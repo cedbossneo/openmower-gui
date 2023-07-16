@@ -2194,6 +2194,11 @@ react-sticky-box@^1.0.2:
   dependencies:
     resize-observer-polyfill "^1.5.1"
 
+react-terminal-ui@^1.0.5:
+  version "1.0.5"
+  resolved "https://nexus.1wplace.com/repository/npm/react-terminal-ui/-/react-terminal-ui-1.0.5.tgz#8ead28bd0ea0143db4c44a166b9e8fb0c0627c64"
+  integrity sha512-yR19ej58dwU3koLiTR0m0nLbqJZoOyeThGWg1B3VrwUs+PLraqjP2C4AkRgiGNUwWMn4u6T0djY5DZXq0Zlvjg==
+
 react@^18.2.0:
   version "18.2.0"
   resolved "https://nexus.1wplace.com/repository/npm/react/-/react-18.2.0.tgz"
