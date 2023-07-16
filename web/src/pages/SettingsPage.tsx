@@ -2,6 +2,7 @@ import {createForm, onFieldValueChange} from '@formily/core'
 import {FormProvider, createSchemaField} from '@formily/react'
 import {FormButtonGroup, FormItem, FormLayout, Input, Submit, Select, Checkbox, NumberPicker} from '@formily/antd-v5'
 import {Col, Row, Typography} from "antd";
+import {useEffect} from "react";
 
 enum SettingType {
     String = "string",
@@ -179,6 +180,24 @@ const SchemaField = createSchemaField({
 
 
 export const SettingsPage = () => {
+    useEffect(() => {
+        (async () => {
+            form.setLoading(true)
+            const settings = await fetch("/api/settings").then(res => res.json()) as {settings: Config};
+            form.setLoading(false)
+            form.setValues(settings.settings)
+        })()
+    })
+
+    const saveSettings = async (values: Config) => {
+        form.setLoading(true)
+        await fetch("/api/settings", {
+            method: "POST",
+            body: JSON.stringify({settings: values}),
+        })
+        form.setLoading(false)
+    };
+
     return (
         <Row>
             <Col span={24}>
@@ -218,7 +237,7 @@ export const SettingsPage = () => {
                         }
                     </FormLayout>
                     <FormButtonGroup align={"center"}>
-                        <Submit onSubmit={console.log}>Save settings</Submit>
+                        <Submit onSubmit={saveSettings}>Save settings</Submit>
                     </FormButtonGroup>
                 </FormProvider>
             </Col>
