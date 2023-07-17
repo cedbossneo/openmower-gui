@@ -43,7 +43,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.SECRET_TOKEN }}
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -114,7 +114,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.SECRET_TOKEN }}
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
