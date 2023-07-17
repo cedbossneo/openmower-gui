@@ -14,4 +14,4 @@ COPY --from=build-web /web/dist /app/web
 COPY --from=build-go /app/mowgli-gui /app/mowgli-gui
 ENV WEB_DIR=/app/web
 WORKDIR /app
-ENTRYPOINT ["./mowgli-gui"]
+CMD ["/app/mowgli-gui"]
