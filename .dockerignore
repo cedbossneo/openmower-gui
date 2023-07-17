@@ -1,0 +1,8 @@
+web/dist
+web/node_modules
+.idea
+.git
+docker-compose.yaml
+.env
+mower_config.sh
+mowgli-gui.iml

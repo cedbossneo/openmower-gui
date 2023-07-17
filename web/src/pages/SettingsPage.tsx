@@ -1,7 +1,7 @@
 import {createForm, onFieldValueChange} from '@formily/core'
-import {FormProvider, createSchemaField} from '@formily/react'
-import {FormButtonGroup, FormItem, FormLayout, Input, Submit, Select, Checkbox, NumberPicker} from '@formily/antd-v5'
-import {Col, Row, Typography} from "antd";
+import {createSchemaField, FormProvider} from '@formily/react'
+import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Submit} from '@formily/antd-v5'
+import {Button, Col, notification, Row, Typography} from "antd";
 import {useEffect} from "react";
 
 enum SettingType {
@@ -180,31 +180,75 @@ const SchemaField = createSchemaField({
 
 
 export const SettingsPage = () => {
+    const [api, contextHolder] = notification.useNotification();
     useEffect(() => {
         (async () => {
-            form.setLoading(true)
-            const settings = await fetch("/api/settings").then(res => res.json()) as {settings: Config};
-            form.setLoading(false)
-            form.setValues(settings.settings)
+            try {
+                form.setLoading(true)
+                const settings = await fetch("/api/settings").then(res => res.json()) as { settings: Config };
+                form.setLoading(false)
+                form.setValues(settings.settings)
+            } catch (e: any) {
+                api.error({
+                    message: "Failed to load settings",
+                    description: e.message,
+                })
+                form.setLoading(false)
+            }
         })()
     })
 
     const saveSettings = async (values: Config) => {
         form.setLoading(true)
-        await fetch("/api/settings", {
-            method: "POST",
-            body: JSON.stringify({settings: values}),
-        })
+        try {
+            await fetch("/api/settings", {
+                method: "POST",
+                body: JSON.stringify({settings: values}),
+            })
+            api.success({
+                message: "Settings saved",
+            })
+        } catch (e: any) {
+            api.error({
+                message: "Failed to save settings",
+                description: e.message,
+            })
+        }
         form.setLoading(false)
     };
 
+    const restartOpenMower = async () => {
+        try {
+            const containers = await fetch("/api/containers").then((res) => res.json()).then((containers) => {
+                return containers.containers as { Id: string, Labels: Record<string, string> }[]
+            });
+            const openMowerContainer = containers.find((container) => container.Labels["app"] == "openmower")
+            if (openMowerContainer) {
+                await fetch(`/api/containers/${openMowerContainer.Id}/restart`, {
+                    method: "POST",
+                })
+                api.success({
+                    message: "OpenMower restarted",
+                })
+            } else {
+                throw new Error("OpenMower container not found")
+            }
+        } catch (e: any) {
+            api.error({
+                message: "Failed to restart OpenMower",
+                description: e.message,
+            })
+        }
+    }
+
     return (
-        <Row>
-            <Col span={24}>
-                <Typography.Title level={2}>Settings</Typography.Title>
-            </Col>
-            <Col span={24}>
-                <FormProvider form={form}>
+        <FormProvider form={form}>
+            <Row>
+                <Col span={24}>
+                    <Typography.Title level={2}>Settings</Typography.Title>
+                </Col>
+                <Col span={24} style={{height: '80vh', overflowY: 'auto'}}>
+                    {contextHolder}
                     <FormLayout layout="vertical">
                         {
                             Object.keys(settings).map(settingKey => {
@@ -212,36 +256,60 @@ export const SettingsPage = () => {
                                 switch (setting.type) {
                                     case SettingType.Lat:
                                         return (
-                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey} title={setting.description} default={setting.defaultValue} x-component-props={{step: 0.000000001}} x-component="NumberPicker" x-decorator="FormItem"/></SchemaField>)
+                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey}
+                                                                                              title={setting.description}
+                                                                                              default={setting.defaultValue}
+                                                                                              x-component-props={{step: 0.000000001}}
+                                                                                              x-component="NumberPicker"
+                                                                                              x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.Lon:
                                         return (
-                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey} title={setting.description} default={setting.defaultValue} x-component-props={{step: 0.000000001}} x-component="NumberPicker" x-decorator="FormItem"/></SchemaField>)
+                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey}
+                                                                                              title={setting.description}
+                                                                                              default={setting.defaultValue}
+                                                                                              x-component-props={{step: 0.000000001}}
+                                                                                              x-component="NumberPicker"
+                                                                                              x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.Boolean:
                                         return (
                                             <SchemaField key={settingKey}><SchemaField.Boolean name={settingKey} title={setting.description} default={setting.defaultValue} x-component="Checkbox" x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.Float:
                                         return (
-                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey} title={setting.description} default={setting.defaultValue} x-component-props={{step: 0.01}}  x-component="NumberPicker" x-decorator="FormItem"/></SchemaField>)
+                                            <SchemaField key={settingKey}><SchemaField.Number name={settingKey} title={setting.description} default={setting.defaultValue} x-component-props={{step: 0.01}} x-component="NumberPicker" x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.Int:
                                         return (
                                             <SchemaField key={settingKey}><SchemaField.Number name={settingKey} title={setting.description} default={setting.defaultValue} x-component-props={{step: 1}} x-component="NumberPicker" x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.Select:
                                         return (
-                                            <SchemaField key={settingKey}><SchemaField.String name={settingKey} title={setting.description} default={setting.defaultValue} enum={setting.options.map(opt => ({label: opt.label, value: opt.id}))} x-component="Select" x-decorator="FormItem"/></SchemaField>)
+                                            <SchemaField key={settingKey}><SchemaField.String name={settingKey}
+                                                                                              title={setting.description}
+                                                                                              default={setting.defaultValue}
+                                                                                              enum={setting.options.map(opt => ({
+                                                                                                  label: opt.label,
+                                                                                                  value: opt.id
+                                                                                              }))} x-component="Select"
+                                                                                              x-decorator="FormItem"/></SchemaField>)
                                     case SettingType.String:
                                         return (
-                                            <SchemaField key={settingKey}><SchemaField.String name={settingKey} title={setting.description} default={setting.defaultValue} x-component="Input" x-decorator="FormItem"/></SchemaField>)
+                                            <SchemaField key={settingKey}><SchemaField.String name={settingKey}
+                                                                                              title={setting.description}
+                                                                                              default={setting.defaultValue}
+                                                                                              x-component="Input"
+                                                                                              x-decorator="FormItem"/></SchemaField>)
 
                                 }
                             })
                         }
                     </FormLayout>
-                    <FormButtonGroup align={"center"}>
+                </Col>
+                <Col span={24} style={{position: "fixed", bottom: 20}}>
+                    <FormButtonGroup>
                         <Submit onSubmit={saveSettings}>Save settings</Submit>
+                        <Button onClick={restartOpenMower}>Restart OpenMower Container</Button>
                     </FormButtonGroup>
-                </FormProvider>
-            </Col>
-        </Row>
+                </Col>
+            </Row>
+        </FormProvider>
 )
 }
 

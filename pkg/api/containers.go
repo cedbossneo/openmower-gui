@@ -9,11 +9,11 @@ import (
 	docker "github.com/docker/docker/client"
 	"github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"io"
 	"log"
 	"strconv"
 	"sync"
-	"time"
 )
 
 func ContainersRoutes(r *gin.RouterGroup) {
@@ -30,13 +30,18 @@ func ContainerListRoutes(group *gin.RouterGroup) {
 			c.Error(err)
 			return
 		}
-		containers, err := client.ContainerList(c.Request.Context(), types.ContainerListOptions{})
+		containers, err := client.ContainerList(c.Request.Context(), types.ContainerListOptions{
+			All: true,
+		})
 		if err != nil {
 			c.Error(err)
 			return
 		}
+		containersFiltered := lo.Filter(containers, func(container types.Container, idx int) bool {
+			return container.Labels["project"] == "mowgli"
+		})
 		c.JSON(200, gin.H{
-			"containers": containers,
+			"containers": containersFiltered,
 		})
 	})
 }
@@ -79,8 +84,7 @@ func ContainerLogsRoutes(group *gin.RouterGroup) {
 		/*
 		  we don't want the stream lasts forever, set the timeout
 		*/
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
+		ctx := context.Background()
 		chanStream := make(chan string) // to consume lines read from docker
 		done := make(chan bool)         // to indicate when the work is done
 		/*
@@ -91,14 +95,6 @@ func ContainerLogsRoutes(group *gin.RouterGroup) {
 				select {
 				case <-c.Request.Context().Done():
 					// client gave up
-					done <- true
-					return
-				case <-ctx.Done():
-					// timeout
-					switch ctx.Err() {
-					case context.DeadlineExceeded:
-						fmt.Println("timeout")
-					}
 					done <- true
 					return
 				}

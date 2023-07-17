@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"mowgli-gui/pkg/api"
+	"os"
 )
 
 func main() {
@@ -13,7 +14,7 @@ func main() {
 	// The web server should listen on port 8080.
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.Use(static.Serve("/", static.LocalFile("./web/dist", false)))
+	r.Use(static.Serve("/", static.LocalFile(os.Getenv("WEB_DIR"), false)))
 	apiGroup := r.Group("/api")
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup)
