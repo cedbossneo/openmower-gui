@@ -77,6 +77,9 @@ func ContainerCommandRoutes(group *gin.RouterGroup) {
 			})
 			return
 		}
+		c.JSON(200, gin.H{
+			"message": "ok",
+		})
 	})
 }
 
@@ -92,7 +95,6 @@ func ContainerLogsRoutes(group *gin.RouterGroup) {
 		/*
 		  we don't want the stream lasts forever, set the timeout
 		*/
-		ctx := context.Background()
 		chanStream := make(chan string) // to consume lines read from docker
 		done := make(chan bool)         // to indicate when the work is done
 		/*
@@ -111,7 +113,7 @@ func ContainerLogsRoutes(group *gin.RouterGroup) {
 		/*
 		   read the logs from docker using docker SDK. be noticed that the Follow value must set to true.
 		*/
-		reader, err := client.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true, Tail: "100"})
+		reader, err := client.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true, Tail: "100"})
 		if err != nil {
 			fmt.Println("error reader: ", err.Error())
 			done <- true
