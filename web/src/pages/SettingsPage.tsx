@@ -1,8 +1,9 @@
 import {createForm, onFieldValueChange} from '@formily/core'
 import {createSchemaField, FormProvider} from '@formily/react'
 import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Submit} from '@formily/antd-v5'
-import {Button, Col, notification, Row, Typography} from "antd";
+import {Col, notification, Row, Typography} from "antd";
 import {useEffect} from "react";
+import AsyncButton from "../components/AsyncButton.tsx";
 
 enum SettingType {
     String = "string",
@@ -321,8 +322,8 @@ export const SettingsPage = () => {
                 </Col>
                 <Col span={24} style={{position: "fixed", bottom: 20}}>
                     <FormButtonGroup>
-                        <Submit onSubmit={saveSettings}>Save settings</Submit>
-                        <Button onClick={restartOpenMower}>Restart OpenMower Container</Button>
+                        <Submit loading={form.loading} onSubmit={saveSettings}>Save settings</Submit>
+                        <AsyncButton onAsyncClick={restartOpenMower}>Restart OpenMower Container</AsyncButton>
                     </FormButtonGroup>
                 </Col>
             </Row>

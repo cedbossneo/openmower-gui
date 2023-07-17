@@ -1,10 +1,58 @@
-import {Button, Col, notification, Row, Typography} from "antd";
+import {Card, Col, notification, Row, Statistic, Typography} from "antd";
 import {useEffect, useState} from "react";
+import AsyncSwitch from "../components/AsyncSwitch.tsx";
+import AsyncButton from "../components/AsyncButton.tsx";
 
 let stream: null | EventSource = null
 
+/*
+	MowerStatus          uint8
+	RaspberryPiPower     bool
+	GpsPower             bool
+	EscPower             bool
+	RainDetected         bool
+	SoundModuleAvailable bool
+	SoundModuleBusy      bool
+	UiBoardAvailable     bool
+	UltrasonicRanges     [5]float32
+	Emergency            bool
+	VCharge              float32
+	VBattery             float32
+	ChargeCurrent        float32
+	LeftEscStatus        ESCStatus
+	RightEscStatus       ESCStatus
+	MowEscStatus         ESCStatus
+ */
+
+type Status = {
+    MowerStatus?: number
+    RaspberryPiPower?: boolean
+    GpsPower?: boolean
+    EscPower?: boolean
+    RainDetected?: boolean
+    SoundModuleAvailable?: boolean
+    SoundModuleBusy?: boolean
+    UiBoardAvailable?: boolean
+    UltrasonicRanges?: [number, number, number, number, number]
+    Emergency?: boolean
+    VCharge?: number
+    VBattery?: number
+    ChargeCurrent?: number
+    LeftEscStatus?: ESCStatus
+    RightEscStatus?: ESCStatus
+    MowEscStatus?: ESCStatus
+}
+
+type ESCStatus = {
+    Status?: string
+    Current?: number
+    Tacho?: number
+    TemperatureMotor?: number
+    TemperaturePcb?: number
+}
+
 export const OpenMowerPage = () => {
-    const [status, setStatus] = useState<Record<string, any>>({})
+    const [status, setStatus] = useState<Status>({})
     const [api, contextHolder] = notification.useNotification();
     const streamOpenMowerStatus = () => {
         stream?.close();
@@ -53,83 +101,75 @@ export const OpenMowerPage = () => {
             })
         }
     };
-    const renderEscStatus = (escStatus: any) => {
-        return <div>
-            <Typography.Text>Status: {escStatus?.Status}</Typography.Text><br/>
-            <Typography.Text>Current: {escStatus?.Current}</Typography.Text><br/>
-            <Typography.Text>Tacho: {escStatus?.Tacho}</Typography.Text><br/>
-            <Typography.Text>TemperatureMotor: {escStatus?.TemperatureMotor}</Typography.Text><br/>
-            <Typography.Text>TemperaturePcb: {escStatus?.TemperaturePcb}</Typography.Text><br/>
-        </div>
+    const renderEscStatus = (escStatus: ESCStatus | undefined) => {
+        return <Row gutter={[16, 16]}>
+            <Col span={8}><Statistic title="Status" value={escStatus?.Status}/></Col>
+            <Col span={8}><Statistic title="Current" value={escStatus?.Current}/></Col>
+            <Col span={8}><Statistic title="Tacho" value={escStatus?.Tacho}/></Col>
+            <Col span={8}><Statistic title="Motor Temperature" value={escStatus?.TemperatureMotor}/></Col>
+            <Col span={8}><Statistic title="PCB Temperature" value={escStatus?.TemperaturePcb}/></Col>
+        </Row>
     };
-    return <Row>
+    return <Row gutter={[16, 16]}>
         <Col span={24}>
             <Typography.Title level={2}>OpenMower</Typography.Title>
         </Col>
         <Col span={24}>
-            {contextHolder}
-            <Button type="primary" onClick={handleMowerCommand("mower_start")} style={{marginRight: 10}}>Start</Button>
-            <Button type="primary" onClick={handleMowerCommand("mower_home")} style={{marginRight: 10}}>Home</Button>
-            <Button type="primary" onClick={handleMowerCommand("mower_s1")} style={{marginRight: 10}}>S1</Button>
-            <Button type="primary" onClick={handleMowerCommand("mower_s2")} style={{marginRight: 10}}>S2</Button>
-            <Button type="primary" onClick={handleMowerCommand("emergency", {emergency: 0})} style={{marginRight: 10}}>Reset
-                Emergency</Button>
-            <Button type="primary" onClick={handleMowerCommand("mow", {mow_enabled: 1, mow_direction: 0})}>Mow
-                motor</Button>
+            <Card title={"Actions"}>
+                {contextHolder}
+                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_start")}
+                             style={{marginRight: 10}}>Start</AsyncButton>
+                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_home")}
+                             style={{marginRight: 10}}>Home</AsyncButton>
+                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_s1")}
+                             style={{marginRight: 10}}>S1</AsyncButton>
+                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_s2")}
+                             style={{marginRight: 10}}>S2</AsyncButton>
+                <AsyncSwitch style={{marginRight: 10}} checked={!!status.Emergency} onAsyncChange={(checked) => {
+                    return handleMowerCommand("emergency", {emergency: checked ? 1 : 0})()
+                }} checkedChildren={"Emergency active"} unCheckedChildren={"Emergency inactive"}/>
+                <AsyncSwitch style={{marginRight: 10}} checked={!!status.MowEscStatus?.Tacho}
+                             onAsyncChange={(checked) => {
+                                 return handleMowerCommand("mow", {mow_enabled: checked ? 1 : 0, mow_direction: 0})()
+                             }} checkedChildren={"Mowing enabled"} unCheckedChildren={"Mowing disabled"}/>
+            </Card>
         </Col>
         <Col span={24}>
-            <Typography.Title level={2}>Status</Typography.Title>
+            <Card title={"Status"}>
+                <Row gutter={[16, 16]}>
+                    <Col span={6}><Statistic title="Mower status" value={status.MowerStatus}/></Col>
+                    <Col span={6}><Statistic title="Raspberry Pi power" value={status.RaspberryPiPower ? "On" : "Off"}/></Col>
+                    <Col span={6}><Statistic title="GPS power" value={status.GpsPower ? "On" : "Off"}/></Col>
+                    <Col span={6}><Statistic title="ESC power" value={status.EscPower ? "On" : "Off"}/></Col>
+                    <Col span={6}><Statistic title="Rain detected" value={status.RainDetected ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="Sound module available"
+                                             value={status.SoundModuleAvailable ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="Sound module busy"
+                                             value={status.SoundModuleBusy ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="UI board available" value={status.UiBoardAvailable ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="Ultrasonic ranges"
+                                             value={status.UltrasonicRanges?.join(", ")}/></Col>
+                    <Col span={6}><Statistic title="Emergency" value={status.Emergency ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="Voltage charge" value={status.VCharge}/></Col>
+                    <Col span={6}><Statistic title="Voltage battery" value={status.VBattery}/></Col>
+                    <Col span={6}><Statistic title="Charge current" value={status.ChargeCurrent}/></Col>
+                </Row>
+            </Card>
         </Col>
-        <Col span={24}>
-            <Typography.Text>Mower status: {status.MowerStatus}</Typography.Text>
+        <Col span={8}>
+            <Card title={"Left ESC Status"}>
+                {renderEscStatus(status.LeftEscStatus)}
+            </Card>
         </Col>
-        <Col span={24}>
-            <Typography.Text>Raspberry Pi power: {status.RaspberryPiPower ? "On" : "Off"}</Typography.Text>
+        <Col span={8}>
+            <Card title={"Right ESC status"}>
+                {renderEscStatus(status.RightEscStatus)}
+            </Card>
         </Col>
-        <Col span={24}>
-            <Typography.Text>GPS power: {status.GpsPower ? "On" : "Off"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>ESC power: {status.EscPower ? "On" : "Off"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Rain detected: {status.RainDetected ? "Yes" : "No"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Sound module available: {status.SoundModuleAvailable ? "Yes" : "No"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Sound module busy: {status.SoundModuleBusy ? "Yes" : "No"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>UI board available: {status.UiBoardAvailable ? "Yes" : "No"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Ultrasonic ranges: {status.UltrasonicRanges?.join(", ")}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Emergency: {status.Emergency ? "Yes" : "No"}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Voltage charge: {status.VCharge}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Voltage battery: {status.VBattery}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Text>Charge current: {status.ChargeCurrent}</Typography.Text>
-        </Col>
-        <Col span={24}>
-            <Typography.Title level={4}>Left ESC Status</Typography.Title>
-            {renderEscStatus(status.LeftEscStatus)}
-        </Col>
-        <Col span={24}>
-            <Typography.Title level={4}>Right ESC status:</Typography.Title>
-            {renderEscStatus(status.RightEscStatus)}
-        </Col>
-        <Col span={24}>
-            <Typography.Title level={4}>Mow ESC status:</Typography.Title>
-            {renderEscStatus(status.MowEscStatus)}
+        <Col span={8}>
+            <Card title={"Mow ESC status"}>
+                {renderEscStatus(status.MowEscStatus)}
+            </Card>
         </Col>
     </Row>
 }

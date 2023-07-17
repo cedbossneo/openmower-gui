@@ -1,7 +1,8 @@
-import {Button, Col, notification, Row, Select, Typography} from "antd";
+import {Col, notification, Row, Select, Typography} from "antd";
 import {useEffect, useState} from "react";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import styled from "styled-components";
+import AsyncButton from "../components/AsyncButton.tsx";
 
 const StyledTerminal = styled.div`
   div.react-terminal-wrapper {
@@ -129,13 +130,13 @@ export const LogsPage = () => {
             }}/>
             {
                 selectedContainer && selectedContainer.status === "started" && <>
-                    <Button onClick={commandContainer("restart")} style={{marginRight: 10}}>Restart</Button>
-                    <Button onClick={commandContainer("stop")}>Stop</Button>
+                    <AsyncButton onAsyncClick={commandContainer("restart")} style={{marginRight: 10}}>Restart</AsyncButton>
+                    <AsyncButton onAsyncClick={commandContainer("stop")}>Stop</AsyncButton>
                 </>
             }
             {
                 selectedContainer && selectedContainer.status === "stopped" &&
-                <Button onClick={commandContainer("start")}>Start</Button>
+                <AsyncButton onAsyncClick={commandContainer("start")}>Start</AsyncButton>
             }
         </Col>
         <Col span={24}>
