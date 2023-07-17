@@ -2,7 +2,7 @@ FROM golang:1.20 as build-go
 
 COPY . /app
 WORKDIR /app
-RUN go build -o mowgli-gui
+RUN CGO_ENABLED=0 go build -o mowgli-gui
 
 FROM node:17 as build-web
 COPY ./web /web
