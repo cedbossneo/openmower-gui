@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -13,12 +12,16 @@ func SettingsRoutes(r *gin.RouterGroup) {
 	r.GET("/settings", func(c *gin.Context) {
 		file, err := os.ReadFile(os.Getenv("MOWER_CONFIG_FILE"))
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		settings, err := godotenv.Parse(strings.NewReader(string(file)))
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		c.JSON(200, gin.H{
@@ -29,12 +32,16 @@ func SettingsRoutes(r *gin.RouterGroup) {
 		var payload map[string]any
 		err := c.BindJSON(&payload)
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		settings, hasSettings := payload["settings"]
 		if !hasSettings {
-			c.Error(errors.New("no settings found"))
+			c.JSON(500, gin.H{
+				"error": "no settings found",
+			})
 			return
 		}
 		// Write settings to file mower_config.sh
@@ -50,7 +57,9 @@ func SettingsRoutes(r *gin.RouterGroup) {
 		}
 		err = os.WriteFile(os.Getenv("MOWER_CONFIG_FILE"), []byte(fileContent), 0644)
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		c.JSON(200, "ok")

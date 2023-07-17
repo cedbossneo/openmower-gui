@@ -18,5 +18,6 @@ func main() {
 	apiGroup := r.Group("/api")
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup)
+	api.OpenMowerRoutes(apiGroup)
 	r.Run(":8080")
 }

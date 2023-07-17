@@ -24,6 +24,9 @@ export const LogsPage = () => {
     async function listContainers() {
         try {
             const containers = await fetch("/api/containers").then((res) => res.json()).then((containers) => {
+                if (containers.error) {
+                    throw new Error(containers.error)
+                }
                 return containers.containers;
             });
             let options = containers.map((container: any) => {
@@ -94,6 +97,10 @@ export const LogsPage = () => {
         try {
             await fetch(`/api/containers/${containerId}/${command}`, {
                 method: "POST"
+            }).then((res) => res.json()).then((res) => {
+                if (res.error) {
+                    throw new Error(res.error)
+                }
             });
             if (command === "start" || command === "restart") {
                 streamContainerLogs();

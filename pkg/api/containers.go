@@ -27,14 +27,18 @@ func ContainerListRoutes(group *gin.RouterGroup) {
 	group.GET("/", func(c *gin.Context) {
 		client, err := docker.NewClientWithOpts(docker.FromEnv)
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		containers, err := client.ContainerList(c.Request.Context(), types.ContainerListOptions{
 			All: true,
 		})
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 		containersFiltered := lo.Filter(containers, func(container types.Container, idx int) bool {
@@ -53,7 +57,9 @@ func ContainerCommandRoutes(group *gin.RouterGroup) {
 
 		client, err := docker.NewClientWithOpts(docker.FromEnv)
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 
@@ -66,7 +72,9 @@ func ContainerCommandRoutes(group *gin.RouterGroup) {
 			err = client.ContainerStart(c.Request.Context(), containerID, types.ContainerStartOptions{})
 		}
 		if err != nil {
-			c.Error(err)
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 	})

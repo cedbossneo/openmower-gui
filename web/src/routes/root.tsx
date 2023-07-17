@@ -1,8 +1,14 @@
 import {Outlet, useMatches, useNavigate} from "react-router-dom";
-import {Row, Col, Menu, MenuProps} from "antd";
-import {SettingOutlined, MessageOutlined} from '@ant-design/icons';
+import {Col, Menu, MenuProps, Row} from "antd";
+import {MessageOutlined, RobotOutlined, SettingOutlined} from '@ant-design/icons';
+import {useEffect} from "react";
 
 let menu: MenuProps['items'] = [
+    {
+        key: '/openmower',
+        label: 'OpenMower',
+        icon: <RobotOutlined/>
+    },
     {
         key: '/settings',
         label: 'Settings',
@@ -12,12 +18,19 @@ let menu: MenuProps['items'] = [
         key: '/logs',
         label: 'Logs',
         icon: <MessageOutlined/>
-    },
+    }
 ];
 
 export default () => {
     const route = useMatches()
     const navigate = useNavigate()
+    useEffect(() => {
+        if (route.length === 1 && route[0].pathname === "/") {
+            navigate({
+                pathname: '/openmower',
+            })
+        }
+    }, [route, navigate])
     return (
         <Row>
             <Col span={4}>

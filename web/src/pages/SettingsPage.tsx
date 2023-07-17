@@ -185,7 +185,13 @@ export const SettingsPage = () => {
         (async () => {
             try {
                 form.setLoading(true)
-                const settings = await fetch("/api/settings").then(res => res.json()) as { settings: Config };
+                const settings = await fetch("/api/settings").then(res => res.json()) as {
+                    settings: Config,
+                    error?: string
+                };
+                if (settings.error) {
+                    throw new Error(settings.error)
+                }
                 form.setLoading(false)
                 form.setValues(settings.settings)
             } catch (e: any) {
@@ -204,7 +210,11 @@ export const SettingsPage = () => {
             await fetch("/api/settings", {
                 method: "POST",
                 body: JSON.stringify({settings: values}),
-            })
+            }).then(res => res.json()).then((res) => {
+                if (res.error) {
+                    throw new Error(res.error)
+                }
+            });
             api.success({
                 message: "Settings saved",
             })
@@ -220,12 +230,19 @@ export const SettingsPage = () => {
     const restartOpenMower = async () => {
         try {
             const containers = await fetch("/api/containers").then((res) => res.json()).then((containers) => {
+                if (containers.error) {
+                    throw new Error(containers.error)
+                }
                 return containers.containers as { Id: string, Labels: Record<string, string> }[]
             });
             const openMowerContainer = containers.find((container) => container.Labels["app"] == "openmower")
             if (openMowerContainer) {
                 await fetch(`/api/containers/${openMowerContainer.Id}/restart`, {
                     method: "POST",
+                }).then(res => res.json()).then((res) => {
+                    if (res.error) {
+                        throw new Error(res.error)
+                    }
                 })
                 api.success({
                     message: "OpenMower restarted",
