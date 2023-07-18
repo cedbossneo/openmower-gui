@@ -30,5 +30,5 @@ func main() {
 	api.ContainersRoutes(apiGroup, dockerProvider)
 	api.OpenMowerRoutes(apiGroup, rosProvider)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	r.Run(":8080")
+	r.Run(":4006")
 }
