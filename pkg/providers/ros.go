@@ -5,19 +5,23 @@ import (
 	"github.com/bluenviron/goroslib/v2"
 	types2 "mowgli-gui/pkg/types"
 	"os"
+	"sync"
 )
 
 type RosProvider struct {
 	node *goroslib.Node
+	mtx  sync.Mutex
 }
 
 func (p *RosProvider) getNode() (*goroslib.Node, error) {
 	var err error
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
 	if p.node != nil {
 		return p.node, err
 	}
 	p.node, err = goroslib.NewNode(goroslib.NodeConf{
-		Name:          "goroslib_pub",
+		Name:          "goroslib",
 		MasterAddress: os.Getenv("ROS_MASTER_URI"),
 	})
 	return p.node, err
