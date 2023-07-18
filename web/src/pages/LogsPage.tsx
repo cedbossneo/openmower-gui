@@ -87,6 +87,9 @@ export const LogsPage = () => {
     useEffect(() => {
         if (containerId) {
             streamContainerLogs();
+            return () => {
+                stream?.close();
+            }
         }
     }, [containerId])
     const commandContainer = (command: "start" | "stop" | "restart") => async () => {

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/diagnostic_msgs"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
 	"github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
@@ -59,8 +58,8 @@ func SubscriberRoute(group *gin.RouterGroup) {
 			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](rosNode, &done, &chanStream, "/diagnostics")
 		case "status":
 			sub, err = subscribe[*msgs.Status](rosNode, &done, &chanStream, "/mower_service/status")
-		case "xb_pose":
-			sub, err = subscribe[*geometry_msgs.Pose](rosNode, &done, &chanStream, "/xbot_driver_gps/xb_pose")
+		case "gps":
+			sub, err = subscribe[*msgs.AbsolutePose](rosNode, &done, &chanStream, "/xbot_driver_gps/xb_pose")
 		case "imu":
 			sub, err = subscribe[*sensor_msgs.Imu](rosNode, &done, &chanStream, "/imu/data_raw")
 		}

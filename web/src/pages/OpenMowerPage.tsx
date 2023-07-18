@@ -3,26 +3,9 @@ import {useEffect, useState} from "react";
 import AsyncSwitch from "../components/AsyncSwitch.tsx";
 import AsyncButton from "../components/AsyncButton.tsx";
 
-let stream: null | EventSource = null
-
-/*
-	MowerStatus          uint8
-	RaspberryPiPower     bool
-	GpsPower             bool
-	EscPower             bool
-	RainDetected         bool
-	SoundModuleAvailable bool
-	SoundModuleBusy      bool
-	UiBoardAvailable     bool
-	UltrasonicRanges     [5]float32
-	Emergency            bool
-	VCharge              float32
-	VBattery             float32
-	ChargeCurrent        float32
-	LeftEscStatus        ESCStatus
-	RightEscStatus       ESCStatus
-	MowEscStatus         ESCStatus
- */
+let statusStream: null | EventSource = null
+let imuStream: null | EventSource = null
+let gpsStream: null | EventSource = null
 
 type Status = {
     MowerStatus?: number
@@ -51,34 +34,188 @@ type ESCStatus = {
     TemperaturePcb?: number
 }
 
+type Point = {
+    /*
+    X           float64
+	Y           float64
+	Z           float64
+     */
+    X?: number
+    Y?: number
+    Z?: number
+}
+
+type Quaternion = {
+    /*
+    X           float64
+	Y           float64
+	Z           float64
+	W           float64
+     */
+    X?: number
+    Y?: number
+    Z?: number
+    W?: number
+}
+
+type Pose = {
+    /*
+    Position    Point
+	Orientation Quaternion
+     */
+    Position?: Point
+    Orientation?: Quaternion
+}
+
+type PoseWithCovariance = {
+    /*
+    Pose        Pose
+	Covariance  [36]float64
+     */
+    Pose?: Pose
+    Covariance?: number[]
+}
+
+type Vector3 = {
+    /*
+    X           float64
+	Y           float64
+	Z           float64
+     */
+    X?: number
+    Y?: number
+    Z?: number
+}
+
+type Gps = {
+    /*
+        SensorStamp uint32
+        ReceivedStamp uint32
+        Source uint8
+        Flags uint16
+        OrientationValid uint8
+        MotionVectorValid uint8
+        PositionAccuracy float32
+        OrientationAccuracy float32
+        Pose geometry_msgs.PoseWithCovariance
+        MotionVector geometry_msgs.Vector3
+        VehicleHeading float64
+        MotionHeading float64
+     */
+    SensorStamp?: number
+    ReceivedStamp?: number
+    Source?: number
+    Flags?: number
+    OrientationValid?: number
+    MotionVectorValid?: number
+    PositionAccuracy?: number
+    OrientationAccuracy?: number
+    Pose?: PoseWithCovariance
+    MotionVector?: Vector3
+    VehicleHeading?: number
+    MotionHeading?: number
+}
+
+type Imu = {
+    /*
+    	Dt          uint16
+	Ax          float64
+	Ay          float64
+	Az          float64
+	Gx          float64
+	Gy          float64
+	Gz          float64
+	Mx          float64
+	My          float64
+	Mz          float64
+     */
+    Dt?: number
+    Ax?: number
+    Ay?: number
+    Az?: number
+    Gx?: number
+    Gy?: number
+    Gz?: number
+    Mx?: number
+    My?: number
+    Mz?: number
+}
+
 export const OpenMowerPage = () => {
+    const [gps, setGps] = useState<Gps>({})
+    const [imu, setImu] = useState<Imu>({})
     const [status, setStatus] = useState<Status>({})
     const [api, contextHolder] = notification.useNotification();
     const streamOpenMowerStatus = () => {
-        stream?.close();
-        stream = null
-        stream = new EventSource(`/api/openmower/subscribe/status`);
-        stream.onopen = function () {
+        statusStream?.close();
+        statusStream = null
+        statusStream = new EventSource(`/api/openmower/subscribe/status`);
+        statusStream.onopen = function () {
             api.info({
-                message: "Logs stream connected",
+                message: "Status Stream connected",
             })
         }
-        stream.onerror = function () {
+        statusStream.onerror = function () {
             api.info({
-                message: "Logs stream closed",
+                message: "Status Stream closed",
             })
-            stream?.close();
-            stream = null
+            statusStream?.close();
+            statusStream = null
         };
-        stream.onmessage = function (e) {
-            let parse = JSON.parse(atob(e.data));
-            console.log(parse)
-            setStatus(parse)
+        statusStream.onmessage = function (e) {
+            setStatus(JSON.parse(atob(e.data)))
+        };
+    };
+    const streamOpenMowerImu = () => {
+        imuStream?.close();
+        imuStream = null
+        imuStream = new EventSource(`/api/openmower/subscribe/imu`);
+        imuStream.onopen = function () {
+            api.info({
+                message: "IMU Stream connected",
+            })
+        }
+        imuStream.onerror = function () {
+            api.info({
+                message: "IMU Stream closed",
+            })
+            statusStream?.close();
+            statusStream = null
+        };
+        imuStream.onmessage = function (e) {
+            setImu(JSON.parse(atob(e.data)))
+        };
+    };
+    const streamOpenMowerGps = () => {
+        gpsStream?.close();
+        gpsStream = null
+        gpsStream = new EventSource(`/api/openmower/subscribe/gps`);
+        gpsStream.onopen = function () {
+            api.info({
+                message: "Gps Stream connected",
+            })
+        }
+        gpsStream.onerror = function () {
+            api.info({
+                message: "Gps Stream closed",
+            })
+            statusStream?.close();
+            statusStream = null
+        };
+        gpsStream.onmessage = function (e) {
+            setGps(JSON.parse(atob(e.data)))
         };
     };
 
     useEffect(() => {
         streamOpenMowerStatus()
+        streamOpenMowerImu()
+        streamOpenMowerGps()
+        return () => {
+            statusStream?.close();
+            imuStream?.close();
+            gpsStream?.close();
+        }
     }, [])
 
     const handleMowerCommand = (command: string, args: Record<string, any> = {}) => async () => {
@@ -169,6 +306,34 @@ export const OpenMowerPage = () => {
         <Col span={8}>
             <Card title={"Mow ESC status"}>
                 {renderEscStatus(status.MowEscStatus)}
+            </Card>
+        </Col>
+        <Col span={24}>
+            <Card title={"IMU"}>
+                <Row gutter={[16, 16]}>
+                    <Col span={8}><Statistic title="Acceleration X" value={imu?.Ax}/></Col>
+                    <Col span={8}><Statistic title="Acceleration Y" value={imu?.Ay}/></Col>
+                    <Col span={8}><Statistic title="Acceleration Z" value={imu?.Az}/></Col>
+                    <Col span={8}><Statistic title="Gyro X" value={imu?.Gx}/></Col>
+                    <Col span={8}><Statistic title="Gyro Y" value={imu?.Gy}/></Col>
+                    <Col span={8}><Statistic title="Gyro Z" value={imu?.Gz}/></Col>
+                    <Col span={8}><Statistic title="Magnetometer X" value={imu?.Mx}/></Col>
+                    <Col span={8}><Statistic title="Magnetometer Y" value={imu?.My}/></Col>
+                    <Col span={8}><Statistic title="Magnetometer Z" value={imu?.Mz}/></Col>
+                </Row>
+            </Card>
+        </Col>
+        <Col span={24}>
+            <Card title={"GPS"}>
+                <Row gutter={[16, 16]}>
+                    <Col span={8}><Statistic title="Latitude" value={gps.Pose?.Pose?.Position?.X}/></Col>
+                    <Col span={8}><Statistic title="Longitude" value={gps.Pose?.Pose?.Position?.Y}/></Col>
+                    <Col span={8}><Statistic title="Altitude" value={gps.Pose?.Pose?.Position?.Z}/></Col>
+                    <Col span={8}><Statistic title="Roll" value={gps.Pose?.Pose?.Orientation?.X}/></Col>
+                    <Col span={8}><Statistic title="Pitch" value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
+                    <Col span={8}><Statistic title="Yaw" value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
+                    <Col span={8}><Statistic title="Accuracy" value={gps.PositionAccuracy}/></Col>
+                </Row>
             </Card>
         </Col>
     </Row>
