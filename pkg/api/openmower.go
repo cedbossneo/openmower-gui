@@ -57,7 +57,7 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		case "diagnostics":
 			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](provider, &done, &chanStream, "/diagnostics")
 		case "status":
-			sub, err = subscribe[*msgs.Status](provider, &done, &chanStream, "/mower_service/status")
+			sub, err = subscribe[*msgs.Status](provider, &done, &chanStream, "/mower/status")
 		case "gps":
 			sub, err = subscribe[*msgs.AbsolutePose](provider, &done, &chanStream, "/xbot_driver_gps/xb_pose")
 		case "imu":
