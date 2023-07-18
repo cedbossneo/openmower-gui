@@ -274,8 +274,10 @@ export const OpenMowerPage = () => {
             <Col span={8}><Statistic title="Status" value={escStatus?.Status}/></Col>
             <Col span={8}><Statistic precision={2} title="Current" value={escStatus?.Current}/></Col>
             <Col span={8}><Statistic precision={2} title="Tacho" value={escStatus?.Tacho}/></Col>
-            <Col span={8}><Statistic precision={2} title="Motor Temperature" value={escStatus?.TemperatureMotor}/></Col>
-            <Col span={8}><Statistic precision={2} title="PCB Temperature" value={escStatus?.TemperaturePcb}/></Col>
+            <Col span={8}><Statistic precision={2} title="Motor Temperature" value={escStatus?.TemperatureMotor}
+                                     suffix={"°C"}/></Col>
+            <Col span={8}><Statistic precision={2} title="PCB Temperature" value={escStatus?.TemperaturePcb}
+                                     suffix={"°C"}/></Col>
         </Row>
     };
 
