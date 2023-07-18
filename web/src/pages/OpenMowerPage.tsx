@@ -1,4 +1,5 @@
-import {Card, Col, notification, Row, Statistic, Typography} from "antd";
+import {Card, Col, notification, Progress, Row, Statistic, Typography} from "antd";
+import {CheckCircleTwoTone, CloseCircleTwoTone} from "@ant-design/icons";
 import {useEffect, useState} from "react";
 import AsyncSwitch from "../components/AsyncSwitch.tsx";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -110,6 +111,25 @@ type Vector3 = {
     Z?: number
 }
 
+type HighLevelStatus = {
+    /*
+    State             uint8
+	StateName         string
+	SubStateName      string
+	GpsQualityPercent float32
+	BatteryPercent    float32
+	IsCharging        bool
+	Emergency         bool
+     */
+    State?: number
+    StateName?: string
+    SubStateName?: string
+    GpsQualityPercent?: number
+    BatteryPercent?: number
+    IsCharging?: boolean
+    Emergency?: boolean
+}
+
 type Gps = {
     /*
         SensorStamp uint32
@@ -170,7 +190,20 @@ export const OpenMowerPage = () => {
     const [wheelTicks, setWheelTicks] = useState<WheelTick>({})
     const [imu, setImu] = useState<Imu>({})
     const [status, setStatus] = useState<Status>({})
+    const [highLevelStatus, setHighLevelStatus] = useState<HighLevelStatus>({})
     const [api, contextHolder] = notification.useNotification();
+    const highLevelStatusStream = useSSE<string>("/api/openmower/subscribe/highLevelStatus", () => {
+            api.info({
+                message: "High Level Status Stream closed",
+            })
+        }, () => {
+            api.info({
+                message: "High Level Status Stream connected",
+            })
+        },
+        (e) => {
+            setHighLevelStatus(JSON.parse(e))
+        })
     const statusStream = useSSE<string>("/api/openmower/subscribe/status", () => {
             api.info({
                 message: "Status Stream closed",
@@ -239,10 +272,10 @@ export const OpenMowerPage = () => {
     const renderEscStatus = (escStatus: ESCStatus | undefined) => {
         return <Row gutter={[16, 16]}>
             <Col span={8}><Statistic title="Status" value={escStatus?.Status}/></Col>
-            <Col span={8}><Statistic title="Current" value={escStatus?.Current}/></Col>
-            <Col span={8}><Statistic title="Tacho" value={escStatus?.Tacho}/></Col>
-            <Col span={8}><Statistic title="Motor Temperature" value={escStatus?.TemperatureMotor}/></Col>
-            <Col span={8}><Statistic title="PCB Temperature" value={escStatus?.TemperaturePcb}/></Col>
+            <Col span={8}><Statistic precision={2} title="Current" value={escStatus?.Current}/></Col>
+            <Col span={8}><Statistic precision={2} title="Tacho" value={escStatus?.Tacho}/></Col>
+            <Col span={8}><Statistic precision={2} title="Motor Temperature" value={escStatus?.TemperatureMotor}/></Col>
+            <Col span={8}><Statistic precision={2} title="PCB Temperature" value={escStatus?.TemperaturePcb}/></Col>
         </Row>
     };
 
@@ -251,13 +284,38 @@ export const OpenMowerPage = () => {
         imuStream.start()
         gpsStream.start()
         ticksStream.start()
+        highLevelStatusStream.start()
         return () => {
             statusStream.stop()
             imuStream.stop()
             gpsStream.stop()
             ticksStream.stop()
+            highLevelStatusStream.stop()
         }
     }, []);
+
+    const booleanFormatter = (value: any) => (value === "On" || value === "Yes") ?
+        <CheckCircleTwoTone twoToneColor={"#01d30d"}/> : <CloseCircleTwoTone twoToneColor={"red"}/>;
+
+    const stateRenderer = (value: string | undefined) => {
+        switch (value) {
+            case "IDLE":
+                return "Idle"
+            case "MOWING":
+                return "Mowing"
+            case "DOCKING":
+                return "Docking"
+            case "UNDOCKING":
+                return "Undocking"
+            case "AREA_RECORDING":
+                return "Area Recording"
+            default:
+                return "Unknown"
+        }
+    };
+    const progressFormatter = (value: any) => {
+        return <Progress steps={3} percent={value} size={25} showInfo={false}/>
+    };
 
     return <Row gutter={[16, 16]}>
         <Col span={24}>
@@ -284,24 +342,50 @@ export const OpenMowerPage = () => {
             </Card>
         </Col>
         <Col span={24}>
+            <Card title={"High Level Status"}>
+                <Row gutter={[16, 16]}>
+                    <Col span={6}><Statistic title="State" valueStyle={{color: '#3f8600'}}
+                                             value={stateRenderer(highLevelStatus.StateName)}/></Col>
+                    <Col span={6}><Statistic title="GPS Quality" value={(highLevelStatus.GpsQualityPercent ?? 0) * 100}
+                                             suffix={"%"}/></Col>
+                    <Col span={6}><Statistic title="Battery" value={(highLevelStatus.BatteryPercent ?? 0) * 100}
+                                             formatter={progressFormatter}/></Col>
+                    <Col span={6}><Statistic title="Charging" value={highLevelStatus.IsCharging ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="Emergency" value={highLevelStatus.Emergency ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
+                </Row>
+            </Card>
+        </Col>
+        <Col span={24}>
             <Card title={"Status"}>
                 <Row gutter={[16, 16]}>
-                    <Col span={6}><Statistic title="Mower status" value={status.MowerStatus}/></Col>
-                    <Col span={6}><Statistic title="Raspberry Pi power" value={status.RaspberryPiPower ? "On" : "Off"}/></Col>
-                    <Col span={6}><Statistic title="GPS power" value={status.GpsPower ? "On" : "Off"}/></Col>
-                    <Col span={6}><Statistic title="ESC power" value={status.EscPower ? "On" : "Off"}/></Col>
-                    <Col span={6}><Statistic title="Rain detected" value={status.RainDetected ? "Yes" : "No"}/></Col>
+                    <Col span={6}><Statistic title="Mower status"
+                                             value={status.MowerStatus == 255 ? "On" : "Off"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="Raspberry Pi power" value={status.RaspberryPiPower ? "On" : "Off"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="GPS power" value={status.GpsPower ? "On" : "Off"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="ESC power" value={status.EscPower ? "On" : "Off"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="Rain detected" value={status.RainDetected ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
                     <Col span={6}><Statistic title="Sound module available"
-                                             value={status.SoundModuleAvailable ? "Yes" : "No"}/></Col>
+                                             value={status.SoundModuleAvailable ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
                     <Col span={6}><Statistic title="Sound module busy"
-                                             value={status.SoundModuleBusy ? "Yes" : "No"}/></Col>
-                    <Col span={6}><Statistic title="UI board available" value={status.UiBoardAvailable ? "Yes" : "No"}/></Col>
+                                             value={status.SoundModuleBusy ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="UI board available" value={status.UiBoardAvailable ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
                     <Col span={6}><Statistic title="Ultrasonic ranges"
                                              value={status.UltrasonicRanges?.join(", ")}/></Col>
-                    <Col span={6}><Statistic title="Emergency" value={status.Emergency ? "Yes" : "No"}/></Col>
-                    <Col span={6}><Statistic title="Voltage charge" value={status.VCharge}/></Col>
-                    <Col span={6}><Statistic title="Voltage battery" value={status.VBattery}/></Col>
-                    <Col span={6}><Statistic title="Charge current" value={status.ChargeCurrent}/></Col>
+                    <Col span={6}><Statistic title="Emergency" value={status.Emergency ? "Yes" : "No"}
+                                             formatter={booleanFormatter}/></Col>
+                    <Col span={6}><Statistic title="Voltage charge" value={status.VCharge} suffix={"V"}/></Col>
+                    <Col span={6}><Statistic title="Voltage battery" value={status.VBattery} suffix={"V"}/></Col>
+                    <Col span={6}><Statistic title="Charge current" value={status.ChargeCurrent} suffix={"A"}/></Col>
                 </Row>
             </Card>
         </Col>
@@ -323,28 +407,28 @@ export const OpenMowerPage = () => {
         <Col span={24}>
             <Card title={"IMU"}>
                 <Row gutter={[16, 16]}>
-                    <Col span={8}><Statistic title="Acceleration X" value={imu?.Ax}/></Col>
-                    <Col span={8}><Statistic title="Acceleration Y" value={imu?.Ay}/></Col>
-                    <Col span={8}><Statistic title="Acceleration Z" value={imu?.Az}/></Col>
-                    <Col span={8}><Statistic title="Gyro X" value={imu?.Gx}/></Col>
-                    <Col span={8}><Statistic title="Gyro Y" value={imu?.Gy}/></Col>
-                    <Col span={8}><Statistic title="Gyro Z" value={imu?.Gz}/></Col>
-                    <Col span={8}><Statistic title="Magnetometer X" value={imu?.Mx}/></Col>
-                    <Col span={8}><Statistic title="Magnetometer Y" value={imu?.My}/></Col>
-                    <Col span={8}><Statistic title="Magnetometer Z" value={imu?.Mz}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Acceleration X" value={imu?.Ax}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Acceleration Y" value={imu?.Ay}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Acceleration Z" value={imu?.Az}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Gyro X" value={imu?.Gx}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Gyro Y" value={imu?.Gy}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Gyro Z" value={imu?.Gz}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Magnetometer X" value={imu?.Mx}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Magnetometer Y" value={imu?.My}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Magnetometer Z" value={imu?.Mz}/></Col>
                 </Row>
             </Card>
         </Col>
         <Col span={12}>
             <Card title={"GPS"}>
                 <Row gutter={[16, 16]}>
-                    <Col span={8}><Statistic title="Latitude" value={gps.Pose?.Pose?.Position?.X}/></Col>
-                    <Col span={8}><Statistic title="Longitude" value={gps.Pose?.Pose?.Position?.Y}/></Col>
-                    <Col span={8}><Statistic title="Altitude" value={gps.Pose?.Pose?.Position?.Z}/></Col>
-                    <Col span={8}><Statistic title="Roll" value={gps.Pose?.Pose?.Orientation?.X}/></Col>
-                    <Col span={8}><Statistic title="Pitch" value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
-                    <Col span={8}><Statistic title="Yaw" value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
-                    <Col span={8}><Statistic title="Accuracy" value={gps.PositionAccuracy}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Latitude" value={gps.Pose?.Pose?.Position?.X}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Longitude" value={gps.Pose?.Pose?.Position?.Y}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Altitude" value={gps.Pose?.Pose?.Position?.Z}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Roll" value={gps.Pose?.Pose?.Orientation?.X}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Pitch" value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Yaw" value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
+                    <Col span={8}><Statistic precision={3} title="Accuracy" value={gps.PositionAccuracy}/></Col>
                 </Row>
             </Card>
         </Col>

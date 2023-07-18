@@ -29,7 +29,7 @@ func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 // @Description subscribe to a topic
 // @Tags openmower
 // @Produce  text/event-stream
-// @Param topic path string true "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks"
+// @Param topic path string true "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks, highLevelStatus"
 // @Router /openmower/subscribe/{topic} [get]
 func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	group.GET("/subscribe/:topic", func(c *gin.Context) {
@@ -58,6 +58,8 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](provider, &done, &chanStream, "/diagnostics")
 		case "status":
 			sub, err = subscribe[*msgs.Status](provider, &done, &chanStream, "/mower/status")
+		case "highLevelStatus":
+			sub, err = subscribe[*msgs.HighLevelStatus](provider, &done, &chanStream, "/mower_logic/current_state")
 		case "gps":
 			sub, err = subscribe[*msgs.AbsolutePose](provider, &done, &chanStream, "/xbot_driver_gps/xb_pose")
 		case "imu":
