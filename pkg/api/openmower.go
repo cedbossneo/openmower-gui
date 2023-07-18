@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -14,28 +13,28 @@ import (
 	"io"
 	"log"
 	"mowgli-gui/pkg/msgs"
-	"os"
+	"mowgli-gui/pkg/types"
 	"strconv"
 )
 
-func OpenMowerRoutes(r *gin.RouterGroup) {
+func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	group := r.Group("/openmower")
-	ServiceRoute(group)
-	SubscriberRoute(group)
+	ServiceRoute(group, provider)
+	SubscriberRoute(group, provider)
 }
 
-func SubscriberRoute(group *gin.RouterGroup) {
+// SubscriberRoute subscribe to a topic
+//
+// @Summary subscribe to a topic
+// @Description subscribe to a topic
+// @Tags openmower
+// @Produce  text/event-stream
+// @Param topic path string true "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks"
+// @Router /openmower/subscribe/{topic} [get]
+func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	group.GET("/subscribe/:topic", func(c *gin.Context) {
 		// create a node and connect to the master
 		topic := c.Param("topic")
-		rosNode, err := getNode()
-		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
 		chanStream := make(chan string) // to consume lines read from docker
 		done := make(chan bool)         // to indicate when the work is done
 		/*
@@ -52,18 +51,19 @@ func SubscriberRoute(group *gin.RouterGroup) {
 			}
 		}()
 		var sub *goroslib.Subscriber
+		var err error
 		// create a subscriber
 		switch topic {
 		case "diagnostics":
-			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](rosNode, &done, &chanStream, "/diagnostics")
+			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](provider, &done, &chanStream, "/diagnostics")
 		case "status":
-			sub, err = subscribe[*msgs.Status](rosNode, &done, &chanStream, "/mower_service/status")
+			sub, err = subscribe[*msgs.Status](provider, &done, &chanStream, "/mower_service/status")
 		case "gps":
-			sub, err = subscribe[*msgs.AbsolutePose](rosNode, &done, &chanStream, "/xbot_driver_gps/xb_pose")
+			sub, err = subscribe[*msgs.AbsolutePose](provider, &done, &chanStream, "/xbot_driver_gps/xb_pose")
 		case "imu":
-			sub, err = subscribe[*sensor_msgs.Imu](rosNode, &done, &chanStream, "/imu/data_raw")
+			sub, err = subscribe[*sensor_msgs.Imu](provider, &done, &chanStream, "/imu/data_raw")
 		case "ticks":
-			sub, err = subscribe[*msgs.WheelTick](rosNode, &done, &chanStream, "/mower/wheel_ticks")
+			sub, err = subscribe[*msgs.WheelTick](provider, &done, &chanStream, "/mower/wheel_ticks")
 		}
 		if err != nil {
 			done <- true
@@ -105,39 +105,34 @@ func SubscriberRoute(group *gin.RouterGroup) {
 	})
 }
 
-func subscribe[T any](rosNode *goroslib.Node, done *chan bool, chanStream *chan string, topic string) (*goroslib.Subscriber, error) {
-	return goroslib.NewSubscriber(goroslib.SubscriberConf{
-		Node:  rosNode,
-		Topic: topic,
-		Callback: func(msg T) {
-			// read lines from the reader
-			str, err := json.Marshal(msg)
-			if err != nil {
-				log.Println("Read Error:", err.Error())
-				*done <- true
-				return
-			}
-			// send the lines to channel
-			*chanStream <- string(str)
-		},
-	})
+func subscribe[T any](provider types.IRosProvider, done *chan bool, chanStream *chan string, topic string) (*goroslib.Subscriber, error) {
+	return provider.Subscribe(topic, func(msg T) {
+		// read lines from the reader
+		str, err := json.Marshal(msg)
+		if err != nil {
+			log.Println("Read Error:", err.Error())
+			*done <- true
+			return
+		}
+		// send the lines to channel
+		*chanStream <- string(str)
+	},
+	)
 }
 
-var node *goroslib.Node
-
-func getNode() (*goroslib.Node, error) {
-	var err error
-	if node != nil {
-		return node, err
-	}
-	node, err = goroslib.NewNode(goroslib.NodeConf{
-		Name:          "goroslib_pub",
-		MasterAddress: os.Getenv("ROS_MASTER_URI"),
-	})
-	return node, err
-}
-
-func ServiceRoute(group *gin.RouterGroup) {
+// ServiceRoute call a service
+//
+// @Summary call a service
+// @Description call a service
+// @Tags openmower
+// @Accept  json
+// @Produce  json
+// @Param command path string true "command to call, could be: mower_start, mower_home, mower_s1, mower_s2, emergency, mow"
+// @Param CallReq body map[string]interface{} true "request body"
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /openmower/call/{command} [post]
+func ServiceRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	// create a node and connect to the master
 	group.POST("/call/:command", func(c *gin.Context) {
 		// create a node and connect to the master
@@ -149,27 +144,27 @@ func ServiceRoute(group *gin.RouterGroup) {
 		}
 		switch command {
 		case "mower_start":
-			err = callService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
 				Command: 1,
 			}, &msgs.HighLevelControlSrvRes{})
 		case "mower_home":
-			err = callService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
 				Command: 2,
 			}, &msgs.HighLevelControlSrvRes{})
 		case "mower_s1":
-			err = callService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
 				Command: 3,
 			}, &msgs.HighLevelControlSrvRes{})
 		case "mower_s2":
-			err = callService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
 				Command: 4,
 			}, &msgs.HighLevelControlSrvRes{})
 		case "emergency":
-			err = callService(c.Request.Context(), "/mower_service/emergency", &msgs.EmergencyStopSrv{}, &msgs.EmergencyStopSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/emergency", &msgs.EmergencyStopSrv{}, &msgs.EmergencyStopSrvReq{
 				Emergency: uint8(CallReq["emergency"].(float64)),
 			}, &msgs.EmergencyStopSrvRes{})
 		case "mow":
-			err = callService(c.Request.Context(), "/mower_service/mow_enabled", &msgs.MowerControlSrv{}, &msgs.MowerControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &msgs.MowerControlSrv{}, &msgs.MowerControlSrvReq{
 				MowEnabled:   uint8(CallReq["mow_enabled"].(float64)),
 				MowDirection: uint8(CallReq["mow_direction"].(float64)),
 			}, &msgs.MowerControlSrvRes{})
@@ -177,28 +172,9 @@ func ServiceRoute(group *gin.RouterGroup) {
 			err = errors.New("unknown command")
 		}
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(500, ErrorResponse{Error: err.Error()})
 		} else {
-			c.JSON(200, gin.H{})
+			c.JSON(200, OkResponse{})
 		}
 	})
-}
-
-func callService(ctx context.Context, srvName string, srv any, req any, res any) error {
-	rosNode, err := getNode()
-	if err != nil {
-		return err
-	}
-	serviceClient, err := goroslib.NewServiceClient(goroslib.ServiceClientConf{
-		Node: rosNode,
-		Name: srvName,
-		Srv:  srv,
-	})
-	err = serviceClient.CallContext(ctx, req, res)
-	if err != nil {
-		return err
-	}
-	return nil
 }

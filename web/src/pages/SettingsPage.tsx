@@ -4,6 +4,7 @@ import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Se
 import {Col, notification, Row, Typography} from "antd";
 import {useEffect} from "react";
 import AsyncButton from "../components/AsyncButton.tsx";
+import {useApi} from "../hooks/useApi.ts";
 
 enum SettingType {
     String = "string",
@@ -181,20 +182,18 @@ const SchemaField = createSchemaField({
 
 
 export const SettingsPage = () => {
+    const guiApi = useApi()
     const [api, contextHolder] = notification.useNotification();
     useEffect(() => {
         (async () => {
             try {
                 form.setLoading(true)
-                const settings = await fetch("/api/settings").then(res => res.json()) as {
-                    settings: Config,
-                    error?: string
-                };
+                const settings = await guiApi.settings.settingsList()
                 if (settings.error) {
-                    throw new Error(settings.error)
+                    throw new Error(settings.error.error)
                 }
                 form.setLoading(false)
-                form.setValues(settings.settings)
+                form.setValues(settings.data.settings)
             } catch (e: any) {
                 api.error({
                     message: "Failed to load settings",
@@ -208,14 +207,10 @@ export const SettingsPage = () => {
     const saveSettings = async (values: Config) => {
         form.setLoading(true)
         try {
-            await fetch("/api/settings", {
-                method: "POST",
-                body: JSON.stringify({settings: values}),
-            }).then(res => res.json()).then((res) => {
-                if (res.error) {
-                    throw new Error(res.error)
-                }
-            });
+            const res = await guiApi.settings.settingsCreate(values)
+            if (res.error) {
+                throw new Error(res.error.error)
+            }
             api.success({
                 message: "Settings saved",
             })
@@ -230,21 +225,16 @@ export const SettingsPage = () => {
 
     const restartOpenMower = async () => {
         try {
-            const containers = await fetch("/api/containers").then((res) => res.json()).then((containers) => {
-                if (containers.error) {
-                    throw new Error(containers.error)
+            const resContainersList = await guiApi.containers.containersList()
+            if (resContainersList.error) {
+                throw new Error(resContainersList.error.error)
+            }
+            const openMowerContainer = resContainersList.data.containers?.find((container) => container.labels?.app == "openmower")
+            if (openMowerContainer?.id) {
+                const res = await guiApi.containers.containersCreate(openMowerContainer.id, "restart")
+                if (res.error) {
+                    throw new Error(res.error.error)
                 }
-                return containers.containers as { Id: string, Labels: Record<string, string> }[]
-            });
-            const openMowerContainer = containers.find((container) => container.Labels["app"] == "openmower")
-            if (openMowerContainer) {
-                await fetch(`/api/containers/${openMowerContainer.Id}/restart`, {
-                    method: "POST",
-                }).then(res => res.json()).then((res) => {
-                    if (res.error) {
-                        throw new Error(res.error)
-                    }
-                })
                 api.success({
                     message: "OpenMower restarted",
                 })

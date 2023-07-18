@@ -6,95 +6,99 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
 	"github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"io"
 	"log"
+	types2 "mowgli-gui/pkg/types"
 	"strconv"
 	"sync"
 )
 
-func ContainersRoutes(r *gin.RouterGroup) {
+func ContainersRoutes(r *gin.RouterGroup, provider types2.IDockerProvider) {
 	group := r.Group("/containers")
-	ContainerListRoutes(group)
-	ContainerLogsRoutes(group)
-	ContainerCommandRoutes(group)
+	ContainerListRoutes(group, provider)
+	ContainerLogsRoutes(group, provider)
+	ContainerCommandRoutes(group, provider)
 }
 
-func ContainerListRoutes(group *gin.RouterGroup) {
+// ContainerListRoutes list all containers
+//
+// @Name list
+// @Summary list all containers
+// @Description list all containers
+// @Tags containers
+// @Produce  json
+// @Success 200 {object} ContainerListResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /containers [get]
+func ContainerListRoutes(group *gin.RouterGroup, provider types2.IDockerProvider) {
 	group.GET("/", func(c *gin.Context) {
-		client, err := docker.NewClientWithOpts(docker.FromEnv)
+		containers, err := provider.ContainerList(c.Request.Context())
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(500, ErrorResponse{Error: err.Error()})
 			return
 		}
-		containers, err := client.ContainerList(c.Request.Context(), types.ContainerListOptions{
-			All: true,
-		})
-		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-		containersFiltered := lo.Filter(containers, func(container types.Container, idx int) bool {
+		containersFiltered := lo.Map(lo.Filter(containers, func(container types.Container, idx int) bool {
 			return container.Labels["project"] == "mowgli"
+		}), func(container types.Container, idx int) Container {
+			return Container{
+				ID:     container.ID,
+				Names:  container.Names,
+				Labels: container.Labels,
+				State:  container.State,
+			}
 		})
-		c.JSON(200, gin.H{
-			"containers": containersFiltered,
-		})
+		c.JSON(200, ContainerListResponse{Containers: containersFiltered})
 	})
 }
 
-func ContainerCommandRoutes(group *gin.RouterGroup) {
+// ContainerCommandRoutes execute a command on a container
+//
+// @Summary execute a command on a container
+// @Description execute a command on a container
+// @Tags containers
+// @Produce  json
+// @Param containerId path string true "container id"
+// @Param command path string true "command to execute (start/stop/restart)"
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /containers/{containerId}/{command} [post]
+func ContainerCommandRoutes(group *gin.RouterGroup, provider types2.IDockerProvider) {
 	group.POST("/:containerId/:command", func(c *gin.Context) {
 		containerID := c.Param("containerId")
 		command := c.Param("command")
-
-		client, err := docker.NewClientWithOpts(docker.FromEnv)
-		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
+		var err error
 
 		switch command {
 		case "restart":
-			err = client.ContainerRestart(c.Request.Context(), containerID, nil)
+			err = provider.ContainerRestart(c.Request.Context(), containerID)
 		case "stop":
-			err = client.ContainerStop(c.Request.Context(), containerID, nil)
+			err = provider.ContainerStop(c.Request.Context(), containerID)
 		case "start":
-			err = client.ContainerStart(c.Request.Context(), containerID, types.ContainerStartOptions{})
+			err = provider.ContainerStart(c.Request.Context(), containerID)
 		}
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(500, ErrorResponse{Error: err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{
-			"message": "ok",
-		})
+		c.JSON(200, OkResponse{})
 	})
 }
 
-func ContainerLogsRoutes(group *gin.RouterGroup) {
+// ContainerLogsRoutes stream container logs
+//
+// @Summary get container logs
+// @Description get container logs
+// @Tags containers
+// @Produce text/event-stream
+// @Param containerId path string true "container id"
+// @Router /containers/{containerId}/logs [get]
+func ContainerLogsRoutes(group *gin.RouterGroup, provider types2.IDockerProvider) {
 	group.GET("/:containerId/logs", func(c *gin.Context) {
 		containerID := c.Param("containerId")
 
-		client, err := docker.NewClientWithOpts(docker.FromEnv)
-		if err != nil {
-			return
-		}
-
-		/*
-		  we don't want the stream lasts forever, set the timeout
-		*/
 		chanStream := make(chan string) // to consume lines read from docker
 		done := make(chan bool)         // to indicate when the work is done
 		/*
@@ -113,7 +117,7 @@ func ContainerLogsRoutes(group *gin.RouterGroup) {
 		/*
 		   read the logs from docker using docker SDK. be noticed that the Follow value must set to true.
 		*/
-		reader, err := client.ContainerLogs(context.Background(), containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true, Tail: "100"})
+		reader, err := provider.ContainerLogs(context.Background(), containerID)
 		if err != nil {
 			fmt.Println("error reader: ", err.Error())
 			done <- true

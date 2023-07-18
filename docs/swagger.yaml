@@ -1,0 +1,196 @@
+definitions:
+  api.Container:
+    properties:
+      id:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      names:
+        items:
+          type: string
+        type: array
+      state:
+        type: string
+    type: object
+  api.ContainerListResponse:
+    properties:
+      containers:
+        items:
+          $ref: '#/definitions/api.Container'
+        type: array
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  api.GetSettingsResponse:
+    properties:
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  api.OkResponse:
+    properties:
+      ok:
+        type: string
+    type: object
+info:
+  contact: { }
+paths:
+  /containers:
+    get:
+      description: list all containers
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ContainerListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: list all containers
+      tags:
+        - containers
+  /containers/{containerId}/{command}:
+    post:
+      description: execute a command on a container
+      parameters:
+        - description: container id
+          in: path
+          name: containerId
+          required: true
+          type: string
+        - description: command to execute (start/stop/restart)
+          in: path
+          name: command
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: execute a command on a container
+      tags:
+        - containers
+  /containers/{containerId}/logs:
+    get:
+      description: get container logs
+      parameters:
+        - description: container id
+          in: path
+          name: containerId
+          required: true
+          type: string
+      produces:
+        - text/event-stream
+      responses: { }
+      summary: get container logs
+      tags:
+        - containers
+  /openmower/call/{command}:
+    post:
+      consumes:
+        - application/json
+      description: call a service
+      parameters:
+        - description: 'command to call, could be: mower_start, mower_home, mower_s1,
+          mower_s2, emergency, mow'
+          in: path
+          name: command
+          required: true
+          type: string
+        - description: request body
+          in: body
+          name: CallReq
+          required: true
+          schema:
+            additionalProperties: true
+            type: object
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: call a service
+      tags:
+        - openmower
+  /openmower/subscribe/{topic}:
+    get:
+      description: subscribe to a topic
+      parameters:
+        - description: 'topic to subscribe to, could be: diagnostics, status, gps, imu,
+          ticks'
+          in: path
+          name: topic
+          required: true
+          type: string
+      produces:
+        - text/event-stream
+      responses: { }
+      summary: subscribe to a topic
+      tags:
+        - openmower
+  /settings:
+    get:
+      description: returns a JSON object with the settings
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GetSettingsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: returns a JSON object with the settings
+      tags:
+        - settings
+    post:
+      consumes:
+        - application/json
+      description: saves the settings to the mower_config.sh file
+      parameters:
+        - description: settings
+          in: body
+          name: settings
+          required: true
+          schema:
+            additionalProperties: true
+            type: object
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: saves the settings to the mower_config.sh file
+      tags:
+        - settings
+swagger: "2.0"

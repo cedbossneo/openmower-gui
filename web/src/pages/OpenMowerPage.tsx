@@ -2,11 +2,8 @@ import {Card, Col, notification, Row, Statistic, Typography} from "antd";
 import {useEffect, useState} from "react";
 import AsyncSwitch from "../components/AsyncSwitch.tsx";
 import AsyncButton from "../components/AsyncButton.tsx";
-
-let statusStream: null | EventSource = null
-let imuStream: null | EventSource = null
-let gpsStream: null | EventSource = null
-let ticksStream: null | EventSource = null
+import {useSSE} from "../hooks/useSSE.ts";
+import {useApi} from "../hooks/useApi.ts";
 
 type WheelTick = {
     /*
@@ -168,115 +165,67 @@ type Imu = {
 }
 
 export const OpenMowerPage = () => {
+    const guiApi = useApi()
     const [gps, setGps] = useState<Gps>({})
     const [wheelTicks, setWheelTicks] = useState<WheelTick>({})
     const [imu, setImu] = useState<Imu>({})
     const [status, setStatus] = useState<Status>({})
     const [api, contextHolder] = notification.useNotification();
-    const streamOpenMowerStatus = () => {
-        statusStream?.close();
-        statusStream = null
-        statusStream = new EventSource(`/api/openmower/subscribe/status`);
-        statusStream.onopen = function () {
-            api.info({
-                message: "Status Stream connected",
-            })
-        }
-        statusStream.onerror = function () {
+    const statusStream = useSSE<string>("/api/openmower/subscribe/status", () => {
             api.info({
                 message: "Status Stream closed",
             })
-            statusStream?.close();
-            statusStream = null
-        };
-        statusStream.onmessage = function (e) {
-            setStatus(JSON.parse(atob(e.data)))
-        };
-    };
-    const streamOpenMowerImu = () => {
-        imuStream?.close();
-        imuStream = null
-        imuStream = new EventSource(`/api/openmower/subscribe/imu`);
-        imuStream.onopen = function () {
+        }, () => {
             api.info({
-                message: "IMU Stream connected",
+                message: "Status Stream connected",
             })
-        }
-        imuStream.onerror = function () {
+        },
+        (e) => {
+            setStatus(JSON.parse(e))
+        })
+    const imuStream = useSSE<string>("/api/openmower/subscribe/imu", () => {
             api.info({
                 message: "IMU Stream closed",
             })
-            imuStream?.close();
-            imuStream = null
-        };
-        imuStream.onmessage = function (e) {
-            setImu(JSON.parse(atob(e.data)))
-        };
-    };
-    const streamOpenMowerGps = () => {
-        gpsStream?.close();
-        gpsStream = null
-        gpsStream = new EventSource(`/api/openmower/subscribe/gps`);
-        gpsStream.onopen = function () {
+        }, () => {
             api.info({
-                message: "Gps Stream connected",
+                message: "IMU Stream connected",
             })
-        }
-        gpsStream.onerror = function () {
+        },
+        (e) => {
+            setImu(JSON.parse(e))
+        })
+    const gpsStream = useSSE<string>("/api/openmower/subscribe/gps", () => {
             api.info({
-                message: "Gps Stream closed",
+                message: "GPS Stream closed",
             })
-            gpsStream?.close();
-            gpsStream = null
-        };
-        gpsStream.onmessage = function (e) {
-            setGps(JSON.parse(atob(e.data)))
-        };
-    };
-    const streamOpenMowerTicks = () => {
-        ticksStream?.close();
-        ticksStream = null
-        ticksStream = new EventSource(`/api/openmower/subscribe/ticks`);
-        ticksStream.onopen = function () {
+        }, () => {
             api.info({
-                message: "Ticks Stream connected",
+                message: "GPS Stream connected",
             })
-        }
-        ticksStream.onerror = function () {
+        },
+        (e) => {
+            setGps(JSON.parse(e))
+        })
+    const ticksStream = useSSE<string>("/api/openmower/subscribe/ticks", () => {
             api.info({
-                message: "Ticks Stream closed",
+                message: "Wheel Ticks Stream closed",
             })
-            ticksStream?.close();
-            ticksStream = null
-        };
-        ticksStream.onmessage = function (e) {
-            setWheelTicks(JSON.parse(atob(e.data)))
-        };
-    };
-
-    useEffect(() => {
-        streamOpenMowerStatus()
-        streamOpenMowerImu()
-        streamOpenMowerGps()
-        streamOpenMowerTicks()
-        return () => {
-            statusStream?.close();
-            imuStream?.close();
-            gpsStream?.close();
-            ticksStream?.close();
-        }
-    }, [])
+        }, () => {
+            api.info({
+                message: "Wheel Ticks Stream connected",
+            })
+        },
+        (e) => {
+            setWheelTicks(JSON.parse(e))
+        })
 
     const handleMowerCommand = (command: string, args: Record<string, any> = {}) => async () => {
         try {
-            await fetch(`/api/openmower/call/${command}`, {
-                method: "POST",
-                body: JSON.stringify(args),
-            }).then((e) => e.json()).then((e) => {
-                if (e.error) {
-                    throw new Error(e.error)
-                }
-            })
+            const res = await guiApi.openmower.callCreate(command, args)
+            if (res.error) {
+                throw new Error(res.error.error)
+            }
             api.success({
                 message: "Command sent",
             })
@@ -296,6 +245,20 @@ export const OpenMowerPage = () => {
             <Col span={8}><Statistic title="PCB Temperature" value={escStatus?.TemperaturePcb}/></Col>
         </Row>
     };
+
+    useEffect(() => {
+        statusStream.start()
+        imuStream.start()
+        gpsStream.start()
+        ticksStream.start()
+        return () => {
+            statusStream.stop()
+            imuStream.stop()
+            gpsStream.stop()
+            ticksStream.stop()
+        }
+    }, []);
+
     return <Row gutter={[16, 16]}>
         <Col span={24}>
             <Typography.Title level={2}>OpenMower</Typography.Title>
