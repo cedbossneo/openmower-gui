@@ -6,6 +6,32 @@ import AsyncButton from "../components/AsyncButton.tsx";
 let statusStream: null | EventSource = null
 let imuStream: null | EventSource = null
 let gpsStream: null | EventSource = null
+let ticksStream: null | EventSource = null
+
+type WheelTick = {
+    /*
+    WheelTickFactor  uint32
+	ValidWheels      uint8
+	WheelDirectionFl uint8
+	WheelTicksFl     uint32
+	WheelDirectionFr uint8
+	WheelTicksFr     uint32
+	WheelDirectionRl uint8
+	WheelTicksRl     uint32
+	WheelDirectionRr uint8
+	WheelTicksRr     uint32
+     */
+    WheelTickFactor?: number
+    ValidWheels?: number
+    WheelDirectionFl?: number
+    WheelTicksFl?: number
+    WheelDirectionFr?: number
+    WheelTicksFr?: number
+    WheelDirectionRl?: number
+    WheelTicksRl?: number
+    WheelDirectionRr?: number
+    WheelTicksRr?: number
+}
 
 type Status = {
     MowerStatus?: number
@@ -143,6 +169,7 @@ type Imu = {
 
 export const OpenMowerPage = () => {
     const [gps, setGps] = useState<Gps>({})
+    const [wheelTicks, setWheelTicks] = useState<WheelTick>({})
     const [imu, setImu] = useState<Imu>({})
     const [status, setStatus] = useState<Status>({})
     const [api, contextHolder] = notification.useNotification();
@@ -179,8 +206,8 @@ export const OpenMowerPage = () => {
             api.info({
                 message: "IMU Stream closed",
             })
-            statusStream?.close();
-            statusStream = null
+            imuStream?.close();
+            imuStream = null
         };
         imuStream.onmessage = function (e) {
             setImu(JSON.parse(atob(e.data)))
@@ -199,11 +226,31 @@ export const OpenMowerPage = () => {
             api.info({
                 message: "Gps Stream closed",
             })
-            statusStream?.close();
-            statusStream = null
+            gpsStream?.close();
+            gpsStream = null
         };
         gpsStream.onmessage = function (e) {
             setGps(JSON.parse(atob(e.data)))
+        };
+    };
+    const streamOpenMowerTicks = () => {
+        ticksStream?.close();
+        ticksStream = null
+        ticksStream = new EventSource(`/api/openmower/subscribe/ticks`);
+        ticksStream.onopen = function () {
+            api.info({
+                message: "Ticks Stream connected",
+            })
+        }
+        ticksStream.onerror = function () {
+            api.info({
+                message: "Ticks Stream closed",
+            })
+            ticksStream?.close();
+            ticksStream = null
+        };
+        ticksStream.onmessage = function (e) {
+            setWheelTicks(JSON.parse(atob(e.data)))
         };
     };
 
@@ -211,10 +258,12 @@ export const OpenMowerPage = () => {
         streamOpenMowerStatus()
         streamOpenMowerImu()
         streamOpenMowerGps()
+        streamOpenMowerTicks()
         return () => {
             statusStream?.close();
             imuStream?.close();
             gpsStream?.close();
+            ticksStream?.close();
         }
     }, [])
 
@@ -254,13 +303,13 @@ export const OpenMowerPage = () => {
         <Col span={24}>
             <Card title={"Actions"}>
                 {contextHolder}
-                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_start")}
+                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_start")}
                              style={{marginRight: 10}}>Start</AsyncButton>
-                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_home")}
+                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_home")}
                              style={{marginRight: 10}}>Home</AsyncButton>
-                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_s1")}
+                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_s1")}
                              style={{marginRight: 10}}>S1</AsyncButton>
-                <AsyncButton type="primary" onAsyncClick={handleMowerCommand("mower_s2")}
+                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_s2")}
                              style={{marginRight: 10}}>S2</AsyncButton>
                 <AsyncSwitch style={{marginRight: 10}} checked={!!status.Emergency} onAsyncChange={(checked) => {
                     return handleMowerCommand("emergency", {emergency: checked ? 1 : 0})()
@@ -323,7 +372,7 @@ export const OpenMowerPage = () => {
                 </Row>
             </Card>
         </Col>
-        <Col span={24}>
+        <Col span={12}>
             <Card title={"GPS"}>
                 <Row gutter={[16, 16]}>
                     <Col span={8}><Statistic title="Latitude" value={gps.Pose?.Pose?.Position?.X}/></Col>
@@ -333,6 +382,16 @@ export const OpenMowerPage = () => {
                     <Col span={8}><Statistic title="Pitch" value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
                     <Col span={8}><Statistic title="Yaw" value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
                     <Col span={8}><Statistic title="Accuracy" value={gps.PositionAccuracy}/></Col>
+                </Row>
+            </Card>
+        </Col>
+        <Col span={12}>
+            <Card title={"Wheel Ticks"}>
+                <Row gutter={[16, 16]}>
+                    <Col span={8}><Statistic title="Rear Left" value={wheelTicks?.WheelTicksRl}/></Col>
+                    <Col span={8}><Statistic title="Rear Right" value={wheelTicks?.WheelTicksRr}/></Col>
+                    <Col span={8}><Statistic title="Rear Left Direction" value={wheelTicks?.WheelDirectionRl}/></Col>
+                    <Col span={8}><Statistic title="Rear Right Direction" value={wheelTicks?.WheelDirectionRr}/></Col>
                 </Row>
             </Card>
         </Col>

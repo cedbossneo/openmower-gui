@@ -62,6 +62,8 @@ func SubscriberRoute(group *gin.RouterGroup) {
 			sub, err = subscribe[*msgs.AbsolutePose](rosNode, &done, &chanStream, "/xbot_driver_gps/xb_pose")
 		case "imu":
 			sub, err = subscribe[*sensor_msgs.Imu](rosNode, &done, &chanStream, "/imu/data_raw")
+		case "ticks":
+			sub, err = subscribe[*msgs.WheelTick](rosNode, &done, &chanStream, "/mower/wheel_ticks")
 		}
 		if err != nil {
 			done <- true
