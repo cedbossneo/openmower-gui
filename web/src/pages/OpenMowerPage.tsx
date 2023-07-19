@@ -1,7 +1,6 @@
 import {Card, Col, notification, Progress, Row, Statistic, Typography} from "antd";
 import {CheckCircleTwoTone, CloseCircleTwoTone} from "@ant-design/icons";
 import {useEffect, useState} from "react";
-import AsyncSwitch from "../components/AsyncSwitch.tsx";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {useSSE} from "../hooks/useSSE.ts";
 import {useApi} from "../hooks/useApi.ts";
@@ -328,19 +327,21 @@ export const OpenMowerPage = () => {
                 {contextHolder}
                 <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_start")}
                              style={{marginRight: 10}}>Start</AsyncButton>
-                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_home")}
+                <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mower_home")}
                              style={{marginRight: 10}}>Home</AsyncButton>
-                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_s1")}
+                <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mower_s1")}
                              style={{marginRight: 10}}>S1</AsyncButton>
-                <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_s2")}
+                <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mower_s2")}
                              style={{marginRight: 10}}>S2</AsyncButton>
-                <AsyncSwitch style={{marginRight: 10}} checked={status.Emergency ?? false} onAsyncChange={(checked) => {
-                    return handleMowerCommand("emergency", {emergency: checked ? 1 : 0})()
-                }} checkedChildren={"Emergency active"} unCheckedChildren={"Emergency inactive"}/>
-                <AsyncSwitch style={{marginRight: 10}} checked={(status.MowEscStatus?.Tacho ?? 0) > 0}
-                             onAsyncChange={(checked) => {
-                                 return handleMowerCommand("mow", {mow_enabled: checked ? 1 : 0, mow_direction: 0})()
-                             }} checkedChildren={"Mowing enabled"} unCheckedChildren={"Mowing disabled"}/>
+                <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("emergency", {emergency: 1})}
+                             style={{marginRight: 10}}>Emergency On</AsyncButton>
+                <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mow", {mow_enabled: 1, mow_direction: 0})}
+                             style={{marginRight: 10}}>Blade On</AsyncButton>
+                <AsyncButton size={"small"} danger onAsyncClick={handleMowerCommand("emergency", {emergency: 0})}
+                             style={{marginRight: 10}}>Emergency Off</AsyncButton>
+                <AsyncButton size={"small"} danger
+                             onAsyncClick={handleMowerCommand("mow", {mow_enabled: 0, mow_direction: 0})}
+                             style={{marginRight: 10}}>Blade Off</AsyncButton>
             </Card>
         </Col>
         <Col span={24}>
