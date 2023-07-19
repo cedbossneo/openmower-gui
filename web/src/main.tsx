@@ -1,15 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import {createBrowserRouter, RouterProvider,} from "react-router-dom";
+import {createHashRouter, RouterProvider,} from "react-router-dom";
 import Root from "./routes/root.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
 import LogsPage from "./pages/LogsPage.tsx";
 import OpenMowerPage from "./pages/OpenMowerPage.tsx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
     {
         path: "/",
-        element: <Root />,
+        element: <Root/>,
         children: [
             {
                 element: <SettingsPage/>,

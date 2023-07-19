@@ -334,10 +334,10 @@ export const OpenMowerPage = () => {
                              style={{marginRight: 10}}>S1</AsyncButton>
                 <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_s2")}
                              style={{marginRight: 10}}>S2</AsyncButton>
-                <AsyncSwitch style={{marginRight: 10}} checked={!!status.Emergency} onAsyncChange={(checked) => {
+                <AsyncSwitch style={{marginRight: 10}} checked={status.Emergency ?? false} onAsyncChange={(checked) => {
                     return handleMowerCommand("emergency", {emergency: checked ? 1 : 0})()
                 }} checkedChildren={"Emergency active"} unCheckedChildren={"Emergency inactive"}/>
-                <AsyncSwitch style={{marginRight: 10}} checked={!!status.MowEscStatus?.Tacho}
+                <AsyncSwitch style={{marginRight: 10}} checked={(status.MowEscStatus?.Tacho ?? 0) > 0}
                              onAsyncChange={(checked) => {
                                  return handleMowerCommand("mow", {mow_enabled: checked ? 1 : 0, mow_direction: 0})()
                              }} checkedChildren={"Mowing enabled"} unCheckedChildren={"Mowing disabled"}/>
