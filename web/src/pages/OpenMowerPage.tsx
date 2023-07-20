@@ -160,27 +160,19 @@ type Gps = {
 
 type Imu = {
     /*
-    	Dt          uint16
-	Ax          float64
-	Ay          float64
-	Az          float64
-	Gx          float64
-	Gy          float64
-	Gz          float64
-	Mx          float64
-	My          float64
-	Mz          float64
+    	Orientation                  geometry_msgs.Quaternion
+	OrientationCovariance        [9]float64
+	AngularVelocity              geometry_msgs.Vector3
+	AngularVelocityCovariance    [9]float64
+	LinearAcceleration           geometry_msgs.Vector3
+	LinearAccelerationCovariance [9]float64
      */
-    Dt?: number
-    Ax?: number
-    Ay?: number
-    Az?: number
-    Gx?: number
-    Gy?: number
-    Gz?: number
-    Mx?: number
-    My?: number
-    Mz?: number
+    Orientation?: Quaternion
+    OrientationCovariance?: number[]
+    AngularVelocity?: Vector3
+    AngularVelocityCovariance?: number[]
+    LinearAcceleration?: Vector3
+    LinearAccelerationCovariance?: number[]
 }
 
 export const OpenMowerPage = () => {
@@ -410,15 +402,21 @@ export const OpenMowerPage = () => {
         <Col span={24}>
             <Card title={"IMU"}>
                 <Row gutter={[16, 16]}>
-                    <Col span={8}><Statistic precision={9} title="Acceleration X" value={imu?.Ax}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Acceleration Y" value={imu?.Ay}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Acceleration Z" value={imu?.Az}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Gyro X" value={imu?.Gx}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Gyro Y" value={imu?.Gy}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Gyro Z" value={imu?.Gz}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Magnetometer X" value={imu?.Mx}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Magnetometer Y" value={imu?.My}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Magnetometer Z" value={imu?.Mz}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Angular Velocity X"
+                                             value={imu.AngularVelocity?.X}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Angular Velocity Y"
+                                             value={imu.AngularVelocity?.Y}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Angular Velocity Z"
+                                             value={imu.AngularVelocity?.Z}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Linear Acceleration X"
+                                             value={imu.LinearAcceleration?.X}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Linear Acceleration Y"
+                                             value={imu.LinearAcceleration?.Y}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Linear Acceleration Z"
+                                             value={imu.LinearAcceleration?.Z}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Orientation X" value={imu.Orientation?.X}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Orientation Y" value={imu.Orientation?.Y}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Orientation Z" value={imu.Orientation?.Z}/></Col>
                 </Row>
             </Card>
         </Col>
