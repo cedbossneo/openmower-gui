@@ -193,7 +193,18 @@ export const SettingsPage = () => {
                     throw new Error(settings.error.error)
                 }
                 form.setLoading(false)
-                form.setValues(settings.data.settings)
+                const fetchedSettings = settings.data.settings ?? {};
+                const newSettings: Record<string, any> = {}
+                Object.keys(fetchedSettings).forEach((key) => {
+                    if (fetchedSettings[key] === "True") {
+                        newSettings[key] = true
+                    } else if (fetchedSettings[key] === "False") {
+                        newSettings[key] = false
+                    } else {
+                        newSettings[key] = fetchedSettings[key]
+                    }
+                })
+                form.setValues(newSettings)
             } catch (e: any) {
                 api.error({
                     message: "Failed to load settings",
