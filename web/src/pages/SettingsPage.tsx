@@ -100,6 +100,7 @@ const settings: Record<string, Setting> = {
     "OM_UNDOCK_DISTANCE": {type: SettingType.Float, defaultValue: 2.0, description: "Distance to undock"},
     "OM_OUTLINE_COUNT": {type: SettingType.Int, defaultValue: 4, description: "Number of points in the outline"},
     "OM_MOWING_ANGLE_OFFSET": {type: SettingType.Float, defaultValue: 0, description: "Mowing angle offset"},
+    "OM_MOWING_ANGLE_INCREMENT": {type: SettingType.Float, defaultValue: 0.1, description: "Mowing angle increment"},
     "OM_MOWING_ANGLE_OFFSET_IS_ABSOLUTE": {
         type: SettingType.Boolean,
         defaultValue: false,

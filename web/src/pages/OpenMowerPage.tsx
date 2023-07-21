@@ -423,12 +423,17 @@ export const OpenMowerPage = () => {
         <Col span={12}>
             <Card title={"GPS"}>
                 <Row gutter={[16, 16]}>
-                    <Col span={8}><Statistic precision={9} title="Latitude" value={gps.Pose?.Pose?.Position?.X}/></Col>
-                    <Col span={8}><Statistic precision={9} title="Longitude" value={gps.Pose?.Pose?.Position?.Y}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Position X"
+                                             value={gps.Pose?.Pose?.Position?.X}/></Col>
+                    <Col span={8}><Statistic precision={9} title="Position Y"
+                                             value={gps.Pose?.Pose?.Position?.Y}/></Col>
                     <Col span={8}><Statistic precision={2} title="Altitude" value={gps.Pose?.Pose?.Position?.Z}/></Col>
-                    <Col span={8}><Statistic precision={2} title="Roll" value={gps.Pose?.Pose?.Orientation?.X}/></Col>
-                    <Col span={8}><Statistic precision={2} title="Pitch" value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
-                    <Col span={8}><Statistic precision={2} title="Yaw" value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Orientation X"
+                                             value={gps.Pose?.Pose?.Orientation?.X}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Orientation Y"
+                                             value={gps.Pose?.Pose?.Orientation?.Y}/></Col>
+                    <Col span={8}><Statistic precision={2} title="Orientation Z"
+                                             value={gps.Pose?.Pose?.Orientation?.Z}/></Col>
                     <Col span={8}><Statistic precision={3} title="Accuracy" value={gps.PositionAccuracy}/></Col>
                 </Row>
             </Card>
