@@ -2,7 +2,6 @@ package api
 
 import (
 	"bufio"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/api/types"
@@ -117,7 +116,7 @@ func ContainerLogsRoutes(group *gin.RouterGroup, provider types2.IDockerProvider
 		/*
 		   read the logs from docker using docker SDK. be noticed that the Follow value must set to true.
 		*/
-		reader, err := provider.ContainerLogs(context.Background(), containerID)
+		reader, err := provider.ContainerLogs(c.Request.Context(), containerID)
 		if err != nil {
 			fmt.Println("error reader: ", err.Error())
 			done <- true

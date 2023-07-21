@@ -23,22 +23,20 @@ export const LogsPage = () => {
     const [containers, setContainers] = useState<ContainerList[]>([]);
     const [containerId, setContainerId] = useState<string | undefined>(undefined);
     const [data, setData] = useState<string[]>([])
-    const stream = useSSE<string>(`/api/containers/${containerId}/logs`, () => {
+    const stream = useSSE<string>(() => {
         api.error({
             message: "Logs stream closed",
         });
     }, () => {
         api.info({
-            message: "Logs stream disconnected",
+            message: "Logs stream connected",
         })
     }, (e, first) => {
         setData((data) => {
             if (first) {
-                first = false;
                 return [e];
             }
-            data.push(e);
-            return data
+            return [...data, e]
         })
     });
 
@@ -78,7 +76,7 @@ export const LogsPage = () => {
 
     useEffect(() => {
         if (containerId) {
-            stream.start();
+            stream.start(`/api/containers/${containerId}/logs`);
             return () => {
                 stream?.stop();
             }
@@ -97,7 +95,7 @@ export const LogsPage = () => {
                     throw new Error(res.error.error)
                 }
                 if (command === "start" || command === "restart") {
-                    stream.start();
+                    stream.start(`/api/containers/${containerId}/logs`);
                 } else {
                     stream?.stop();
                 }

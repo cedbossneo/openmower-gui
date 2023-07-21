@@ -183,7 +183,7 @@ export const OpenMowerPage = () => {
     const [status, setStatus] = useState<Status>({})
     const [highLevelStatus, setHighLevelStatus] = useState<HighLevelStatus>({})
     const [api, contextHolder] = notification.useNotification();
-    const highLevelStatusStream = useSSE<string>("/api/openmower/subscribe/highLevelStatus", () => {
+    const highLevelStatusStream = useSSE<string>(() => {
             api.info({
                 message: "High Level Status Stream closed",
             })
@@ -195,7 +195,7 @@ export const OpenMowerPage = () => {
         (e) => {
             setHighLevelStatus(JSON.parse(e))
         })
-    const statusStream = useSSE<string>("/api/openmower/subscribe/status", () => {
+    const statusStream = useSSE<string>(() => {
             api.info({
                 message: "Status Stream closed",
             })
@@ -207,7 +207,7 @@ export const OpenMowerPage = () => {
         (e) => {
             setStatus(JSON.parse(e))
         })
-    const imuStream = useSSE<string>("/api/openmower/subscribe/imu", () => {
+    const imuStream = useSSE<string>(() => {
             api.info({
                 message: "IMU Stream closed",
             })
@@ -219,7 +219,7 @@ export const OpenMowerPage = () => {
         (e) => {
             setImu(JSON.parse(e))
         })
-    const gpsStream = useSSE<string>("/api/openmower/subscribe/gps", () => {
+    const gpsStream = useSSE<string>(() => {
             api.info({
                 message: "GPS Stream closed",
             })
@@ -231,7 +231,7 @@ export const OpenMowerPage = () => {
         (e) => {
             setGps(JSON.parse(e))
         })
-    const ticksStream = useSSE<string>("/api/openmower/subscribe/ticks", () => {
+    const ticksStream = useSSE<string>(() => {
             api.info({
                 message: "Wheel Ticks Stream closed",
             })
@@ -273,11 +273,11 @@ export const OpenMowerPage = () => {
     };
 
     useEffect(() => {
-        statusStream.start()
-        imuStream.start()
-        gpsStream.start()
-        ticksStream.start()
-        highLevelStatusStream.start()
+        statusStream.start("/api/openmower/subscribe/status",)
+        imuStream.start("/api/openmower/subscribe/imu",)
+        gpsStream.start("/api/openmower/subscribe/gps",)
+        ticksStream.start("/api/openmower/subscribe/ticks",)
+        highLevelStatusStream.start("/api/openmower/subscribe/highLevelStatus",)
         return () => {
             statusStream.stop()
             imuStream.stop()

@@ -1,6 +1,6 @@
-export const useSSE = <T>(uri: string, onError: (e: Error) => void, onInfo: (msg: string) => void, onData: (data: T, first?: boolean) => void) => {
+export const useSSE = <T>(onError: (e: Error) => void, onInfo: (msg: string) => void, onData: (data: T, first?: boolean) => void) => {
     let stream: EventSource | null = null;
-    const start = () => {
+    const start = (uri: string) => {
         let first = true;
         stream?.close();
         stream = null
@@ -23,7 +23,7 @@ export const useSSE = <T>(uri: string, onError: (e: Error) => void, onInfo: (msg
         };
     };
     const stop = () => {
-        console.log(`Closing stream ${uri}`)
+        console.log(`Closing stream ${stream?.url}`)
         stream?.close();
         stream = null
     }
