@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import styled from "styled-components";
 import AsyncButton from "../components/AsyncButton.tsx";
-import {useSSE} from "../hooks/useSSE.ts";
+import {useWS} from "../hooks/useWS.ts";
 import {useApi} from "../hooks/useApi.ts";
 
 const StyledTerminal = styled.div`
@@ -23,7 +23,7 @@ export const LogsPage = () => {
     const [containers, setContainers] = useState<ContainerList[]>([]);
     const [containerId, setContainerId] = useState<string | undefined>(undefined);
     const [data, setData] = useState<string[]>([])
-    const stream = useSSE<string>(() => {
+    const stream = useWS<string>(() => {
         api.error({
             message: "Logs stream closed",
         });

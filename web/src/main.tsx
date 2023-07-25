@@ -5,6 +5,7 @@ import Root from "./routes/root.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
 import LogsPage from "./pages/LogsPage.tsx";
 import OpenMowerPage from "./pages/OpenMowerPage.tsx";
+import MapPage from "./pages/MapPage.tsx";
 
 const router = createHashRouter([
     {
@@ -22,6 +23,10 @@ const router = createHashRouter([
             {
                 element: <OpenMowerPage/>,
                 path: "/openmower",
+            },
+            {
+                element: <MapPage/>,
+                path: "/map",
             }
         ]
     },

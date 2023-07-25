@@ -2,16 +2,14 @@ package api
 
 import (
 	"bufio"
-	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/api/types"
-	"github.com/gin-contrib/sse"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/samber/lo"
-	"io"
 	"log"
 	types2 "mowgli-gui/pkg/types"
-	"strconv"
+	"net/http"
 	"sync"
 )
 
@@ -95,24 +93,22 @@ func ContainerCommandRoutes(group *gin.RouterGroup, provider types2.IDockerProvi
 // @Param containerId path string true "container id"
 // @Router /containers/{containerId}/logs [get]
 func ContainerLogsRoutes(group *gin.RouterGroup, provider types2.IDockerProvider) {
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
+	}
+
 	group.GET("/:containerId/logs", func(c *gin.Context) {
 		containerID := c.Param("containerId")
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
 
 		chanStream := make(chan string) // to consume lines read from docker
 		done := make(chan bool)         // to indicate when the work is done
-		/*
-		   this is where we handle the request context
-		*/
-		go func() {
-			for {
-				select {
-				case <-c.Request.Context().Done():
-					// client gave up
-					done <- true
-					return
-				}
-			}
-		}()
 		/*
 		   read the logs from docker using docker SDK. be noticed that the Follow value must set to true.
 		*/
@@ -142,28 +138,25 @@ func ContainerLogsRoutes(group *gin.RouterGroup, provider types2.IDockerProvider
 				mu.Unlock()
 			}
 		}()
-		count := 0 // to indicate the message id
-		isStreaming := c.Stream(func(w io.Writer) bool {
-			for {
-				select {
-				case <-done:
-					// when deadline is reached, send 'end' event
-					c.SSEvent("end", "end")
-					return false
-				case msg := <-chanStream:
-					// send events to client
-					c.Render(-1, sse.Event{
-						Id:    strconv.Itoa(count),
-						Event: "message",
-						Data:  base64.StdEncoding.EncodeToString([]byte(msg)),
+		for {
+			select {
+			case <-c.Done():
+				reader.Close()
+				return
+			case <-done:
+				reader.Close()
+				return
+			case msg := <-chanStream:
+				// send events to client
+				err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
+				if err != nil {
+					c.JSON(500, gin.H{
+						"error": err.Error(),
 					})
-					count++
-					return true
+					return
 				}
+				return
 			}
-		})
-		if !isStreaming {
-			fmt.Println("stream closed")
 		}
 	})
 }

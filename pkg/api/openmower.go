@@ -1,21 +1,22 @@
 package api
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/bluenviron/goroslib/v2"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/diagnostic_msgs"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
-	"github.com/gin-contrib/sse"
+	"github.com/docker/distribution/uuid"
 	"github.com/gin-gonic/gin"
-	"io"
+	"github.com/gorilla/websocket"
 	"log"
 	"mowgli-gui/pkg/msgs"
 	"mowgli-gui/pkg/types"
-	"strconv"
+	"net/http"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
+}
 
 func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	group := r.Group("/openmower")
@@ -34,92 +35,74 @@ func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	group.GET("/subscribe/:topic", func(c *gin.Context) {
 		// create a node and connect to the master
+		var err error
 		topic := c.Param("topic")
-		chanStream := make(chan string) // to consume lines read from docker
-		done := make(chan bool)         // to indicate when the work is done
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
 		/*
 		   this is where we handle the request context
 		*/
-		go func() {
-			for {
-				select {
-				case <-c.Request.Context().Done():
-					// client gave up
-					done <- true
-					return
-				}
-			}
-		}()
-		var sub *goroslib.Subscriber
-		var err error
 		// create a subscriber
+		var def func()
 		switch topic {
 		case "diagnostics":
-			sub, err = subscribe[*diagnostic_msgs.DiagnosticArray](provider, &done, &chanStream, "/diagnostics")
+			def, err = subscribe(provider, c, conn, "/diagnostics")
 		case "status":
-			sub, err = subscribe[*msgs.Status](provider, &done, &chanStream, "/mower/status")
+			def, err = subscribe(provider, c, conn, "/mower/status")
 		case "highLevelStatus":
-			sub, err = subscribe[*msgs.HighLevelStatus](provider, &done, &chanStream, "/mower_logic/current_state")
+			def, err = subscribe(provider, c, conn, "/mower_logic/current_state")
 		case "gps":
-			sub, err = subscribe[*msgs.AbsolutePose](provider, &done, &chanStream, "/xbot_driver_gps/xb_pose")
+			def, err = subscribe(provider, c, conn, "/xbot_positioning/xb_pose")
 		case "imu":
-			sub, err = subscribe[*sensor_msgs.Imu](provider, &done, &chanStream, "/imu/data_raw")
+			def, err = subscribe(provider, c, conn, "/imu/data_raw")
 		case "ticks":
-			sub, err = subscribe[*msgs.WheelTick](provider, &done, &chanStream, "/mower/wheel_ticks")
+			def, err = subscribe(provider, c, conn, "/mower/wheel_ticks")
+		case "map":
+			def, err = subscribe(provider, c, conn, "/xbot_monitoring/map")
 		}
 		if err != nil {
-			done <- true
+			log.Println(err.Error())
 			return
 		}
+		defer def()
 		/*
 		   send log lines to channel
 		*/
-		count := 0 // to indicate the message id
-		isStreaming := c.Stream(func(w io.Writer) bool {
-			for {
-				select {
-				case <-done:
-					// when deadline is reached, send 'end' event
-					c.SSEvent("end", "end")
-					return false
-				case msg := <-chanStream:
-					// send events to client
-					c.Render(-1, sse.Event{
-						Id:    strconv.Itoa(count),
-						Event: "message",
-						Data:  base64.StdEncoding.EncodeToString([]byte(msg)),
-					})
-					count++
-					return true
-				}
-			}
-		})
-		if !isStreaming {
-			fmt.Println("stream closed")
-		}
+		_, _, err = conn.ReadMessage()
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err.Error(),
-			})
+			c.Error(err)
 			return
 		}
-		defer sub.Close()
 	})
 }
 
-func subscribe[T any](provider types.IRosProvider, done *chan bool, chanStream *chan string, topic string) (*goroslib.Subscriber, error) {
-	return provider.Subscribe(topic, func(msg T) {
+func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn, topic string) (func(), error) {
+	id := uuid.Generate()
+	uidString := id.String()
+	err := provider.Subscribe(topic, uidString, func(msg any) {
 		// read lines from the reader
 		str, err := json.Marshal(msg)
 		if err != nil {
 			log.Println("Read Error:", err.Error())
-			*done <- true
+			c.Error(err)
 			return
 		}
-		// send the lines to channel
-		*chanStream <- string(str)
+		err = conn.WriteMessage(websocket.TextMessage, str)
+		if err != nil {
+			c.Error(err)
+			return
+		}
 	},
 	)
+	if err != nil {
+		return nil, err
+	}
+	return func() {
+		provider.UnSubscribe(topic, uidString)
+	}, nil
 }
 
 // ServiceRoute call a service

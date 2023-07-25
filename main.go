@@ -5,12 +5,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerfiles "github.com/swaggo/files"
+
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"mowgli-gui/docs"
 	"mowgli-gui/pkg/api"
 	"mowgli-gui/pkg/providers"
 	"os"
 )
+import "github.com/gin-contrib/cors"
 
 // gin-swagger middleware
 // swagger embed files
@@ -22,6 +24,10 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	docs.SwaggerInfo.BasePath = "/api"
 	r := gin.Default()
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowWebSockets = true
+	r.Use(cors.New(config))
 	r.Use(static.Serve("/", static.LocalFile(os.Getenv("WEB_DIR"), false)))
 	apiGroup := r.Group("/api")
 	dockerProvider := providers.NewDockerProvider()
