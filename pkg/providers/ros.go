@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
-	"mowgli-gui/pkg/msgs"
+	"github.com/sirupsen/logrus"
+	"mowgli-gui/pkg/msgs/mower_msgs"
+	"mowgli-gui/pkg/msgs/xbot_msgs"
 	types2 "mowgli-gui/pkg/types"
 	"os"
 	"sync"
@@ -40,7 +42,11 @@ func (p *RosProvider) getNode() (*goroslib.Node, error) {
 
 func NewRosProvider() types2.IRosProvider {
 	r := &RosProvider{}
-	r.initSubscribers()
+	err := r.initSubscribers()
+	if err != nil {
+		logrus.Error(err)
+		return nil
+	}
 	return r
 }
 
@@ -62,7 +68,10 @@ func (p *RosProvider) CallService(ctx context.Context, srvName string, srv any, 
 }
 
 func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error {
-	p.initSubscribers()
+	err := p.initSubscribers()
+	if err != nil {
+		return err
+	}
 	subscriber, hasSubscriber := p.subscribers[topic]
 	if !hasSubscriber {
 		p.subscribers[topic] = make(map[string]func(msg any))
@@ -85,10 +94,10 @@ func (p *RosProvider) UnSubscribe(topic string, id string) {
 	delete(p.subscribers[topic], id)
 }
 
-func (p *RosProvider) initSubscribers() {
+func (p *RosProvider) initSubscribers() error {
 	node, err := p.getNode()
 	if err != nil {
-		return
+		return err
 	}
 	if p.subscribers == nil {
 		p.subscribers = make(map[string]map[string]func(msg any))
@@ -100,21 +109,21 @@ func (p *RosProvider) initSubscribers() {
 		p.statusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:     node,
 			Topic:    "/mower/status",
-			Callback: cbHandler[*msgs.Status](p, "/mower/status"),
+			Callback: cbHandler[*mower_msgs.Status](p, "/mower/status"),
 		})
 	}
 	if p.highLevelStatusSubscriber == nil {
 		p.highLevelStatusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:     node,
 			Topic:    "/mower_logic/current_state",
-			Callback: cbHandler[*msgs.HighLevelStatus](p, "/mower_logic/current_state"),
+			Callback: cbHandler[*mower_msgs.HighLevelStatus](p, "/mower_logic/current_state"),
 		})
 	}
 	if p.gpsSubscriber == nil {
 		p.gpsSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:     node,
 			Topic:    "/xbot_positioning/xb_pose",
-			Callback: cbHandler[*msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),
+			Callback: cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),
 		})
 	}
 	if p.imuSubscriber == nil {
@@ -128,16 +137,17 @@ func (p *RosProvider) initSubscribers() {
 		p.ticksSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:     node,
 			Topic:    "/mower/wheel_ticks",
-			Callback: cbHandler[*msgs.WheelTick](p, "/mower/wheel_ticks"),
+			Callback: cbHandler[*xbot_msgs.WheelTick](p, "/mower/wheel_ticks"),
 		})
 	}
 	if p.mapSubscriber == nil {
 		p.mapSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:     node,
 			Topic:    "/xbot_monitoring/map",
-			Callback: cbHandler[*msgs.Map](p, "/xbot_monitoring/map"),
+			Callback: cbHandler[*xbot_msgs.Map](p, "/xbot_monitoring/map"),
 		})
 	}
+	return nil
 }
 
 func cbHandler[T any](p *RosProvider, topic string) func(msg T) {

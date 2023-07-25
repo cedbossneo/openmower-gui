@@ -8,9 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log"
-	"mowgli-gui/pkg/msgs"
+	"mowgli-gui/pkg/msgs/mower_map"
+	"mowgli-gui/pkg/msgs/mower_msgs"
 	"mowgli-gui/pkg/types"
 	"net/http"
+	"strconv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,12 +24,66 @@ var upgrader = websocket.Upgrader{
 func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	group := r.Group("/openmower")
 	ServiceRoute(group, provider)
-	MapRoute(group, provider)
+	AddMapAreaRoute(group, provider)
+	DeleteMapAreaRoute(group, provider)
 	SubscriberRoute(group, provider)
 }
 
-func MapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+// AddMapAreaRoute add a map area
+//
+// @Summary add a map area
+// @Description add a map area
+// @Tags openmower
+// @Accept  json
+// @Produce  json
+// @Param CallReq body mower_map.AddMowingAreaSrvReq true "request body"
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /openmower/map/area/add [post]
+func AddMapAreaRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.POST("/map/area/add", func(c *gin.Context) {
+		var CallReq mower_map.AddMowingAreaSrvReq
+		err := unmarshalROSMessage[*mower_map.AddMowingAreaSrvReq](c.Request.Body, &CallReq)
+		if err != nil {
+			return
+		}
+		err = provider.CallService(c.Request.Context(), "/mower_map_service/add_mowing_area", &mower_map.AddMowingAreaSrv{}, &CallReq, &mower_map.AddMowingAreaSrvRes{})
+		if err != nil {
+			c.JSON(500, ErrorResponse{Error: err.Error()})
+		} else {
+			c.JSON(200, OkResponse{})
+		}
+	})
+}
 
+// DeleteMapAreaRoute delete a map area
+//
+// @Summary delete a map area
+// @Description delete a map area
+// @Tags openmower
+// @Accept  json
+// @Produce  json
+// @Param index path string true "index of the area to delete"
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /openmower/map/area/{index} [delete]
+func DeleteMapAreaRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.DELETE("/map/area/:index", func(c *gin.Context) {
+		index := c.Param("index")
+		i, err := strconv.ParseInt(index, 10, 32)
+		if err != nil {
+			c.JSON(500, ErrorResponse{Error: err.Error()})
+			return
+		}
+		err = provider.CallService(c.Request.Context(), "/mower_map_service/delete_mowing_area", &mower_map.DeleteMowingAreaSrv{}, &mower_map.DeleteMowingAreaSrvReq{
+			Index: uint32(i),
+		}, &mower_map.DeleteMowingAreaSrvRes{})
+		if err != nil {
+			c.JSON(500, ErrorResponse{Error: err.Error()})
+		} else {
+			c.JSON(200, OkResponse{})
+		}
+	})
 }
 
 // SubscriberRoute subscribe to a topic
@@ -35,7 +91,6 @@ func MapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 // @Summary subscribe to a topic
 // @Description subscribe to a topic
 // @Tags openmower
-// @Produce  text/event-stream
 // @Param topic path string true "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks, highLevelStatus"
 // @Router /openmower/subscribe/{topic} [get]
 func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
@@ -96,7 +151,17 @@ func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn
 			c.Error(err)
 			return
 		}
-		err = conn.WriteMessage(websocket.TextMessage, []byte(base64.StdEncoding.EncodeToString(str)))
+		writer, err := conn.NextWriter(websocket.TextMessage)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		_, err = writer.Write([]byte(base64.StdEncoding.EncodeToString(str)))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		err = writer.Close()
 		if err != nil {
 			c.Error(err)
 			return
@@ -135,30 +200,30 @@ func ServiceRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		}
 		switch command {
 		case "mower_start":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
 				Command: 1,
-			}, &msgs.HighLevelControlSrvRes{})
+			}, &mower_msgs.HighLevelControlSrvRes{})
 		case "mower_home":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
 				Command: 2,
-			}, &msgs.HighLevelControlSrvRes{})
+			}, &mower_msgs.HighLevelControlSrvRes{})
 		case "mower_s1":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
 				Command: 3,
-			}, &msgs.HighLevelControlSrvRes{})
+			}, &mower_msgs.HighLevelControlSrvRes{})
 		case "mower_s2":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &msgs.HighLevelControlSrv{}, &msgs.HighLevelControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
 				Command: 4,
-			}, &msgs.HighLevelControlSrvRes{})
+			}, &mower_msgs.HighLevelControlSrvRes{})
 		case "emergency":
-			err = provider.CallService(c.Request.Context(), "/mower_service/emergency", &msgs.EmergencyStopSrv{}, &msgs.EmergencyStopSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/emergency", &mower_msgs.EmergencyStopSrv{}, &mower_msgs.EmergencyStopSrvReq{
 				Emergency: uint8(CallReq["emergency"].(float64)),
-			}, &msgs.EmergencyStopSrvRes{})
+			}, &mower_msgs.EmergencyStopSrvRes{})
 		case "mow":
-			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &msgs.MowerControlSrv{}, &msgs.MowerControlSrvReq{
+			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &mower_msgs.MowerControlSrvReq{
 				MowEnabled:   uint8(CallReq["mow_enabled"].(float64)),
 				MowDirection: uint8(CallReq["mow_direction"].(float64)),
-			}, &msgs.MowerControlSrvRes{})
+			}, &mower_msgs.MowerControlSrvRes{})
 		default:
 			err = errors.New("unknown command")
 		}

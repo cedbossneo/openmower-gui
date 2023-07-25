@@ -7,7 +7,10 @@ import {Gps, Map as MapType} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
 import type {Feature} from 'geojson';
+import {Polygon} from "geojson";
 import {MowerActions} from "../components/MowerActions.tsx";
+import {MowerMapMapArea} from "../api/Api.ts";
+import AsyncButton from "../components/AsyncButton.tsx";
 
 const radians = function (degrees: number) {
     return degrees * Math.PI / 180;
@@ -26,9 +29,17 @@ const earth = 6378.137,  //radius of the earth in kilometer
 
 const transpose = (datumLon: number, datumLat: number, y: number, x: number) => {
     const new_latitude = datumLat + (y * m);
-    const new_longitude = datumLon + (x * m) / Math.cos(datumLat * (pi / 180));
+    const new_longitude = datumLon + ((x * m) / Math.cos(datumLat * (pi / 180)));
     return [new_longitude, new_latitude]
 };
+
+const itranspose = (datumLon: number, datumLat: number, y: number, x: number) => {
+    //Inverse the transpose function
+    const new_latitude = (y - datumLat) / m;
+    const new_longitude = (x - datumLon) / (m / Math.cos(datumLat * (pi / 180)));
+    return [new_longitude, new_latitude]
+};
+
 export const MapPage = () => {
     const [api, contextHolder] = notification.useNotification();
     const guiApi = useApi()
@@ -76,7 +87,7 @@ export const MapPage = () => {
             const gps = JSON.parse(e) as Gps
             const mower_lonlat = transpose(datumLon, datumLat, gps.Pose?.Pose?.Position?.Y!!, gps.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
-                const line = drawLine(mower_lonlat[0], mower_lonlat[1], gps.VehicleHeading!! * 2 * pi * 10, m / 2)
+                const line = drawLine(mower_lonlat[0], mower_lonlat[1], gps.MotionHeading!! * 2 * pi * 10, m / 2)
                 return {
                     ...oldFeatures, mower: {
                         id: "mower",
@@ -110,6 +121,7 @@ export const MapPage = () => {
         (e) => {
             let parse = JSON.parse(e) as MapType;
             setMap(parse)
+            console.log(parse)
             const feats = parse.WorkingArea?.map((area, index) => {
                 return {
                     id: "area-" + index,
@@ -137,6 +149,16 @@ export const MapPage = () => {
                     }
                     newFeatures[f.id] = f;
                 }
+                const dock_lonlat = transpose(datumLon, datumLat, parse?.DockY!!, parse?.DockX!!)
+                newFeatures["dock"] = {
+                    id: "dock",
+                    type: "Feature",
+                    properties: {},
+                    geometry: {
+                        coordinates: dock_lonlat,
+                        type: "Point",
+                    }
+                }
                 return newFeatures;
             })
         });
@@ -161,7 +183,25 @@ export const MapPage = () => {
         setFeatures(currFeatures => {
             const newFeatures = {...currFeatures};
             for (const f of e.features) {
-                newFeatures[f.id] = f;
+                if ((f.id as string).length > 20) {
+                    const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
+                        return (f.id as string).startsWith("area-")
+                    }).reduce((acc, val) => {
+                        if (val.id == undefined) {
+                            return acc
+                        }
+                        const index = parseInt((val.id as string).substring(5))
+                        if (index > acc) {
+                            return index
+                        }
+                        return acc
+                    }, 0)
+                    let id = "area-" + (maxArea + 1);
+                    f.id = id
+                    newFeatures[id] = f;
+                } else {
+                    newFeatures[f.id] = f;
+                }
             }
             return newFeatures;
         });
@@ -188,23 +228,70 @@ export const MapPage = () => {
         setEditMap(!editMap)
     }
 
-    function handleSaveMap() {
-        alert("Not implemented, yet, will be available soon")
+    async function handleSaveMap() {
+        for (const f of Object.values<Feature>(features)) {
+            if (f.id == undefined || !(f.id as string).startsWith("area-")) {
+                continue
+            }
+            const feature = f as Feature<Polygon>
+            const points = feature.geometry.coordinates[0].map((point) => {
+                return itranspose(datumLon, datumLat, point[1], point[0])
+            })
+            const area: MowerMapMapArea = {
+                area: {
+                    points: points.map((point) => {
+                        return {
+                            x: point[0],
+                            y: point[1],
+                            z: 0,
+                        }
+                    })
+                }
+            }
+            try {
+                await guiApi.openmower.mapAreaAddCreate({area: area})
+                api.success({
+                    message: "Area saved",
+                })
+                setEditMap(false)
+            } catch (e: any) {
+                api.error({
+                    message: "Failed to save area",
+                    description: e.message,
+                })
+            }
+        }
+        for (let i = 0; i < (map?.WorkingArea?.length ?? 0); i++) {
+            try {
+                await guiApi.openmower.mapAreaDelete(i.toString())
+                api.success({
+                    message: "Area deleted",
+                })
+                setEditMap(false)
+            } catch (e: any) {
+                api.error({
+                    message: "Failed to delete area",
+                    description: e.message,
+                })
+            }
+        }
     }
 
     return (
         <Row gutter={[16, 16]}>
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
+                <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
+                    use</Typography.Title>
             </Col>
             <Col span={24}>
                 <MowerActions api={api}>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
                                          style={{marginRight: 10}}>Edit Map</Button>}
+                    {editMap && <AsyncButton size={"small"} type="primary" onAsyncClick={handleSaveMap}
+                                             style={{marginRight: 10}}>Save Map</AsyncButton>}
                     {editMap && <Button size={"small"} onClick={handleEditMap}
                                         style={{marginRight: 10}}>Cancel Map Edition</Button>}
-                    {editMap && <Button size={"small"} type="primary" onClick={handleSaveMap}
-                                        style={{marginRight: 10}}>Save Map</Button>}
                 </MowerActions>
             </Col>
             <Col span={24}>
@@ -217,7 +304,7 @@ export const MapPage = () => {
                         zoom: 25,
                     }}
                     style={{width: '80vw', height: '70vh'}}
-                    mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+                    mapStyle="mapbox://styles/mapbox/satellite-v9"
                 >
                     <DrawControl
                         features={Object.values(features)}

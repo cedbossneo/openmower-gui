@@ -38,6 +38,48 @@ definitions:
       ok:
         type: string
     type: object
+  geometry_msgs.Point32:
+    properties:
+      msg.Package:
+        type: integer
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
+    type: object
+  geometry_msgs.Polygon:
+    properties:
+      msg.Package:
+        type: integer
+      points:
+        items:
+          $ref: '#/definitions/geometry_msgs.Point32'
+        type: array
+    type: object
+  mower_map.AddMowingAreaSrvReq:
+    properties:
+      area:
+        $ref: '#/definitions/mower_map.MapArea'
+      isNavigationArea:
+        type: boolean
+      msg.Package:
+        type: integer
+    type: object
+  mower_map.MapArea:
+    properties:
+      area:
+        $ref: '#/definitions/geometry_msgs.Polygon'
+      msg.Package:
+        type: integer
+      name:
+        type: string
+      obstacles:
+        items:
+          $ref: '#/definitions/geometry_msgs.Polygon'
+        type: array
+    type: object
 info:
   contact: { }
 paths:
@@ -134,18 +176,67 @@ paths:
       summary: call a service
       tags:
         - openmower
+  /openmower/map/area/{index}:
+    delete:
+      consumes:
+        - application/json
+      description: delete a map area
+      parameters:
+        - description: index of the area to delete
+          in: path
+          name: index
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: delete a map area
+      tags:
+        - openmower
+  /openmower/map/area/add:
+    post:
+      consumes:
+        - application/json
+      description: add a map area
+      parameters:
+        - description: request body
+          in: body
+          name: CallReq
+          required: true
+          schema:
+            $ref: '#/definitions/mower_map.AddMowingAreaSrvReq'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: add a map area
+      tags:
+        - openmower
   /openmower/subscribe/{topic}:
     get:
       description: subscribe to a topic
       parameters:
         - description: 'topic to subscribe to, could be: diagnostics, status, gps, imu,
-          ticks'
+          ticks, highLevelStatus'
           in: path
           name: topic
           required: true
           type: string
-      produces:
-        - text/event-stream
       responses: { }
       summary: subscribe to a topic
       tags:

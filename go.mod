@@ -4,12 +4,14 @@ go 1.20
 
 require (
 	github.com/bluenviron/goroslib/v2 v2.1.0
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/swaggo/files v1.0.1
@@ -24,7 +26,6 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect

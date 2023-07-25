@@ -154,12 +154,87 @@ const docTemplate = `{
                 }
             }
         },
+        "/openmower/map/area/add": {
+            "post": {
+                "description": "add a map area",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "add a map area",
+                "parameters": [
+                    {
+                        "description": "request body",
+                        "name": "CallReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/mower_map.AddMowingAreaSrvReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/openmower/map/area/{index}": {
+            "delete": {
+                "description": "delete a map area",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "delete a map area",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "index of the area to delete",
+                        "name": "index",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/openmower/subscribe/{topic}": {
             "get": {
                 "description": "subscribe to a topic",
-                "produces": [
-                    "text/event-stream"
-                ],
                 "tags": [
                     "openmower"
                 ],
@@ -167,7 +242,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks",
+                        "description": "topic to subscribe to, could be: diagnostics, status, gps, imu, ticks, highLevelStatus",
                         "name": "topic",
                         "in": "path",
                         "required": true
@@ -301,6 +376,71 @@ const docTemplate = `{
             "properties": {
                 "ok": {
                     "type": "string"
+                }
+            }
+        },
+        "geometry_msgs.Point32": {
+            "type": "object",
+            "properties": {
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "z": {
+                    "type": "number"
+                }
+            }
+        },
+        "geometry_msgs.Polygon": {
+            "type": "object",
+            "properties": {
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/geometry_msgs.Point32"
+                    }
+                }
+            }
+        },
+        "mower_map.AddMowingAreaSrvReq": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "$ref": "#/definitions/mower_map.MapArea"
+                },
+                "isNavigationArea": {
+                    "type": "boolean"
+                },
+                "msg.Package": {
+                    "type": "integer"
+                }
+            }
+        },
+        "mower_map.MapArea": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "$ref": "#/definitions/geometry_msgs.Polygon"
+                },
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "obstacles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/geometry_msgs.Polygon"
+                    }
                 }
             }
         }

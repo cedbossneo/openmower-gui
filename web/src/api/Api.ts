@@ -1,6 +1,5 @@
 /* eslint-disable */
 /* tslint:disable */
-
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -26,22 +25,47 @@ export interface ApiErrorResponse {
 }
 
 export interface ApiGetSettingsResponse {
-  settings?: Record<string, string>;
+    settings?: Record<string, string>;
 }
 
 export interface ApiOkResponse {
-  ok?: string;
+    ok?: string;
+}
+
+export interface GeometryMsgsPoint32 {
+    "msg.Package"?: number;
+    x?: number;
+    y?: number;
+    z?: number;
+}
+
+export interface GeometryMsgsPolygon {
+    "msg.Package"?: number;
+    points?: GeometryMsgsPoint32[];
+}
+
+export interface MowerMapAddMowingAreaSrvReq {
+    area?: MowerMapMapArea;
+    isNavigationArea?: boolean;
+    "msg.Package"?: number;
+}
+
+export interface MowerMapMapArea {
+    area?: GeometryMsgsPolygon;
+    "msg.Package"?: number;
+    name?: string;
+    obstacles?: GeometryMsgsPolygon[];
 }
 
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
 export interface FullRequestParams extends Omit<RequestInit, "body"> {
-  /** set parameter to `true` for call `securityWorker` for this request */
-  secure?: boolean;
-  /** request path */
-  path: string;
-  /** content type of request body */
+    /** set parameter to `true` for call `securityWorker` for this request */
+    secure?: boolean;
+    /** request path */
+    path: string;
+    /** content type of request body */
   type?: ContentType;
   /** query params */
   query?: QueryParamsType;
@@ -117,9 +141,9 @@ export class HttpClient<SecurityDataType = unknown> {
   protected toQueryString(rawQuery?: QueryParamsType): string {
     const query = rawQuery || {};
     const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
-    return keys
-        .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
-        .join("&");
+      return keys
+          .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
+          .join("&");
   }
 
   protected addQueryParams(rawQuery?: QueryParamsType): string {
@@ -128,23 +152,23 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   private contentFormatters: Record<ContentType, (input: any) => any> = {
-    [ContentType.Json]: (input: any) =>
-        input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
-    [ContentType.Text]: (input: any) => (input !== null && typeof input !== "string" ? JSON.stringify(input) : input),
-    [ContentType.FormData]: (input: any) =>
-        Object.keys(input || {}).reduce((formData, key) => {
-          const property = input[key];
-          formData.append(
-              key,
-              property instanceof Blob
-                  ? property
-                  : typeof property === "object" && property !== null
-                      ? JSON.stringify(property)
-                      : `${property}`,
-          );
-          return formData;
-        }, new FormData()),
-    [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
+      [ContentType.Json]: (input: any) =>
+          input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
+      [ContentType.Text]: (input: any) => (input !== null && typeof input !== "string" ? JSON.stringify(input) : input),
+      [ContentType.FormData]: (input: any) =>
+          Object.keys(input || {}).reduce((formData, key) => {
+              const property = input[key];
+              formData.append(
+                  key,
+                  property instanceof Blob
+                      ? property
+                      : typeof property === "object" && property !== null
+                          ? JSON.stringify(property)
+                          : `${property}`,
+              );
+              return formData;
+          }, new FormData()),
+      [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
   };
 
   protected mergeRequestParams(params1: RequestParams, params2?: RequestParams): RequestParams {
@@ -184,31 +208,31 @@ export class HttpClient<SecurityDataType = unknown> {
   };
 
   public request = async <T = any, E = any>({
-                                              body,
-                                              secure,
-                                              path,
-                                              type,
-                                              query,
-                                              format,
-                                              baseUrl,
-                                              cancelToken,
-                                              ...params
+                                                body,
+                                                secure,
+                                                path,
+                                                type,
+                                                query,
+                                                format,
+                                                baseUrl,
+                                                cancelToken,
+                                                ...params
                                             }: FullRequestParams): Promise<HttpResponse<T, E>> => {
-    const secureParams =
-        ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
-            this.securityWorker &&
-            (await this.securityWorker(this.securityData))) ||
-        {};
-    const requestParams = this.mergeRequestParams(params, secureParams);
-    const queryString = query && this.toQueryString(query);
-    const payloadFormatter = this.contentFormatters[type || ContentType.Json];
-    const responseFormat = format || requestParams.format;
+      const secureParams =
+          ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
+              this.securityWorker &&
+              (await this.securityWorker(this.securityData))) ||
+          {};
+      const requestParams = this.mergeRequestParams(params, secureParams);
+      const queryString = query && this.toQueryString(query);
+      const payloadFormatter = this.contentFormatters[type || ContentType.Json];
+      const responseFormat = format || requestParams.format;
 
     return this.customFetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
       ...requestParams,
       headers: {
-        ...(requestParams.headers || {}),
-        ...(type && type !== ContentType.FormData ? {"Content-Type": type} : {}),
+          ...(requestParams.headers || {}),
+          ...(type && type !== ContentType.FormData ? {"Content-Type": type} : {}),
       },
       signal: (cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal) || null,
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
@@ -217,21 +241,21 @@ export class HttpClient<SecurityDataType = unknown> {
       r.data = null as unknown as T;
       r.error = null as unknown as E;
 
-      const data = !responseFormat
-          ? r
-          : await response[responseFormat]()
-              .then((data) => {
-                if (r.ok) {
-                  r.data = data;
-                } else {
-                  r.error = data;
-                }
-                return r;
-              })
-              .catch((e) => {
-                r.error = e;
-                return r;
-              });
+        const data = !responseFormat
+            ? r
+            : await response[responseFormat]()
+                .then((data) => {
+                    if (r.ok) {
+                        r.data = data;
+                    } else {
+                        r.error = data;
+                    }
+                    return r;
+                })
+                .catch((e) => {
+                    r.error = e;
+                    return r;
+                });
 
       if (cancelToken) {
         this.abortControllers.delete(cancelToken);
@@ -249,120 +273,155 @@ export class HttpClient<SecurityDataType = unknown> {
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   containers = {
-    /**
-     * @description list all containers
-     *
-     * @tags containers
-     * @name ContainersList
-     * @summary list all containers
-     * @request GET:/containers
-     */
-    containersList: (params: RequestParams = {}) =>
-        this.request<ApiContainerListResponse, ApiErrorResponse>({
-          path: `/containers`,
-          method: "GET",
-          format: "json",
-          ...params,
-        }),
+      /**
+       * @description list all containers
+       *
+       * @tags containers
+       * @name ContainersList
+       * @summary list all containers
+       * @request GET:/containers
+       */
+      containersList: (params: RequestParams = {}) =>
+          this.request<ApiContainerListResponse, ApiErrorResponse>({
+              path: `/containers`,
+              method: "GET",
+              format: "json",
+              ...params,
+          }),
 
-    /**
-     * @description get container logs
-     *
-     * @tags containers
-     * @name LogsDetail
-     * @summary get container logs
-     * @request GET:/containers/{containerId}/logs
-     */
-    logsDetail: (containerId: string, params: RequestParams = {}) =>
-        this.request<any, any>({
-          path: `/containers/${containerId}/logs`,
-          method: "GET",
-          ...params,
-        }),
+      /**
+       * @description get container logs
+       *
+       * @tags containers
+       * @name LogsDetail
+       * @summary get container logs
+       * @request GET:/containers/{containerId}/logs
+       */
+      logsDetail: (containerId: string, params: RequestParams = {}) =>
+          this.request<any, any>({
+              path: `/containers/${containerId}/logs`,
+              method: "GET",
+              ...params,
+          }),
 
-    /**
-     * @description execute a command on a container
-     *
-     * @tags containers
-     * @name ContainersCreate
-     * @summary execute a command on a container
-     * @request POST:/containers/{containerId}/{command}
-     */
-    containersCreate: (containerId: string, command: string, params: RequestParams = {}) =>
-        this.request<ApiOkResponse, ApiErrorResponse>({
-          path: `/containers/${containerId}/${command}`,
-          method: "POST",
-          format: "json",
-          ...params,
-        }),
+      /**
+       * @description execute a command on a container
+       *
+       * @tags containers
+       * @name ContainersCreate
+       * @summary execute a command on a container
+       * @request POST:/containers/{containerId}/{command}
+       */
+      containersCreate: (containerId: string, command: string, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/containers/${containerId}/${command}`,
+              method: "POST",
+              format: "json",
+              ...params,
+          }),
   };
   openmower = {
-    /**
-     * @description call a service
-     *
-     * @tags openmower
-     * @name CallCreate
-     * @summary call a service
-     * @request POST:/openmower/call/{command}
-     */
-    callCreate: (command: string, CallReq: Record<string, any>, params: RequestParams = {}) =>
-        this.request<ApiOkResponse, ApiErrorResponse>({
-          path: `/openmower/call/${command}`,
-          method: "POST",
-          body: CallReq,
-          type: ContentType.Json,
-          format: "json",
-          ...params,
-        }),
+      /**
+       * @description call a service
+       *
+       * @tags openmower
+       * @name CallCreate
+       * @summary call a service
+       * @request POST:/openmower/call/{command}
+       */
+      callCreate: (command: string, CallReq: Record<string, any>, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/openmower/call/${command}`,
+              method: "POST",
+              body: CallReq,
+              type: ContentType.Json,
+              format: "json",
+              ...params,
+          }),
 
-    /**
-     * @description subscribe to a topic
-     *
-     * @tags openmower
-     * @name SubscribeDetail
-     * @summary subscribe to a topic
-     * @request GET:/openmower/subscribe/{topic}
-     */
-    subscribeDetail: (topic: string, params: RequestParams = {}) =>
-        this.request<any, any>({
-          path: `/openmower/subscribe/${topic}`,
-          method: "GET",
-          ...params,
-        }),
+      /**
+       * @description add a map area
+       *
+       * @tags openmower
+       * @name MapAreaAddCreate
+       * @summary add a map area
+       * @request POST:/openmower/map/area/add
+       */
+      mapAreaAddCreate: (CallReq: MowerMapAddMowingAreaSrvReq, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/openmower/map/area/add`,
+              method: "POST",
+              body: CallReq,
+              type: ContentType.Json,
+              format: "json",
+              ...params,
+          }),
+
+      /**
+       * @description delete a map area
+       *
+       * @tags openmower
+       * @name MapAreaDelete
+       * @summary delete a map area
+       * @request DELETE:/openmower/map/area/{index}
+       */
+      mapAreaDelete: (index: string, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/openmower/map/area/${index}`,
+              method: "DELETE",
+              type: ContentType.Json,
+              format: "json",
+              ...params,
+          }),
+
+      /**
+       * @description subscribe to a topic
+       *
+       * @tags openmower
+       * @name SubscribeDetail
+       * @summary subscribe to a topic
+       * @request GET:/openmower/subscribe/{topic}
+       */
+      subscribeDetail: (topic: string, params: RequestParams = {}) =>
+          this.request<any, any>({
+              path: `/openmower/subscribe/${topic}`,
+              method: "GET",
+              ...params,
+          }),
   };
   settings = {
-    /**
-     * @description returns a JSON object with the settings
-     *
-     * @tags settings
-     * @name SettingsList
-     * @summary returns a JSON object with the settings
-     * @request GET:/settings
-     */
-    settingsList: (params: RequestParams = {}) =>
-        this.request<ApiGetSettingsResponse, ApiErrorResponse>({
-          path: `/settings`,
-          method: "GET",
-          format: "json",
-          ...params,
-        }),
+      /**
+       * @description returns a JSON object with the settings
+       *
+       * @tags settings
+       * @name SettingsList
+       * @summary returns a JSON object with the settings
+       * @request GET:/settings
+       */
+      settingsList: (params: RequestParams = {}) =>
+          this.request<ApiGetSettingsResponse, ApiErrorResponse>({
+              path: `/settings`,
+              method: "GET",
+              format: "json",
+              ...params,
+          }),
 
-    /**
-     * @description saves the settings to the mower_config.sh file
-     *
-     * @tags settings
-     * @name SettingsCreate
-     * @summary saves the settings to the mower_config.sh file
-     * @request POST:/settings
-     */
-    settingsCreate: (settings: Record<string, any>, params: RequestParams = {}) =>
-        this.request<ApiOkResponse, ApiErrorResponse>({
-          path: `/settings`,
-          method: "POST",
-          body: settings,
-          type: ContentType.Json,
-          format: "json",
-          ...params,
-        }),
+      /**
+       * @description saves the settings to the mower_config.sh file
+       *
+       * @tags settings
+       * @name SettingsCreate
+       * @summary saves the settings to the mower_config.sh file
+       * @request POST:/settings
+       */
+      settingsCreate: (settings: Record<string, any>, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/settings`,
+              method: "POST",
+              body: settings,
+              type: ContentType.Json,
+              format: "json",
+              ...params,
+          }),
   };
 }
