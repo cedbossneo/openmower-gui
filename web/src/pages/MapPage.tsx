@@ -1,12 +1,13 @@
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
-import {Col, notification, Row, Typography} from "antd";
+import {Button, Col, notification, Row, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
 import type {Feature} from 'geojson';
+import {MowerActions} from "../components/MowerActions.tsx";
 
 const radians = function (degrees: number) {
     return degrees * Math.PI / 180;
@@ -31,6 +32,7 @@ const transpose = (datumLon: number, datumLat: number, y: number, x: number) => 
 export const MapPage = () => {
     const [api, contextHolder] = notification.useNotification();
     const guiApi = useApi()
+    const [editMap, setEditMap] = useState<boolean>(false)
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
     useEffect(() => {
@@ -49,6 +51,18 @@ export const MapPage = () => {
             }
         })()
     }, [])
+    useEffect(() => {
+        if (editMap) {
+            mapStream.stop()
+            gpsStream.stop()
+        } else {
+            if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
+                return
+            }
+            gpsStream.start("/api/openmower/subscribe/gps",)
+            mapStream.start("/api/openmower/subscribe/map",)
+        }
+    }, [editMap])
     const gpsStream = useWS<string>(() => {
             api.info({
                 message: "GPS Stream closed",
@@ -169,10 +183,29 @@ export const MapPage = () => {
         return <>Loading</>
     }
     const map_center = (map) ? transpose(datumLon, datumLat, map.MapCenterY!!, map.MapCenterX!!) : [datumLat, datumLon]
+
+    function handleEditMap() {
+        setEditMap(!editMap)
+    }
+
+    function handleSaveMap() {
+        alert("Not implemented, yet, will be available soon")
+    }
+
     return (
-        <Row>
+        <Row gutter={[16, 16]}>
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
+            </Col>
+            <Col span={24}>
+                <MowerActions api={api}>
+                    {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
+                                         style={{marginRight: 10}}>Edit Map</Button>}
+                    {editMap && <Button size={"small"} onClick={handleEditMap}
+                                        style={{marginRight: 10}}>Cancel Map Edition</Button>}
+                    {editMap && <Button size={"small"} type="primary" onClick={handleSaveMap}
+                                        style={{marginRight: 10}}>Save Map</Button>}
+                </MowerActions>
             </Col>
             <Col span={24}>
                 {contextHolder}
@@ -183,18 +216,19 @@ export const MapPage = () => {
                         latitude: map_center[1],
                         zoom: 25,
                     }}
-                    style={{width: '80vw', height: '80vh'}}
+                    style={{width: '80vw', height: '70vh'}}
                     mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
                 >
                     <DrawControl
                         features={Object.values(features)}
                         position="top-left"
                         displayControlsDefault={false}
+                        editMode={editMap}
                         controls={{
                             polygon: true,
                             trash: true
                         }}
-                        defaultMode="draw_polygon"
+                        defaultMode="simple_select"
                         onCreate={onUpdate}
                         onUpdate={onUpdate}
                         onDelete={onDelete}

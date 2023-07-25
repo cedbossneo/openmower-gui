@@ -6,6 +6,7 @@ import {useEffect} from "react";
 type DrawControlProps = ConstructorParameters<typeof MapboxDraw>[0] & {
     position?: ControlPosition;
     features?: any[];
+    editMode?: boolean;
 
     onCreate: (evt: any) => void;
     onUpdate: (evt: any) => void;
@@ -40,6 +41,15 @@ export default function DrawControl(props: DrawControlProps) {
             }
         }
     }, [mp, props.features]);
+    useEffect(() => {
+        if (mp) {
+            if (props.editMode) {
+                mp.changeMode('simple_select');
+            } else {
+                mp.changeMode('draw_polygon');
+            }
+        }
+    }, [mp, props.editMode]);
     return null;
 }
 

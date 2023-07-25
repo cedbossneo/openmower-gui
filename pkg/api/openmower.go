@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"github.com/docker/distribution/uuid"
@@ -21,7 +22,12 @@ var upgrader = websocket.Upgrader{
 func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	group := r.Group("/openmower")
 	ServiceRoute(group, provider)
+	MapRoute(group, provider)
 	SubscriberRoute(group, provider)
+}
+
+func MapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+
 }
 
 // SubscriberRoute subscribe to a topic
@@ -90,7 +96,7 @@ func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn
 			c.Error(err)
 			return
 		}
-		err = conn.WriteMessage(websocket.TextMessage, str)
+		err = conn.WriteMessage(websocket.TextMessage, []byte(base64.StdEncoding.EncodeToString(str)))
 		if err != nil {
 			c.Error(err)
 			return

@@ -2,15 +2,17 @@ package api
 
 import (
 	"bufio"
+	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/samber/lo"
+	"io"
 	"log"
 	types2 "mowgli-gui/pkg/types"
 	"net/http"
-	"sync"
 )
 
 func ContainersRoutes(r *gin.RouterGroup, provider types2.IDockerProvider) {
@@ -105,58 +107,45 @@ func ContainerLogsRoutes(group *gin.RouterGroup, provider types2.IDockerProvider
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func(conn *websocket.Conn) {
+			err := conn.Close()
+			if err != nil {
+				fmt.Println("error closing websocket connection: ", err.Error())
+			}
+		}(conn)
 
-		chanStream := make(chan string) // to consume lines read from docker
-		done := make(chan bool)         // to indicate when the work is done
 		/*
 		   read the logs from docker using docker SDK. be noticed that the Follow value must set to true.
 		*/
-		reader, err := provider.ContainerLogs(c.Request.Context(), containerID)
+		reader, err := provider.ContainerLogs(context.Background(), containerID)
 		if err != nil {
 			fmt.Println("error reader: ", err.Error())
-			done <- true
 			return
 		}
+		defer func(reader io.ReadCloser) {
+			err := reader.Close()
+			if err != nil {
+				fmt.Println("error closing reader: ", err.Error())
+			}
+		}(reader)
 		/*
 		   send log lines to channel
 		*/
 		rd := bufio.NewReader(reader)
-		var mu sync.RWMutex
-		go func() {
-			for {
-				mu.Lock()
-				// read lines from the reader
-				str, _, err := rd.ReadLine()
-				if err != nil {
-					log.Println("Read Error:", err.Error())
-					done <- true
-					return
-				}
-				// send the lines to channel
-				chanStream <- string(str)
-				mu.Unlock()
-			}
-		}()
 		for {
-			select {
-			case <-c.Done():
-				reader.Close()
-				return
-			case <-done:
-				reader.Close()
-				return
-			case msg := <-chanStream:
-				// send events to client
-				err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
-				if err != nil {
-					c.JSON(500, gin.H{
-						"error": err.Error(),
-					})
-					return
-				}
+			// read lines from the reader
+			str, _, err := rd.ReadLine()
+			if err != nil {
+				log.Println("Read Error:", err.Error())
 				return
 			}
+			// send events to client
+			err = conn.WriteMessage(websocket.TextMessage, []byte(base64.StdEncoding.EncodeToString(str)))
+			if err != nil {
+				log.Println("Write Error:", err.Error())
+				return
+			}
+			// send the lines to channel
 		}
 	})
 }

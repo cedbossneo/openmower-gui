@@ -19,9 +19,9 @@ export const useWS = <T>(onError: (e: Error) => void, onInfo: (msg: string) => v
         },
         onMessage: (e) => {
             if (first) {
-                setFirst(true)
+                setFirst(false)
             }
-            onData(e.data as T, first);
+            onData(atob(e.data) as T, first);
         }
     });
     const start = (uri: string) => {
