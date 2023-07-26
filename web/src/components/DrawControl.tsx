@@ -34,8 +34,8 @@ export default function DrawControl(props: DrawControlProps) {
     useEffect(() => {
         if (mp) {
             if (props.features) {
+                mp.deleteAll();
                 props.features.forEach((f) => {
-                    mp.delete(f.id);
                     mp.add(f);
                 })
             }
@@ -43,7 +43,7 @@ export default function DrawControl(props: DrawControlProps) {
     }, [mp, props.features]);
     useEffect(() => {
         if (mp) {
-            if (props.editMode) {
+            if (!props.editMode) {
                 mp.changeMode('simple_select');
             } else {
                 mp.changeMode('draw_polygon');

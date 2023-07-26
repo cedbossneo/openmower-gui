@@ -35,7 +35,7 @@ func unmarshalROSMessage[T any](reader io.ReadCloser, out *mower_map.AddMowingAr
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		Result: out,
 		MatchName: func(mapKey, fieldName string) bool {
-			return strings.ToLower(fieldName) == mapKey
+			return strings.ToLower(fieldName) == strings.ToLower(mapKey)
 		},
 	})
 	err = decoder.Decode(m)
