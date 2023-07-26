@@ -12,7 +12,6 @@ import (
 	"mowgli-gui/pkg/msgs/mower_msgs"
 	"mowgli-gui/pkg/types"
 	"net/http"
-	"strconv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -25,7 +24,8 @@ func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	group := r.Group("/openmower")
 	ServiceRoute(group, provider)
 	AddMapAreaRoute(group, provider)
-	DeleteMapAreaRoute(group, provider)
+	SetDockingPointRoute(group, provider)
+	ClearMapRoute(group, provider)
 	SubscriberRoute(group, provider)
 }
 
@@ -56,28 +56,46 @@ func AddMapAreaRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	})
 }
 
-// DeleteMapAreaRoute delete a map area
+// ClearMapRoute delete a map area
 //
-// @Summary delete a map area
-// @Description delete a map area
+// @Summary clear the map
+// @Description clear the map
 // @Tags openmower
 // @Accept  json
 // @Produce  json
-// @Param index path string true "index of the area to delete"
 // @Success 200 {object} OkResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /openmower/map/area/{index} [delete]
-func DeleteMapAreaRoute(group *gin.RouterGroup, provider types.IRosProvider) {
-	group.DELETE("/map/area/:index", func(c *gin.Context) {
-		index := c.Param("index")
-		i, err := strconv.ParseInt(index, 10, 32)
+// @Router /openmower/map [delete]
+func ClearMapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.DELETE("/map", func(c *gin.Context) {
+		err := provider.CallService(c.Request.Context(), "/mower_map_service/clear_map", &mower_map.ClearMapSrv{}, &mower_map.ClearMapSrvReq{}, &mower_map.ClearMapSrvRes{})
 		if err != nil {
 			c.JSON(500, ErrorResponse{Error: err.Error()})
+		} else {
+			c.JSON(200, OkResponse{})
+		}
+	})
+}
+
+// SetDockingPointRoute set the docking point
+//
+// @Summary set the docking point
+// @Description set the docking point
+// @Tags openmower
+// @Accept  json
+// @Produce  json
+// @Param CallReq body mower_map.SetDockingPointSrvReq true "request body"
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /openmower/map/docking [post]
+func SetDockingPointRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.POST("/map/docking", func(c *gin.Context) {
+		var CallReq mower_map.SetDockingPointSrvReq
+		err := unmarshalROSMessage[*mower_map.SetDockingPointSrvReq](c.Request.Body, &CallReq)
+		if err != nil {
 			return
 		}
-		err = provider.CallService(c.Request.Context(), "/mower_map_service/delete_mowing_area", &mower_map.DeleteMowingAreaSrv{}, &mower_map.DeleteMowingAreaSrvReq{
-			Index: uint32(i),
-		}, &mower_map.DeleteMowingAreaSrvRes{})
+		err = provider.CallService(c.Request.Context(), "/mower_map_service/set_docking_point", &mower_map.SetDockingPointSrv{}, &CallReq, &mower_map.SetDockingPointSrvRes{})
 		if err != nil {
 			c.JSON(500, ErrorResponse{Error: err.Error()})
 		} else {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/mitchellh/mapstructure"
 	"io"
-	"mowgli-gui/pkg/msgs/mower_map"
 	"strings"
 	"unicode"
 )
@@ -22,7 +21,7 @@ func snakeToCamel(in string) string {
 	return string(tmp)
 }
 
-func unmarshalROSMessage[T any](reader io.ReadCloser, out *mower_map.AddMowingAreaSrvReq) error {
+func unmarshalROSMessage[T any](reader io.ReadCloser, out T) error {
 	var m map[string]interface{}
 	all, err := io.ReadAll(reader)
 	if err != nil {

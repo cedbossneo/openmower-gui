@@ -154,6 +154,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/openmower/map": {
+            "delete": {
+                "description": "clear the map",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "clear the map",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/openmower/map/area/add": {
             "post": {
                 "description": "add a map area",
@@ -194,9 +223,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/openmower/map/area/{index}": {
-            "delete": {
-                "description": "delete a map area",
+        "/openmower/map/docking": {
+            "post": {
+                "description": "set the docking point",
                 "consumes": [
                     "application/json"
                 ],
@@ -206,14 +235,16 @@ const docTemplate = `{
                 "tags": [
                     "openmower"
                 ],
-                "summary": "delete a map area",
+                "summary": "set the docking point",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "index of the area to delete",
-                        "name": "index",
-                        "in": "path",
-                        "required": true
+                        "description": "request body",
+                        "name": "CallReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/mower_map.SetDockingPointSrvReq"
+                        }
                     }
                 ],
                 "responses": {
@@ -379,6 +410,23 @@ const docTemplate = `{
                 }
             }
         },
+        "geometry_msgs.Point": {
+            "type": "object",
+            "properties": {
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "z": {
+                    "type": "number"
+                }
+            }
+        },
         "geometry_msgs.Point32": {
             "type": "object",
             "properties": {
@@ -407,6 +455,40 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/geometry_msgs.Point32"
                     }
+                }
+            }
+        },
+        "geometry_msgs.Pose": {
+            "type": "object",
+            "properties": {
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "orientation": {
+                    "$ref": "#/definitions/geometry_msgs.Quaternion"
+                },
+                "position": {
+                    "$ref": "#/definitions/geometry_msgs.Point"
+                }
+            }
+        },
+        "geometry_msgs.Quaternion": {
+            "type": "object",
+            "properties": {
+                "msg.Package": {
+                    "type": "integer"
+                },
+                "w": {
+                    "type": "number"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "z": {
+                    "type": "number"
                 }
             }
         },
@@ -441,6 +523,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/geometry_msgs.Polygon"
                     }
+                }
+            }
+        },
+        "mower_map.SetDockingPointSrvReq": {
+            "type": "object",
+            "properties": {
+                "dockingPose": {
+                    "$ref": "#/definitions/geometry_msgs.Pose"
+                },
+                "msg.Package": {
+                    "type": "integer"
                 }
             }
         }
