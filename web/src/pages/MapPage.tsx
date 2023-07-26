@@ -379,14 +379,13 @@ export const MapPage = () => {
             }
         }
         if (!map) {
-            let quaternionFromHeading = getQuaternionFromHeading(0.90);
             await guiApi.openmower.mapDockingCreate({
                 dockingPose: {
                     orientation: {
-                        x: quaternionFromHeading.X!!,
-                        y: quaternionFromHeading.Y!!,
-                        z: quaternionFromHeading.Z!!,
-                        w: quaternionFromHeading.W!!,
+                        x: 0,
+                        y: 0,
+                        z: 0,
+                        w: 1,
                     },
                     position: {
                         x: 0,
