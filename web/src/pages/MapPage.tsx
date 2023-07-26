@@ -298,10 +298,10 @@ export const MapPage = () => {
 
     const datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
     const datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
-    if (datumLon == 0 || datumLat == 0 || Object.keys(features).length == 0 || !map?.MapCenterY || !map?.MapCenterX) {
+    if (datumLon == 0 || datumLat == 0) {
         return <>Loading</>
     }
-    const map_center = (map) ? transpose(datumLon, datumLat, map.MapCenterY!!, map.MapCenterX!!) : [datumLat, datumLon]
+    const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(datumLon, datumLat, map.MapCenterY, map.MapCenterX) : [datumLon, datumLat]
 
     function handleEditMap() {
         setEditMap(!editMap)
@@ -378,22 +378,42 @@ export const MapPage = () => {
                 }
             }
         }
-        let quaternionFromHeading = getQuaternionFromHeading(map?.DockHeading!!);
-        await guiApi.openmower.mapDockingCreate({
-            dockingPose: {
-                orientation: {
-                    x: quaternionFromHeading.X!!,
-                    y: quaternionFromHeading.Y!!,
-                    z: quaternionFromHeading.Z!!,
-                    w: quaternionFromHeading.W!!,
-                },
-                position: {
-                    x: map?.DockX!!,
-                    y: map?.DockY!!,
-                    z: 0,
+        if (!map) {
+            let quaternionFromHeading = getQuaternionFromHeading(0.90);
+            await guiApi.openmower.mapDockingCreate({
+                dockingPose: {
+                    orientation: {
+                        x: quaternionFromHeading.X!!,
+                        y: quaternionFromHeading.Y!!,
+                        z: quaternionFromHeading.Z!!,
+                        w: quaternionFromHeading.W!!,
+                    },
+                    position: {
+                        x: 0,
+                        y: 0,
+                        z: 0,
+                    }
                 }
-            }
-        })
+            })
+        } else {
+            let quaternionFromHeading = getQuaternionFromHeading(map?.DockHeading!!);
+            await guiApi.openmower.mapDockingCreate({
+                dockingPose: {
+                    orientation: {
+                        x: quaternionFromHeading.X!!,
+                        y: quaternionFromHeading.Y!!,
+                        z: quaternionFromHeading.Z!!,
+                        w: quaternionFromHeading.W!!,
+                    },
+                    position: {
+                        x: map?.DockX!!,
+                        y: map?.DockY!!,
+                        z: 0,
+                    }
+                }
+            })
+        }
+
     }
 
     return (
