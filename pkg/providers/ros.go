@@ -45,7 +45,7 @@ func NewRosProvider() types2.IRosProvider {
 	err := r.initSubscribers()
 	if err != nil {
 		logrus.Error(err)
-		return nil
+		return r
 	}
 	return r
 }
