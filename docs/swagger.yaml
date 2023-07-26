@@ -38,6 +38,17 @@ definitions:
       ok:
         type: string
     type: object
+  geometry_msgs.Point:
+    properties:
+      msg.Package:
+        type: integer
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
+    type: object
   geometry_msgs.Point32:
     properties:
       msg.Package:
@@ -57,6 +68,28 @@ definitions:
         items:
           $ref: '#/definitions/geometry_msgs.Point32'
         type: array
+    type: object
+  geometry_msgs.Pose:
+    properties:
+      msg.Package:
+        type: integer
+      orientation:
+        $ref: '#/definitions/geometry_msgs.Quaternion'
+      position:
+        $ref: '#/definitions/geometry_msgs.Point'
+    type: object
+  geometry_msgs.Quaternion:
+    properties:
+      msg.Package:
+        type: integer
+      w:
+        type: number
+      x:
+        type: number
+      "y":
+        type: number
+      z:
+        type: number
     type: object
   mower_map.AddMowingAreaSrvReq:
     properties:
@@ -79,6 +112,13 @@ definitions:
         items:
           $ref: '#/definitions/geometry_msgs.Polygon'
         type: array
+    type: object
+  mower_map.SetDockingPointSrvReq:
+    properties:
+      dockingPose:
+        $ref: '#/definitions/geometry_msgs.Pose'
+      msg.Package:
+        type: integer
     type: object
 info:
   contact: { }
@@ -176,17 +216,11 @@ paths:
       summary: call a service
       tags:
         - openmower
-  /openmower/map/area/{index}:
+  /openmower/map:
     delete:
       consumes:
         - application/json
-      description: delete a map area
-      parameters:
-        - description: index of the area to delete
-          in: path
-          name: index
-          required: true
-          type: string
+      description: clear the map
       produces:
         - application/json
       responses:
@@ -198,7 +232,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorResponse'
-      summary: delete a map area
+      summary: clear the map
       tags:
         - openmower
   /openmower/map/area/add:
@@ -225,6 +259,32 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: add a map area
+      tags:
+        - openmower
+  /openmower/map/docking:
+    post:
+      consumes:
+        - application/json
+      description: set the docking point
+      parameters:
+        - description: request body
+          in: body
+          name: CallReq
+          required: true
+          schema:
+            $ref: '#/definitions/mower_map.SetDockingPointSrvReq'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: set the docking point
       tags:
         - openmower
   /openmower/subscribe/{topic}:

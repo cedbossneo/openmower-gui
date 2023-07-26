@@ -3,7 +3,7 @@ import {useApi} from "../hooks/useApi.ts";
 import {Button, Col, Modal, notification, Row, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {useCallback, useEffect, useState} from "react";
-import {Gps, Map as MapType, MapArea} from "../types/ros.ts";
+import {Gps, Map as MapType, MapArea, Quaternion} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
 import type {Feature} from 'geojson';
@@ -14,6 +14,23 @@ import AsyncButton from "../components/AsyncButton.tsx";
 
 const radians = function (degrees: number) {
     return degrees * Math.PI / 180;
+}
+
+/*
+function getHeading(quaternion: Quaternion): number {
+    return Math.atan2(2.0 * (quaternion.W!! * quaternion.Z!! + quaternion.X!! * quaternion.Y!!), 1.0 - 2.0 * (quaternion.Y!! * quaternion.Y!! + quaternion.Z!! * quaternion.Z!!));
+}*/
+
+function getQuaternionFromHeading(heading: number): Quaternion {
+    const q = {
+        X: 0,
+        Y: 0,
+        Z: 0,
+        W: 0,
+    } as Quaternion
+    q.W = Math.cos(heading / 2)
+    q.Z = Math.sin(heading / 2)
+    return q
 }
 
 export function drawLine(longitude: number, latitude: number, orientation: number, length: number): [number, number] {
@@ -330,6 +347,18 @@ export const MapPage = () => {
                 }]
             }
         }
+        try {
+            await guiApi.openmower.deleteOpenmower()
+            api.success({
+                message: "Map deleted",
+            })
+            setEditMap(false)
+        } catch (e: any) {
+            api.error({
+                message: "Failed to delete map",
+                description: e.message,
+            })
+        }
         for (const [type, areasOfType] of Object.entries(areas)) {
             for (const [_, area] of Object.entries(areasOfType)) {
                 try {
@@ -349,20 +378,22 @@ export const MapPage = () => {
                 }
             }
         }
-        for (let i = 0; i < (map?.WorkingArea?.length ?? 0) + (map?.NavigationAreas?.length ?? 0); i++) {
-            try {
-                await guiApi.openmower.mapAreaDelete(i.toString())
-                api.success({
-                    message: "Area deleted",
-                })
-                setEditMap(false)
-            } catch (e: any) {
-                api.error({
-                    message: "Failed to delete area",
-                    description: e.message,
-                })
+        let quaternionFromHeading = getQuaternionFromHeading(map?.DockHeading!!);
+        await guiApi.openmower.mapDockingCreate({
+            dockingPose: {
+                orientation: {
+                    x: quaternionFromHeading.X!!,
+                    y: quaternionFromHeading.Y!!,
+                    z: quaternionFromHeading.Z!!,
+                    w: quaternionFromHeading.W!!,
+                },
+                position: {
+                    x: map?.DockX!!,
+                    y: map?.DockY!!,
+                    z: 0,
+                }
             }
-        }
+        })
     }
 
     return (

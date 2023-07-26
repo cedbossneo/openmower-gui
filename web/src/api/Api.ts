@@ -32,6 +32,13 @@ export interface ApiOkResponse {
     ok?: string;
 }
 
+export interface GeometryMsgsPoint {
+    "msg.Package"?: number;
+    x?: number;
+    y?: number;
+    z?: number;
+}
+
 export interface GeometryMsgsPoint32 {
     "msg.Package"?: number;
     x?: number;
@@ -42,6 +49,20 @@ export interface GeometryMsgsPoint32 {
 export interface GeometryMsgsPolygon {
     "msg.Package"?: number;
     points?: GeometryMsgsPoint32[];
+}
+
+export interface GeometryMsgsPose {
+    "msg.Package"?: number;
+    orientation?: GeometryMsgsQuaternion;
+    position?: GeometryMsgsPoint;
+}
+
+export interface GeometryMsgsQuaternion {
+    "msg.Package"?: number;
+    w?: number;
+    x?: number;
+    y?: number;
+    z?: number;
 }
 
 export interface MowerMapAddMowingAreaSrvReq {
@@ -57,6 +78,11 @@ export interface MowerMapMapArea {
     obstacles?: GeometryMsgsPolygon[];
 }
 
+export interface MowerMapSetDockingPointSrvReq {
+    dockingPose?: GeometryMsgsPose;
+    "msg.Package"?: number;
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -66,16 +92,16 @@ export interface FullRequestParams extends Omit<RequestInit, "body"> {
     /** request path */
     path: string;
     /** content type of request body */
-  type?: ContentType;
-  /** query params */
-  query?: QueryParamsType;
-  /** format of response (i.e. response.json() -> format: "json") */
-  format?: ResponseFormat;
-  /** request body */
-  body?: unknown;
-  /** base url */
-  baseUrl?: string;
-  /** request cancellation token */
+    type?: ContentType;
+    /** query params */
+    query?: QueryParamsType;
+    /** format of response (i.e. response.json() -> format: "json") */
+    format?: ResponseFormat;
+    /** request body */
+    body?: unknown;
+    /** base url */
+    baseUrl?: string;
+    /** request cancellation token */
   cancelToken?: CancelToken;
 }
 
@@ -139,8 +165,8 @@ export class HttpClient<SecurityDataType = unknown> {
   }
 
   protected toQueryString(rawQuery?: QueryParamsType): string {
-    const query = rawQuery || {};
-    const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
+      const query = rawQuery || {};
+      const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
       return keys
           .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
           .join("&");
@@ -228,42 +254,42 @@ export class HttpClient<SecurityDataType = unknown> {
       const payloadFormatter = this.contentFormatters[type || ContentType.Json];
       const responseFormat = format || requestParams.format;
 
-    return this.customFetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
-      ...requestParams,
-      headers: {
-          ...(requestParams.headers || {}),
-          ...(type && type !== ContentType.FormData ? {"Content-Type": type} : {}),
-      },
-      signal: (cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal) || null,
-      body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
-    }).then(async (response) => {
-      const r = response as HttpResponse<T, E>;
-      r.data = null as unknown as T;
-      r.error = null as unknown as E;
+      return this.customFetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
+          ...requestParams,
+          headers: {
+              ...(requestParams.headers || {}),
+              ...(type && type !== ContentType.FormData ? {"Content-Type": type} : {}),
+          },
+          signal: (cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal) || null,
+          body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
+      }).then(async (response) => {
+          const r = response as HttpResponse<T, E>;
+          r.data = null as unknown as T;
+          r.error = null as unknown as E;
 
-        const data = !responseFormat
-            ? r
-            : await response[responseFormat]()
-                .then((data) => {
-                    if (r.ok) {
-                        r.data = data;
-                    } else {
-                        r.error = data;
-                    }
-                    return r;
-                })
-                .catch((e) => {
-                    r.error = e;
-                    return r;
-                });
+          const data = !responseFormat
+              ? r
+              : await response[responseFormat]()
+                  .then((data) => {
+                      if (r.ok) {
+                          r.data = data;
+                      } else {
+                          r.error = data;
+                      }
+                      return r;
+                  })
+                  .catch((e) => {
+                      r.error = e;
+                      return r;
+                  });
 
-      if (cancelToken) {
-        this.abortControllers.delete(cancelToken);
-      }
+          if (cancelToken) {
+              this.abortControllers.delete(cancelToken);
+          }
 
-      if (!response.ok) throw data;
-      return data;
-    });
+          if (!response.ok) throw data;
+          return data;
+      });
   };
 }
 
@@ -340,6 +366,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           }),
 
       /**
+       * @description clear the map
+       *
+       * @tags openmower
+       * @name DeleteOpenmower
+       * @summary clear the map
+       * @request DELETE:/openmower/map
+       */
+      deleteOpenmower: (params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/openmower/map`,
+              method: "DELETE",
+              type: ContentType.Json,
+              format: "json",
+              ...params,
+          }),
+
+      /**
        * @description add a map area
        *
        * @tags openmower
@@ -358,17 +401,18 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           }),
 
       /**
-       * @description delete a map area
+       * @description set the docking point
        *
        * @tags openmower
-       * @name MapAreaDelete
-       * @summary delete a map area
-       * @request DELETE:/openmower/map/area/{index}
+       * @name MapDockingCreate
+       * @summary set the docking point
+       * @request POST:/openmower/map/docking
        */
-      mapAreaDelete: (index: string, params: RequestParams = {}) =>
+      mapDockingCreate: (CallReq: MowerMapSetDockingPointSrvReq, params: RequestParams = {}) =>
           this.request<ApiOkResponse, ApiErrorResponse>({
-              path: `/openmower/map/area/${index}`,
-              method: "DELETE",
+              path: `/openmower/map/docking`,
+              method: "POST",
+              body: CallReq,
               type: ContentType.Json,
               format: "json",
               ...params,
