@@ -63,6 +63,7 @@ export const MapPage = () => {
 
     const guiApi = useApi()
     const [editMap, setEditMap] = useState<boolean>(false)
+    const [features, setFeatures] = useState<Record<string, Feature>>({});
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
     useEffect(() => {
@@ -185,11 +186,10 @@ export const MapPage = () => {
         (e) => {
             let parse = JSON.parse(e) as MapType;
             setMap(parse)
-            console.log(parse)
             const workingAreas = buildFeatures(parse.WorkingArea, "area")
             const navigationAreas = buildFeatures(parse.NavigationAreas, "navigation")
-            setFeatures(oldFeatures => {
-                const newFeatures = {...oldFeatures, ...workingAreas, ...navigationAreas};
+            setFeatures(() => {
+                const newFeatures = {...workingAreas, ...navigationAreas};
                 const dock_lonlat = transpose(datumLon, datumLat, parse?.DockY!!, parse?.DockX!!)
                 newFeatures["dock"] = {
                     id: "dock",
@@ -219,8 +219,6 @@ export const MapPage = () => {
             mapStream.stop()
         }
     }, [])
-
-    const [features, setFeatures] = useState<Record<string, Feature>>({});
 
     function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
         const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
