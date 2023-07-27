@@ -2,19 +2,6 @@
 
 A GUI for the Mowgli / OpenMower project.
 
-## Installation
+## Demo
 
-### Prerequisites
-
-- Docker
-- Docker Compose
-
-### Configuration
-
-Copy the `.env.dist` file to `.env` and edit it to your needs.
-
-### Launch
-
-```bash
-docker-compose up
-```
+[![Watch the video](https://img.youtube.com/vi/BeHon956ir8/default.jpg)]([https://youtu.be/BeHon956ir8](https://youtu.be/BeHon956ir8))
