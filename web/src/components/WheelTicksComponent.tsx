@@ -25,9 +25,9 @@ export function WheelTicksComponent(props: { api: NotificationInstance }) {
         }
     }, []);
     return <Row gutter={[16, 16]}>
-        <Col span={8}><Statistic title="Rear Left" value={wheelTicks?.WheelTicksRl}/></Col>
-        <Col span={8}><Statistic title="Rear Right" value={wheelTicks?.WheelTicksRr}/></Col>
-        <Col span={8}><Statistic title="Rear Left Direction" value={wheelTicks?.WheelDirectionRl}/></Col>
-        <Col span={8}><Statistic title="Rear Right Direction" value={wheelTicks?.WheelDirectionRr}/></Col>
+        <Col lg={8} xs={24}><Statistic title="Rear Left" value={wheelTicks?.WheelTicksRl}/></Col>
+        <Col lg={8} xs={24}><Statistic title="Rear Right" value={wheelTicks?.WheelTicksRr}/></Col>
+        <Col lg={8} xs={24}><Statistic title="Rear Left Direction" value={wheelTicks?.WheelDirectionRl}/></Col>
+        <Col lg={8} xs={24}><Statistic title="Rear Right Direction" value={wheelTicks?.WheelDirectionRr}/></Col>
     </Row>;
 }

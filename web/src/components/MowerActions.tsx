@@ -3,6 +3,14 @@ import {useApi} from "../hooks/useApi.ts";
 import {Card} from "antd";
 import AsyncButton from "./AsyncButton.tsx";
 import React from "react";
+import styled from "styled-components";
+
+const ActionsCard = styled(Card)`
+  .ant-card-body > button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+`;
 
 export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationInstance }>> = (props) => {
     const guiApi = useApi()
@@ -22,7 +30,7 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
             })
         }
     };
-    return <Card title={"Actions"}>
+    return <ActionsCard title={"Actions"}>
         {props.children}
         <AsyncButton size={"small"} type="primary" onAsyncClick={handleMowerCommand("mower_start")}
                      style={{marginRight: 10}}>Start</AsyncButton>
@@ -41,5 +49,5 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
         <AsyncButton size={"small"} danger
                      onAsyncClick={handleMowerCommand("mow", {mow_enabled: 0, mow_direction: 0})}
                      style={{marginRight: 10}}>Blade Off</AsyncButton>
-    </Card>;
+    </ActionsCard>;
 };

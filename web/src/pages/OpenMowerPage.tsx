@@ -31,12 +31,12 @@ export const OpenMowerPage = () => {
                 {<ImuComponent api={api}/>}
             </Card>
         </Col>
-        <Col span={12}>
+        <Col lg={12} xs={24}>
             <Card title={"GPS"}>
                 {<GpsComponent api={api}/>}
             </Card>
         </Col>
-        <Col span={12}>
+        <Col lg={12} xs={24}>
             <Card title={"Wheel Ticks"}>
                 {<WheelTicksComponent api={api}/>}
             </Card>

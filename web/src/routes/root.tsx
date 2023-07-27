@@ -37,15 +37,16 @@ export default () => {
         }
     }, [route, navigate])
     return (
-        <Row>
-            <Col span={4}>
-                <Menu onClick={(info) =>
+        <Row style={{height: '100%'}}>
+            <Col span={4} style={{height: '100%'}}>
+                <Menu style={{height: '100%'}} onClick={(info) =>
                     navigate({
                         pathname: info.key,
                     })} selectedKeys={route.map(r => r.pathname)} mode="vertical" items={menu}/>
             </Col>
             <Col span={20} style={{
                 padding: '0 24px',
+                height: '100%',
             }}>
                 <Outlet/>
             </Col>

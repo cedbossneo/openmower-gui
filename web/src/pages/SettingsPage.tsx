@@ -588,7 +588,7 @@ export const SettingsPage = () => {
                 <Col span={24} style={{position: "fixed", bottom: 20}}>
                     <FormButtonGroup>
                         <Submit loading={form.loading} onSubmit={saveSettings}>Save settings</Submit>
-                        <AsyncButton onAsyncClick={restartOpenMower}>Restart OpenMower Container</AsyncButton>
+                        <AsyncButton onAsyncClick={restartOpenMower}>Restart OpenMower</AsyncButton>
                     </FormButtonGroup>
                 </Col>
             </Row>

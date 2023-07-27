@@ -414,7 +414,7 @@ export const MapPage = () => {
     }
 
     return (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
                 <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
@@ -430,7 +430,7 @@ export const MapPage = () => {
                                         style={{marginRight: 10}}>Cancel Map Edition</Button>}
                 </MowerActions>
             </Col>
-            <Col span={24}>
+            <Col span={24} style={{height: '70%'}}>
                 {contextHolder}
                 {notificationContextHolder}
                 <Map
@@ -440,7 +440,7 @@ export const MapPage = () => {
                         latitude: map_center[1],
                         zoom: 25,
                     }}
-                    style={{width: '80vw', height: '70vh'}}
+                    style={{width: '100%', height: '100%'}}
                     mapStyle="mapbox://styles/mapbox/satellite-v9"
                 >
                     <DrawControl
