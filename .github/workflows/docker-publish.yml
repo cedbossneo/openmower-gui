@@ -12,6 +12,9 @@ on:
   push:
     branches: [ "master" ]
 
+# permissions are needed if pushing to ghcr.io
+permissions:
+  packages: write
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -48,7 +51,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.SECRET_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -120,7 +123,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.SECRET_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
