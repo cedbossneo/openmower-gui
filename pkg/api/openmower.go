@@ -141,6 +141,8 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 			def, err = subscribe(provider, c, conn, "/mower/wheel_ticks")
 		case "map":
 			def, err = subscribe(provider, c, conn, "/xbot_monitoring/map")
+		case "path":
+			def, err = subscribe(provider, c, conn, "/slic3r_coverage_planner/path_marker_array")
 		}
 		if err != nil {
 			log.Println(err.Error())

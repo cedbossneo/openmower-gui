@@ -1,3 +1,48 @@
+export type ColorRGBA = {
+    R: number
+    G: number
+    B: number
+    A: number
+}
+
+export type Marker = {
+    /*
+    Header                   std_msgs.Header
+	Ns                       string
+	Id                       int32
+	Type                     int32
+	Action                   int32
+	Pose                     geometry_msgs.Pose
+	Scale                    geometry_msgs.Vector3
+	Color                    std_msgs.ColorRGBA
+	Lifetime                 time.Duration
+	FrameLocked              bool
+	Points                   []geometry_msgs.Point
+	Colors                   []std_msgs.ColorRGBA
+	Text                     string
+	MeshResource             string
+	MeshUseEmbeddedMaterials bool
+     */
+    Ns: string
+    Id: number
+    Type: number
+    Action: number
+    Pose: Pose
+    Scale: Vector3
+    Color: ColorRGBA
+    Lifetime: number
+    FrameLocked: boolean
+    Points: Point[]
+    Colors: ColorRGBA[]
+    Text: string
+    MeshResource: string
+    MeshUseEmbeddedMaterials: boolean
+}
+
+export type MarkerArray = {
+    Markers: Marker[]
+}
+
 export type Point32 = {
     /*
     X           float32

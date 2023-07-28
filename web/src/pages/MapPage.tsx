@@ -3,11 +3,11 @@ import {useApi} from "../hooks/useApi.ts";
 import {Button, Col, Modal, notification, Row, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {useCallback, useEffect, useState} from "react";
-import {Gps, Map as MapType, MapArea} from "../types/ros.ts";
+import {Gps, Map as MapType, MapArea, MarkerArray} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
 import type {Feature} from 'geojson';
-import {Polygon, Position} from "geojson";
+import {LineString, Polygon, Position} from "geojson";
 import {MowerActions} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -28,6 +28,7 @@ export const MapPage = () => {
     const [editMap, setEditMap] = useState<boolean>(false)
     const [features, setFeatures] = useState<Record<string, Feature>>({});
     const [map, setMap] = useState<MapType | undefined>(undefined)
+    const [path, setPath] = useState<MarkerArray | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
     useEffect(() => {
         (async () => {
@@ -49,12 +50,14 @@ export const MapPage = () => {
         if (editMap) {
             mapStream.stop()
             gpsStream.stop()
+            pathStream.stop()
         } else {
             if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
                 return
             }
             gpsStream.start("/api/openmower/subscribe/gps",)
             mapStream.start("/api/openmower/subscribe/map",)
+            pathStream.start("/api/openmower/subscribe/path")
         }
     }, [editMap])
     const gpsStream = useWS<string>(() => {
@@ -149,39 +152,80 @@ export const MapPage = () => {
         (e) => {
             let parse = JSON.parse(e) as MapType;
             setMap(parse)
-            const workingAreas = buildFeatures(parse.WorkingArea, "area")
-            const navigationAreas = buildFeatures(parse.NavigationAreas, "navigation")
-            setFeatures(() => {
-                const newFeatures = {...workingAreas, ...navigationAreas};
-                const dock_lonlat = transpose(datumLon, datumLat, parse?.DockY!!, parse?.DockX!!)
-                newFeatures["dock"] = {
-                    id: "dock",
-                    type: "Feature",
-                    properties: {
-                        "color": "#ff00f2",
-                    },
-                    geometry: {
-                        coordinates: dock_lonlat,
-                        type: "Point",
-                    }
-                }
-                return newFeatures;
-            })
         });
+
+    const pathStream = useWS<string>(() => {
+            api.info({
+                message: "PATH Stream closed",
+            })
+        }, () => {
+            api.info({
+                message: "PATH Stream connected",
+            })
+        },
+        (e) => {
+            let parse = JSON.parse(e) as MarkerArray;
+            setPath(parse)
+        });
+
     useEffect(() => {
         if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
             return
         }
         gpsStream.start("/api/openmower/subscribe/gps",)
         mapStream.start("/api/openmower/subscribe/map",)
+        pathStream.start("/api/openmower/subscribe/path")
     }, [settings]);
 
     useEffect(() => {
         return () => {
             gpsStream.stop()
             mapStream.stop()
+            pathStream.stop()
         }
     }, [])
+
+    useEffect(() => {
+        let newFeatures: Record<string, Feature> = {}
+        if (map) {
+            const workingAreas = buildFeatures(map.WorkingArea, "area")
+            const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
+            newFeatures = {...workingAreas, ...navigationAreas}
+            const dock_lonlat = transpose(datumLon, datumLat, map?.DockY!!, map?.DockX!!)
+            newFeatures["dock"] = {
+                id: "dock",
+                type: "Feature",
+                properties: {
+                    "color": "#ff00f2",
+                },
+                geometry: {
+                    coordinates: dock_lonlat,
+                    type: "Point",
+                }
+            }
+        }
+        if (path) {
+            path.Markers.forEach((marker, index) => {
+                const line: Position[] = marker.Points.map(point => {
+                    return transpose(datumLon, datumLat, point.Y!!, point.X!!)
+                })
+                const feature: Feature<LineString> = {
+                    id: "path-" + index,
+                    type: 'Feature',
+                    properties: {
+                        color: `rgb(${marker.Color.R}, ${marker.Color.G}, ${marker.Color.B}, ${marker.Color.A})`
+                    },
+                    geometry: {
+                        coordinates: line,
+                        type: 'LineString'
+                    }
+                }
+                newFeatures[feature.id as string] = feature
+                return feature
+            })
+        }
+        setFeatures(newFeatures)
+    }, [map, path]);
 
     function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
         const maxArea = Object.values<Feature>(currFeatures).filter((f) => {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
+	"github.com/bluenviron/goroslib/v2/pkg/msgs/visualization_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/xbot_msgs"
 	types2 "github.com/cedbossneo/openmower-gui/pkg/types"
@@ -21,6 +22,7 @@ type RosProvider struct {
 	imuSubscriber             *goroslib.Subscriber
 	ticksSubscriber           *goroslib.Subscriber
 	mapSubscriber             *goroslib.Subscriber
+	pathSubscriber            *goroslib.Subscriber
 	subscribers               map[string]map[string]func(msg any)
 	lastMessage               map[string]any
 }
@@ -145,6 +147,13 @@ func (p *RosProvider) initSubscribers() error {
 			Node:     node,
 			Topic:    "/xbot_monitoring/map",
 			Callback: cbHandler[*xbot_msgs.Map](p, "/xbot_monitoring/map"),
+		})
+	}
+	if p.pathSubscriber == nil {
+		p.pathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
+			Node:     node,
+			Topic:    "/slic3r_coverage_planner/path_marker_array",
+			Callback: cbHandler[*visualization_msgs.MarkerArray](p, "/slic3r_coverage_planner/path_marker_array"),
 		})
 	}
 	return nil
