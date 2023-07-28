@@ -7,7 +7,7 @@ import {Gps, Map as MapType, MapArea} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
 import type {Feature} from 'geojson';
-import {Polygon} from "geojson";
+import {Polygon, Position} from "geojson";
 import {MowerActions} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -21,7 +21,8 @@ function getHeading(quaternion: Quaternion): number {
 
 export const MapPage = () => {
     const [api, notificationContextHolder] = notification.useNotification();
-    const [modal, contextHolder] = Modal.useModal();
+    const [modalOpen, setModalOpen] = useState<boolean>(false)
+    const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
 
     const guiApi = useApi()
     const [editMap, setEditMap] = useState<boolean>(false)
@@ -99,7 +100,7 @@ export const MapPage = () => {
     function buildFeatures(areas: MapArea[] | undefined, type: string) {
         return areas?.flatMap((area, index) => {
             const map = {
-                id: type + "-" + index + "-area",
+                id: type + "-" + index + "-area-0",
                 type: 'Feature',
                 properties: {
                     "color": type == "navigation" ? "white" : "#01d30d",
@@ -111,12 +112,12 @@ export const MapPage = () => {
                     type: "Polygon"
                 }
             } as Feature;
-            const obstacles = area.Obstacles?.map((obstacle, index) => {
+            const obstacles = area.Obstacles?.map((obstacle, oindex) => {
                 return {
-                    id: type + "-" + index + "-obstacle",
+                    id: type + "-" + index + "-obstacle-" + oindex,
                     type: 'Feature',
                     properties: {
-                        "color": "#ff0000",
+                        "color": "#bf0000",
                     },
                     geometry: {
                         coordinates: [obstacle.Points?.map((point) => {
@@ -185,7 +186,7 @@ export const MapPage = () => {
     function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
         const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
             let idDetails = (f.id as string).split("-")
-            if (idDetails.length != 3) {
+            if (idDetails.length != 4) {
                 return false
             }
             let areaType = idDetails[0]
@@ -193,7 +194,7 @@ export const MapPage = () => {
             return areaType == type && component == areaComponent
         }).reduce((acc, val) => {
             let idDetails = (val.id as string).split("-")
-            if (idDetails.length != 3) {
+            if (idDetails.length != 4) {
                 return acc
             }
             let index = parseInt(idDetails[1])
@@ -202,37 +203,117 @@ export const MapPage = () => {
             }
             return acc
         }, 0)
-        return type + "-" + (maxArea + 1) + "-" + component;
+        const maxComponent = Object.values<Feature>(currFeatures).filter((f) => {
+            return (f.id as string).startsWith(type + "-" + (maxArea + 1) + "-" + component + "-")
+        }).reduce((acc, val) => {
+            let idDetails = (val.id as string).split("-")
+            if (idDetails.length != 4) {
+                return acc
+            }
+            let index = parseInt(idDetails[3])
+            if (index > acc) {
+                return index
+            }
+            return acc
+        }, 0)
+        return type + "-" + (maxArea + 1) + "-" + component + "-" + maxComponent + 1;
+    }
+
+    function saveNavigationArea() {
+        if (currentFeature == undefined) {
+            return
+        }
+        setFeatures(currFeatures => {
+            let id = getNewId(currFeatures, "navigation", "area");
+            currentFeature.id = id
+            currentFeature.properties = {
+                color: "white",
+            }
+            return {...currFeatures, [id]: currentFeature};
+        })
+        setCurrentFeature(undefined)
+        setModalOpen(false)
+    }
+
+    function saveMowingArea() {
+        if (currentFeature == undefined) {
+            return
+        }
+        setFeatures(currFeatures => {
+            let id = getNewId(currFeatures, "area", "area");
+            currentFeature.id = id
+            currentFeature.properties = {
+                color: "#01d30d",
+            }
+            return {...currFeatures, [id]: currentFeature};
+        })
+        setCurrentFeature(undefined)
+        setModalOpen(false)
+    }
+
+    const inside = (currentLayerCoordinates: Position[], areaCoordinates: Position[]) => {
+        let inside = false;
+        let j = areaCoordinates.length - 1;
+        for (let i = 0; i < areaCoordinates.length; i++) {
+            const xi = areaCoordinates[i][0];
+            const yi = areaCoordinates[i][1];
+            const xj = areaCoordinates[j][0];
+            const yj = areaCoordinates[j][1];
+
+            const intersect = ((yi > currentLayerCoordinates[1][1]) !== (yj > currentLayerCoordinates[1][1]))
+                && (currentLayerCoordinates[1][0] < (xj - xi) * (currentLayerCoordinates[1][1] - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+            j = i;
+        }
+        return inside;
+    };
+
+    function deleteFeature() {
+        if (currentFeature == undefined) {
+            return
+        }
+        setFeatures(currFeatures => {
+            const newFeatures = {...currFeatures};
+            delete newFeatures[currentFeature.id!!]
+            return newFeatures
+        })
+        setCurrentFeature(undefined)
+        setModalOpen(false)
+    }
+
+    function saveObstacle() {
+        if (currentFeature == undefined) {
+            return
+        }
+        setFeatures(currFeatures => {
+            const currentLayerCoordinates = (currentFeature as Feature<Polygon>).geometry.coordinates[0]
+            // find the area that contains the obstacle
+            const area = Object.values<Feature>(currFeatures).find((f) => {
+                if (f.geometry.type != "Polygon") {
+                    return false
+                }
+                const areaCoordinates = (f as Feature<Polygon>).geometry.coordinates[0]
+                return inside(currentLayerCoordinates, areaCoordinates)
+            })
+            if (!area) {
+                return currFeatures
+            }
+            const areaType = (area.id as string).split("-")[0]
+            let id = getNewId(currFeatures, areaType, "obstacle");
+            currentFeature.id = id
+            currentFeature.properties = {
+                color: "#bf0000",
+            }
+            return {...currFeatures, [id]: currentFeature} as Record<string, Feature>;
+        })
+        setCurrentFeature(undefined)
+        setModalOpen(false)
     }
 
     const onCreate = useCallback((e: any) => {
         for (const f of e.features) {
-            modal.confirm({
-                title: 'Set the area type',
-                content: 'Do you want to set the area as a working area or a navigation area?',
-                okText: 'Working area',
-                cancelText: 'Navigation area',
-                onOk: () => {
-                    setFeatures(currFeatures => {
-                        let id = getNewId(currFeatures, "area", "area");
-                        f.id = id
-                        f.properties = {
-                            color: "#01d30d",
-                        }
-                        return {...currFeatures, [id]: f};
-                    })
-                },
-                onCancel: () => {
-                    setFeatures(currFeatures => {
-                        let id = getNewId(currFeatures, "navigation", "area");
-                        f.id = id
-                        f.properties = {
-                            color: "white",
-                        }
-                        return {...currFeatures, [id]: f};
-                    })
-                }
-            })
+            setCurrentFeature(f)
+            setModalOpen(true)
         }
     }, []);
 
@@ -272,7 +353,7 @@ export const MapPage = () => {
         for (const f of Object.values<Feature>(features)) {
             let id = f.id as string;
             let idDetails = id.split("-")
-            if (idDetails.length != 3) {
+            if (idDetails.length != 4) {
                 continue
             }
             let type = idDetails[0]
@@ -377,6 +458,27 @@ export const MapPage = () => {
 
     return (
         <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
+            <Modal
+                open={modalOpen}
+                title={"Set the area type"}
+                footer={[
+                    <Button style={{paddingRight: 10}} key="mowing" type="primary" onClick={saveMowingArea}>
+                        Working area
+                    </Button>,
+                    <Button style={{paddingRight: 10}} key="navigation" onClick={saveNavigationArea}>
+                        Navigation area
+                    </Button>,
+                    <Button style={{paddingRight: 10}} key="obstacle" onClick={saveObstacle}>
+                        Obstacle
+                    </Button>,
+                    <Button key="cancel" onClick={deleteFeature}>
+                        Cancel
+                    </Button>,
+                ]}
+                onOk={saveMowingArea}
+                onCancel={deleteFeature}
+            />
+            {notificationContextHolder}
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
                 <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
@@ -393,8 +495,6 @@ export const MapPage = () => {
                 </MowerActions>
             </Col>
             <Col span={24} style={{height: '70%'}}>
-                {contextHolder}
-                {notificationContextHolder}
                 <Map
                     mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
                     initialViewState={{
