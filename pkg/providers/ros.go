@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/xbot_msgs"
+	types2 "github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/sirupsen/logrus"
-	"mowgli-gui/pkg/msgs/mower_msgs"
-	"mowgli-gui/pkg/msgs/xbot_msgs"
-	types2 "mowgli-gui/pkg/types"
 	"os"
 	"sync"
 )

@@ -3,11 +3,11 @@ package providers
 import (
 	"context"
 	"errors"
+	types2 "github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	"io"
-	types2 "mowgli-gui/pkg/types"
 )
 
 type DockerProvider struct {

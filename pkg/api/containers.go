@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	types2 "github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/docker/docker/api/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/samber/lo"
 	"io"
 	"log"
-	types2 "mowgli-gui/pkg/types"
 	"net/http"
 )
 
@@ -40,7 +40,7 @@ func ContainerListRoutes(group *gin.RouterGroup, provider types2.IDockerProvider
 			return
 		}
 		containersFiltered := lo.Map(lo.Filter(containers, func(container types.Container, idx int) bool {
-			return container.Labels["project"] == "mowgli"
+			return container.Labels["project"] == "openmower"
 		}), func(container types.Container, idx int) Container {
 			return Container{
 				ID:     container.ID,

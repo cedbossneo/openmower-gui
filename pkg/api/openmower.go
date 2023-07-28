@@ -4,13 +4,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
+	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log"
-	"mowgli-gui/pkg/msgs/mower_map"
-	"mowgli-gui/pkg/msgs/mower_msgs"
-	"mowgli-gui/pkg/types"
 	"net/http"
 )
 

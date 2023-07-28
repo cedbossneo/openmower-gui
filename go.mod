@@ -1,4 +1,4 @@
-module mowgli-gui
+module github.com/cedbossneo/openmower-gui
 
 go 1.20
 

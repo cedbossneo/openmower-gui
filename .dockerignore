@@ -5,4 +5,4 @@ web/node_modules
 docker-compose.yaml
 .env
 mower_config.sh
-mowgli-gui.iml
+openmower-gui.iml

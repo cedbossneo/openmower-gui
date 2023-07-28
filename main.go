@@ -6,10 +6,10 @@ import (
 	"github.com/joho/godotenv"
 	swaggerfiles "github.com/swaggo/files"
 
+	"github.com/cedbossneo/openmower-gui/docs"
+	"github.com/cedbossneo/openmower-gui/pkg/api"
+	"github.com/cedbossneo/openmower-gui/pkg/providers"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"mowgli-gui/docs"
-	"mowgli-gui/pkg/api"
-	"mowgli-gui/pkg/providers"
 	"os"
 )
 import "github.com/gin-contrib/cors"

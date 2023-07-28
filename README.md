@@ -1,6 +1,6 @@
-# Mowgli GUI
+# OpenMower GUI
 
-A GUI for the Mowgli / OpenMower project.
+A GUI for the OpenMower project.
 
 ## Demo
 
