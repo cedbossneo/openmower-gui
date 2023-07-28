@@ -51,6 +51,7 @@ export const MapPage = () => {
             mapStream.stop()
             gpsStream.stop()
             pathStream.stop()
+            setPath(undefined)
         } else {
             if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
                 return
