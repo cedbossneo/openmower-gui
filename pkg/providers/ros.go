@@ -37,6 +37,7 @@ func (p *RosProvider) getNode() (*goroslib.Node, error) {
 	p.node, err = goroslib.NewNode(goroslib.NodeConf{
 		Name:          "goroslib",
 		MasterAddress: os.Getenv("ROS_MASTER_URI"),
+		Host:          os.Getenv("ROS_NODE_HOST"),
 	})
 	return p.node, err
 
