@@ -83,6 +83,28 @@ export interface MowerMapSetDockingPointSrvReq {
     "msg.Package"?: number;
 }
 
+export interface ProvidersFirmwareConfig {
+    batChargeCutoffVoltage?: number;
+    boardType?: string;
+    bothWheelsLiftEmergencyMillis?: number;
+    branch?: string;
+    debugType?: string;
+    disableEmergency?: boolean;
+    externalImuAcceleration?: boolean;
+    externalImuAngular?: boolean;
+    limitVoltage150MA?: number;
+    masterJ18?: boolean;
+    maxChargeCurrent?: number;
+    maxChargeVoltage?: number;
+    maxMps?: number;
+    oneWheelLiftEmergencyMillis?: number;
+    panelType?: string;
+    playButtonClearEmergencyMillis?: number;
+    repository?: string;
+    stopButtonEmergencyMillis?: number;
+    tiltEmergencyMillis?: number;
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -467,5 +489,39 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
               format: "json",
               ...params,
           }),
+  };
+    setup = {
+        /**
+         * @description flash the mower board with the given config
+         *
+         * @tags setup
+         * @name FlashBoardCreate
+         * @summary flash the mower board with the given config
+         * @request POST:/setup/flashBoard
+         */
+        flashBoardCreate: (settings: ProvidersFirmwareConfig, params: RequestParams = {}) =>
+            this.request<ApiOkResponse, ApiErrorResponse>({
+                path: `/setup/flashBoard`,
+                method: "POST",
+                body: settings,
+                type: ContentType.Json,
+                ...params,
+            }),
+
+        /**
+         * @description flash the gps configuration
+         *
+         * @tags setup
+         * @name FlashGpsCreate
+         * @summary flash the gps configuration
+         * @request POST:/setup/flashGPS
+         */
+        flashGpsCreate: (params: RequestParams = {}) =>
+            this.request<ApiOkResponse, ApiErrorResponse>({
+                path: `/setup/flashGPS`,
+                method: "POST",
+                type: ContentType.Json,
+                ...params,
+            }),
   };
 }

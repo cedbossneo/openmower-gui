@@ -120,6 +120,47 @@ definitions:
       msg.Package:
         type: integer
     type: object
+  providers.FirmwareConfig:
+    properties:
+      batChargeCutoffVoltage:
+        type: number
+      boardType:
+        type: string
+      bothWheelsLiftEmergencyMillis:
+        type: integer
+      branch:
+        type: string
+      debugType:
+        type: string
+      disableEmergency:
+        type: boolean
+      externalImuAcceleration:
+        type: boolean
+      externalImuAngular:
+        type: boolean
+      limitVoltage150MA:
+        type: number
+      masterJ18:
+        type: boolean
+      maxChargeCurrent:
+        type: number
+      maxChargeVoltage:
+        type: number
+      maxMps:
+        type: number
+      oneWheelLiftEmergencyMillis:
+        type: integer
+      panelType:
+        type: string
+      playButtonClearEmergencyMillis:
+        type: integer
+      repository:
+        type: string
+      stopButtonEmergencyMillis:
+        type: integer
+      tiltEmergencyMillis:
+        type: integer
+    type: object
 info:
   contact: { }
 paths:
@@ -344,4 +385,49 @@ paths:
       summary: saves the settings to the mower_config.sh file
       tags:
         - settings
+  /setup/flashBoard:
+    post:
+      consumes:
+        - application/json
+      description: flash the mower board with the given config
+      parameters:
+        - description: config
+          in: body
+          name: settings
+          required: true
+          schema:
+            $ref: '#/definitions/providers.FirmwareConfig'
+      produces:
+        - text/event-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: flash the mower board with the given config
+      tags:
+        - setup
+  /setup/flashGPS:
+    post:
+      consumes:
+        - application/json
+      description: flash the gps configuration
+      produces:
+        - text/event-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: flash the gps configuration
+      tags:
+        - setup
 swagger: "2.0"

@@ -319,6 +319,75 @@
                         }
                     }
                 ],
+              "responses": {
+                "200": {
+                  "description": "OK",
+                  "schema": {
+                    "$ref": "#/definitions/api.OkResponse"
+                  }
+                },
+                "500": {
+                  "description": "Internal Server Error",
+                  "schema": {
+                    "$ref": "#/definitions/api.ErrorResponse"
+                  }
+                }
+              }
+            }
+        },
+      "/setup/flashBoard": {
+        "post": {
+          "description": "flash the mower board with the given config",
+          "consumes": [
+            "application/json"
+          ],
+          "produces": [
+            "text/event-stream"
+          ],
+          "tags": [
+            "setup"
+          ],
+          "summary": "flash the mower board with the given config",
+          "parameters": [
+            {
+              "description": "config",
+              "name": "settings",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/providers.FirmwareConfig"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "$ref": "#/definitions/api.OkResponse"
+              }
+            },
+            "500": {
+              "description": "Internal Server Error",
+              "schema": {
+                "$ref": "#/definitions/api.ErrorResponse"
+              }
+            }
+          }
+        }
+      },
+      "/setup/flashGPS": {
+        "post": {
+          "description": "flash the gps configuration",
+          "consumes": [
+            "application/json"
+          ],
+          "produces": [
+            "text/event-stream"
+          ],
+          "tags": [
+            "setup"
+          ],
+          "summary": "flash the gps configuration",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -522,6 +591,68 @@
                 },
                 "msg.Package": {
                     "type": "integer"
+                }
+            }
+        },
+      "providers.FirmwareConfig": {
+        "type": "object",
+        "properties": {
+          "batChargeCutoffVoltage": {
+            "type": "number"
+          },
+          "boardType": {
+            "type": "string"
+          },
+          "bothWheelsLiftEmergencyMillis": {
+            "type": "integer"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "debugType": {
+            "type": "string"
+          },
+          "disableEmergency": {
+            "type": "boolean"
+          },
+          "externalImuAcceleration": {
+            "type": "boolean"
+          },
+          "externalImuAngular": {
+            "type": "boolean"
+          },
+          "limitVoltage150MA": {
+            "type": "number"
+          },
+          "masterJ18": {
+            "type": "boolean"
+          },
+          "maxChargeCurrent": {
+            "type": "number"
+          },
+          "maxChargeVoltage": {
+            "type": "number"
+          },
+          "maxMps": {
+            "type": "number"
+          },
+          "oneWheelLiftEmergencyMillis": {
+            "type": "integer"
+          },
+          "panelType": {
+            "type": "string"
+          },
+          "playButtonClearEmergencyMillis": {
+            "type": "integer"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "stopButtonEmergencyMillis": {
+            "type": "integer"
+          },
+          "tiltEmergencyMillis": {
+            "type": "integer"
                 }
             }
         }

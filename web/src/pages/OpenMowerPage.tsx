@@ -7,38 +7,38 @@ import {WheelTicksComponent} from "../components/WheelTicksComponent.tsx";
 import {GpsComponent} from "../components/GpsComponent.tsx";
 
 export const OpenMowerPage = () => {
-    const [api, contextHolder] = notification.useNotification();
+    const [notificationInstance, notificationContextHolder] = notification.useNotification();
 
 
     return <Row gutter={[16, 16]}>
-        {contextHolder}
+        {notificationContextHolder}
         <Col span={24}>
             <Typography.Title level={2}>OpenMower</Typography.Title>
         </Col>
         <Col span={24}>
-            <MowerActions api={api}/>
+            <MowerActions api={notificationInstance}/>
         </Col>
         <Col span={24}>
             <Card title={"High Level Status"}>
-                {<HighLevelStatusComponent api={api}/>}
+                {<HighLevelStatusComponent api={notificationInstance}/>}
             </Card>
         </Col>
         <Col span={24}>
-            {<StatusComponent api={api}/>}
+            {<StatusComponent api={notificationInstance}/>}
         </Col>
         <Col span={24}>
             <Card title={"IMU"}>
-                {<ImuComponent api={api}/>}
+                {<ImuComponent api={notificationInstance}/>}
             </Card>
         </Col>
         <Col lg={12} xs={24}>
             <Card title={"GPS"}>
-                {<GpsComponent api={api}/>}
+                {<GpsComponent api={notificationInstance}/>}
             </Card>
         </Col>
         <Col lg={12} xs={24}>
             <Card title={"Wheel Ticks"}>
-                {<WheelTicksComponent api={api}/>}
+                {<WheelTicksComponent api={notificationInstance}/>}
             </Card>
         </Col>
     </Row>

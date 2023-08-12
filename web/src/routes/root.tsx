@@ -1,6 +1,6 @@
 import {Outlet, useMatches, useNavigate} from "react-router-dom";
 import {Col, Menu, MenuProps, Row} from "antd";
-import {HeatMapOutlined, MessageOutlined, RobotOutlined, SettingOutlined} from '@ant-design/icons';
+import {HeatMapOutlined, MessageOutlined, RobotOutlined, RocketOutlined, SettingOutlined} from '@ant-design/icons';
 import {useEffect} from "react";
 
 let menu: MenuProps['items'] = [
@@ -8,6 +8,11 @@ let menu: MenuProps['items'] = [
         key: '/openmower',
         label: 'OpenMower',
         icon: <RobotOutlined/>
+    },
+    {
+        key: '/setup',
+        label: 'Setup',
+        icon: <RocketOutlined/>
     },
     {
         key: '/settings',
