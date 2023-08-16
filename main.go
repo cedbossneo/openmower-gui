@@ -32,9 +32,13 @@ func main() {
 	apiGroup := r.Group("/api")
 	dockerProvider := providers.NewDockerProvider()
 	rosProvider := providers.NewRosProvider()
+	firmwareProvider := providers.NewFirmwareProvider()
+	ubloxProvider := providers.NewUbloxProvider()
+	providers.NewHomeKitProvider(rosProvider)
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup, dockerProvider)
 	api.OpenMowerRoutes(apiGroup, rosProvider)
+	api.SetupRoutes(apiGroup, firmwareProvider, ubloxProvider)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	r.Run(":4006")
 }

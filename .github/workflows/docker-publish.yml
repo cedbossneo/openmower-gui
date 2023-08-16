@@ -11,6 +11,9 @@ on:
   workflow_dispatch:
   push:
     branches: [ "master" ]
+  pull_request:
+    branches:
+      - 'master'
 
 # permissions are needed if pushing to ghcr.io
 permissions:

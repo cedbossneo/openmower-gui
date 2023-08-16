@@ -20,7 +20,7 @@ function getHeading(quaternion: Quaternion): number {
 }*/
 
 export const MapPage = () => {
-    const [api, notificationContextHolder] = notification.useNotification();
+    const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [modalOpen, setModalOpen] = useState<boolean>(false)
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
 
@@ -39,7 +39,7 @@ export const MapPage = () => {
                 }
                 setSettings(settings.data.settings ?? {})
             } catch (e: any) {
-                api.error({
+                notificationInstance.error({
                     message: "Failed to load settings",
                     description: e.message,
                 })
@@ -62,11 +62,11 @@ export const MapPage = () => {
         }
     }, [editMap])
     const gpsStream = useWS<string>(() => {
-            api.info({
+            notificationInstance.info({
                 message: "GPS Stream closed",
             })
         }, () => {
-            api.info({
+            notificationInstance.info({
                 message: "GPS Stream connected",
             })
         },
@@ -142,11 +142,11 @@ export const MapPage = () => {
     }
 
     const mapStream = useWS<string>(() => {
-            api.info({
+            notificationInstance.info({
                 message: "MAP Stream closed",
             })
         }, () => {
-            api.info({
+            notificationInstance.info({
                 message: "MAP Stream connected",
             })
         },
@@ -156,11 +156,11 @@ export const MapPage = () => {
         });
 
     const pathStream = useWS<string>(() => {
-            api.info({
+            notificationInstance.info({
                 message: "PATH Stream closed",
             })
         }, () => {
-            api.info({
+            notificationInstance.info({
                 message: "PATH Stream connected",
             })
         },
@@ -435,12 +435,12 @@ export const MapPage = () => {
         }
         try {
             await guiApi.openmower.deleteOpenmower()
-            api.success({
+            notificationInstance.success({
                 message: "Map deleted",
             })
             setEditMap(false)
         } catch (e: any) {
-            api.error({
+            notificationInstance.error({
                 message: "Failed to delete map",
                 description: e.message,
             })
@@ -452,12 +452,12 @@ export const MapPage = () => {
                         area: area,
                         isNavigationArea: type == "navigation",
                     })
-                    api.success({
+                    notificationInstance.success({
                         message: "Area saved",
                     })
                     setEditMap(false)
                 } catch (e: any) {
-                    api.error({
+                    notificationInstance.error({
                         message: "Failed to save area",
                         description: e.message,
                     })
@@ -530,7 +530,7 @@ export const MapPage = () => {
                     use</Typography.Title>
             </Col>
             <Col span={24}>
-                <MowerActions api={api}>
+                <MowerActions api={notificationInstance}>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
                                          style={{marginRight: 10}}>Edit Map</Button>}
                     {editMap && <AsyncButton size={"small"} type="primary" onAsyncClick={handleSaveMap}

@@ -1,34 +1,24 @@
 import {Col, notification, Row, Select, Typography} from "antd";
 import {useEffect, useState} from "react";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
-import styled from "styled-components";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {useWS} from "../hooks/useWS.ts";
 import {useApi} from "../hooks/useApi.ts";
-
-const StyledTerminal = styled.div`
-  div.react-terminal-wrapper {
-    padding-top: 35px;
-  }
-
-  div.react-terminal-wrapper > div.react-terminal-window-buttons {
-    display: none;
-  }
-`;
+import {StyledTerminal} from "../components/StyledTerminal.tsx";
 
 type ContainerList = { value: string, label: string, status: "started" | "stopped" };
 export const LogsPage = () => {
     const guiApi = useApi();
-    const [api, contextHolder] = notification.useNotification();
+    const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [containers, setContainers] = useState<ContainerList[]>([]);
     const [containerId, setContainerId] = useState<string | undefined>(undefined);
     const [data, setData] = useState<string[]>([])
     const stream = useWS<string>(() => {
-        api.error({
+        notificationInstance.error({
             message: "Logs stream closed",
         });
     }, () => {
-        api.info({
+        notificationInstance.info({
             message: "Logs stream connected",
         })
     }, (e, first) => {
@@ -61,7 +51,7 @@ export const LogsPage = () => {
                 setContainerId(options[0].value)
             }
         } catch (e: any) {
-            api.error({
+            notificationInstance.error({
                 message: "Failed to list containers",
                 description: e.message
             })
@@ -100,12 +90,12 @@ export const LogsPage = () => {
                     stream?.stop();
                 }
                 await listContainers();
-                api.success({
+                notificationInstance.success({
                     message: messages[command],
                 })
             }
         } catch (e: any) {
-            api.error({
+            notificationInstance.error({
                 message: `Failed to ${command} container`,
                 description: e.message
             })
@@ -132,7 +122,7 @@ export const LogsPage = () => {
             }
         </Col>
         <Col span={24}>
-            {contextHolder}
+            {notificationContextHolder}
             <StyledTerminal>
                 <Terminal colorMode={ColorMode.Light}>
                     {data.map((line, index) => {
