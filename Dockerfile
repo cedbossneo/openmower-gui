@@ -10,7 +10,7 @@ WORKDIR /web
 RUN yarn && yarn build
 
 FROM ubuntu:22.04
-RUN apt-get update && apt-get install -y ca-certificates curl python3 python3-pip python3-venv git build-essential
+RUN apt-get update && apt-get install -y ca-certificates curl python3 python3-pip python3-venv git build-essential openocd unzip wget
 RUN curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -o get-platformio.py &&    python3 get-platformio.py
 RUN python3 -m pip install --upgrade pygnssutils
 RUN mkdir -p /usr/local/bin &&    ln -s ~/.platformio/penv/bin/platformio /usr/local/bin/platformio &&    ln -s ~/.platformio/penv/bin/pio /usr/local/bin/pio &&    ln -s ~/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb

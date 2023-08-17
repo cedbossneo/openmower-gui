@@ -5,7 +5,7 @@ import {createSchemaField, FormProvider} from "@formily/react";
 import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Submit} from "@formily/antd-v5";
 import {StyledTerminal} from "./StyledTerminal.tsx";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
-import {createForm} from "@formily/core";
+import {createForm, onFieldValueChange} from "@formily/core";
 
 const SchemaField = createSchemaField({
     components: {
@@ -19,6 +19,8 @@ const SchemaField = createSchemaField({
 type Config = {
     repository: string
     branch: string
+    file: string
+    version: string,
     boardType: string,
     panelType: string,
     debugType: string,
@@ -37,7 +39,21 @@ type Config = {
     externalImuAngular: boolean,
     masterJ18: boolean,
 }
-const form = createForm<Config>()
+
+const form = createForm<Config>({
+    effects() {
+        onFieldValueChange('boardType', (field) => {
+            form.setFieldState('*(panelType,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18)', (state) => {
+                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                state.display = field.value !== "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
+            })
+            form.setFieldState('*(version,file)', (state) => {
+                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                state.display = field.value === "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
+            })
+        })
+    },
+})
 export const FlashBoardComponent = (props: { onNext: () => void }) => {
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [data, setData] = useState<string[]>()
@@ -120,6 +136,71 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
             <Col span={24} style={{height: "55vh", overflowY: "auto"}}>
                 <FormLayout layout="vertical">
                     <SchemaField><SchemaField.String
+                        name={"boardType"}
+                        title={"Board Selection"}
+                        default={"BOARD_VERMUT_YARDFORCE500"}
+                        enum={[{
+                            label: "Vermut - YardForce 500 Classic",
+                            value: "BOARD_VERMUT_YARDFORCE500"
+                        }, {
+                            label: "Mowgli - YardForce 500 Classic",
+                            value: "BOARD_YARDFORCE500"
+                        },
+                            {
+                                label: "Mowgli - LUV1000RI",
+                                value: "BOARD_LUV1000RI"
+                            }
+                        ]} x-component="Select"
+                        x-decorator="FormItem"/></SchemaField>
+                    <SchemaField><SchemaField.String
+                        name={"version"}
+                        title={"Version"}
+                        default={"0_13_X"}
+                        enum={[{
+                            label: "V0.13",
+                            value: "0_13_X"
+                        }, {
+                            label: "V0.12 (LSM6DSO)",
+                            value: "0_12_X_LSM6DSO"
+                        },
+                            {
+                                label: "V0.12",
+                                value: "0_12_X"
+                            },
+                            {
+                                label: "V0.11 (MPU9250)",
+                                value: "0_11_X_MPU9250"
+                            },
+                            {
+                                label: "V0.11 (WT901)",
+                                value: "0_11_X_WT901"
+                            },
+                            {
+                                label: "V0.10 (MPU9250)",
+                                value: "0_10_X_MPU9250"
+                            },
+                            {
+                                label: "V0.10 (WT901)",
+                                value: "0_10_X_WT901"
+                            },
+                            {
+                                label: "V0.9 (MPU9250)",
+                                value: "0_9_X_MPU9250"
+                            },
+                            {
+                                label: "V0.9 (WT901 instead of sound)",
+                                value: "0_9_X_WT901_INSTEAD_OF_SOUND"
+                            }
+                        ]} x-component="Select"
+                        x-decorator="FormItem"/></SchemaField>
+                    <SchemaField><SchemaField.String
+                        name={"file"}
+                        title={"Archive"}
+                        default={"https://github.com/ClemensElflein/OpenMower/releases/download/latest/firmware.zip"}
+                        x-decorator-props={{tooltip: "Archive to use for firmware"}}
+                        x-component="Input"
+                        x-decorator="FormItem"/></SchemaField>
+                    <SchemaField><SchemaField.String
                         name={"repository"}
                         title={"Repository"}
                         default={"https://github.com/cedbossneo/mowgli"}
@@ -132,20 +213,6 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                         default={"main"}
                         x-decorator-props={{tooltip: "Branch to use for firmware"}}
                         x-component="Input"
-                        x-decorator="FormItem"/></SchemaField>
-                    <SchemaField><SchemaField.String
-                        name={"boardType"}
-                        title={"Board Selection"}
-                        default={"BOARD_YARDFORCE500"}
-                        enum={[{
-                            label: "YardForce 500 Classic",
-                            value: "BOARD_YARDFORCE500"
-                        },
-                            {
-                                label: "LUV1000RI",
-                                value: "BOARD_LUV1000RI"
-                            }
-                        ]} x-component="Select"
                         x-decorator="FormItem"/></SchemaField>
                     <SchemaField><SchemaField.String
                         name={"panelType"}
