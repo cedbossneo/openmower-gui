@@ -89,7 +89,7 @@ func (hc *HomeKitProvider) launchServer(as *accessory.A) {
 func (hc *HomeKitProvider) subscribeToRos() {
 	hc.rosProvider.Subscribe("/mower_logic/current_state", "ha-status", func(msg any) {
 		status := msg.(*mower_msgs.HighLevelStatus)
-		if status.State == mower_msgs.HighLevelStatus_HIGH_LEVEL_STATE_AUTONOMOUS {
+		if status.StateName == "MOWING" || status.StateName == "DOCKING" || status.StateName == "UNDOCKING" {
 			hc.mower.Switch.On.SetValue(true)
 		} else {
 			hc.mower.Switch.On.SetValue(false)
