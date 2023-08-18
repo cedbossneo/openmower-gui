@@ -2,7 +2,7 @@ import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
 import {Button, Col, Modal, notification, Row, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
-import {useCallback, useEffect, useState} from "react";
+import {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map from 'react-map-gl';
@@ -501,6 +501,41 @@ export const MapPage = () => {
 
     }
 
+    const handleBackupMap = () => {
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style.display = "none";
+        const json = JSON.stringify(map),
+            blob = new Blob([json], {type: "octet/stream"}),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "map.json";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+    const handleRestoreMap = () => {
+        /*<input id="file-input" type="file" name="name" style="display: none;" />*/
+        const input = document.createElement("input");
+        input.type = "file";
+        input.style.display = "none";
+        document.body.appendChild(input);
+        input.addEventListener('change', (event) => {
+            setEditMap(true)
+            const file = (event as unknown as ChangeEvent<HTMLInputElement>).target?.files?.[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.addEventListener('load', (event) => {
+                let content = event.target?.result as string;
+                let parts = content.split(",");
+                let newMap = JSON.parse(atob(parts[1])) as MapType;
+                setMap(newMap)
+            });
+            reader.readAsDataURL(file);
+        })
+        input.click();
+    };
     return (
         <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
             <Modal
@@ -537,6 +572,10 @@ export const MapPage = () => {
                                              style={{marginRight: 10}}>Save Map</AsyncButton>}
                     {editMap && <Button size={"small"} onClick={handleEditMap}
                                         style={{marginRight: 10}}>Cancel Map Edition</Button>}
+                    <Button size={"small"} onClick={handleBackupMap}
+                            style={{marginRight: 10}}>Backup Map</Button>
+                    <Button size={"small"} onClick={handleRestoreMap}
+                            style={{marginRight: 10}}>Restore Map</Button>
                 </MowerActions>
             </Col>
             <Col span={24} style={{height: '70%'}}>

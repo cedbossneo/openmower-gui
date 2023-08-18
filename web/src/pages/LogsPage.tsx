@@ -6,7 +6,7 @@ import {useWS} from "../hooks/useWS.ts";
 import {useApi} from "../hooks/useApi.ts";
 import {StyledTerminal} from "../components/StyledTerminal.tsx";
 
-type ContainerList = { value: string, label: string, status: "started" | "stopped" };
+type ContainerList = { value: string, label: string, status: "started" | "stopped", labels: Record<string, string> };
 export const LogsPage = () => {
     const guiApi = useApi();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
@@ -43,7 +43,8 @@ export const LogsPage = () => {
                 return [{
                     label: `${container.labels.app} ( ${container.names[0].replace("/", "")} )`,
                     value: container.id,
-                    status: container.state == "running" ? "started" : "stopped"
+                    status: container.state == "running" ? "started" : "stopped",
+                    labels: container.labels
                 }]
             });
             setContainers(options ?? []);
@@ -113,7 +114,8 @@ export const LogsPage = () => {
             {
                 selectedContainer && selectedContainer.status === "started" && <>
                     <AsyncButton onAsyncClick={commandContainer("restart")} style={{marginRight: 10}}>Restart</AsyncButton>
-                    <AsyncButton onAsyncClick={commandContainer("stop")}>Stop</AsyncButton>
+                    <AsyncButton disabled={selectedContainer.labels.app == "gui"}
+                                 onAsyncClick={commandContainer("stop")}>Stop</AsyncButton>
                 </>
             }
             {

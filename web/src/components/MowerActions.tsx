@@ -43,7 +43,9 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
         <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("emergency", {emergency: 1})}
                      style={{marginRight: 10}}>Emergency On</AsyncButton>
         <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mow", {mow_enabled: 1, mow_direction: 0})}
-                     style={{marginRight: 10}}>Blade On</AsyncButton>
+                     style={{marginRight: 10}}>Blade Forward</AsyncButton>
+        <AsyncButton size={"small"} onAsyncClick={handleMowerCommand("mow", {mow_enabled: 1, mow_direction: 1})}
+                     style={{marginRight: 10}}>Blade Backward</AsyncButton>
         <AsyncButton size={"small"} danger onAsyncClick={handleMowerCommand("emergency", {emergency: 0})}
                      style={{marginRight: 10}}>Emergency Off</AsyncButton>
         <AsyncButton size={"small"} danger
