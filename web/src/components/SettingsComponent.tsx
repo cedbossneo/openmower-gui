@@ -405,18 +405,20 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
         (async () => {
             try {
                 form.setLoading(true)
-                const settings = await guiApi.settings.settingsList()
-                if (settings.error) {
-                    throw new Error(settings.error.error)
+                const settingsList = await guiApi.settings.settingsList()
+                if (settingsList.error) {
+                    throw new Error(settingsList.error.error)
                 }
                 form.setLoading(false)
-                const fetchedSettings = settings.data.settings ?? {};
+                const fetchedSettings = settingsList.data.settings ?? {};
                 const newSettings: Record<string, any> = {}
                 Object.keys(fetchedSettings).forEach((key) => {
-                    if (fetchedSettings[key] === "True") {
-                        newSettings[key] = true
-                    } else if (fetchedSettings[key] === "False") {
-                        newSettings[key] = false
+                    if (settings[key]?.type === SettingType.Boolean) {
+                        if (fetchedSettings[key] === "True" || fetchedSettings[key] == "1") {
+                            newSettings[key] = true
+                        } else if (fetchedSettings[key] === "False" || fetchedSettings[key] == "0") {
+                            newSettings[key] = false
+                        }
                     } else {
                         newSettings[key] = fetchedSettings[key]
                     }
