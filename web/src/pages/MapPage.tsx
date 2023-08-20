@@ -12,7 +12,7 @@ import {MowerActions} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {MapStyle} from "./MapStyle.tsx";
-import {drawLine, getQuaternionFromHeading, itranspose, meterInDegree, pi, transpose} from "../utils/map.tsx";
+import {drawLine, getQuaternionFromHeading, itranspose, meterInDegree, transpose} from "../utils/map.tsx";
 
 /*
 function getHeading(quaternion: Quaternion): number {
@@ -27,6 +27,7 @@ export const MapPage = () => {
     const guiApi = useApi()
     const [editMap, setEditMap] = useState<boolean>(false)
     const [features, setFeatures] = useState<Record<string, Feature>>({});
+    const [mapKey, setMapKey] = useState<string>("origin")
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
@@ -74,7 +75,8 @@ export const MapPage = () => {
             const gps = JSON.parse(e) as Gps
             const mower_lonlat = transpose(datumLon, datumLat, gps.Pose?.Pose?.Position?.Y!!, gps.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
-                const line = drawLine(mower_lonlat[0], mower_lonlat[1], gps.MotionHeading!! * 2 * pi * 10, meterInDegree / 2)
+                let orientation = gps.MotionHeading!!;
+                const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation, meterInDegree / 2)
                 return {
                     ...oldFeatures, mower: {
                         id: "mower",
@@ -153,6 +155,7 @@ export const MapPage = () => {
         (e) => {
             let parse = JSON.parse(e) as MapType;
             setMap(parse)
+            setMapKey("live")
         });
 
     const pathStream = useWS<string>(() => {
@@ -388,7 +391,8 @@ export const MapPage = () => {
         return <>Loading</>
     }
     const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(datumLon, datumLat, map.MapCenterY, map.MapCenterX) : [datumLon, datumLat]
-
+    const map_ne = transpose(map_center[0], map_center[1], ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
+    const map_sw = transpose(map_center[0], map_center[1], -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
     function handleEditMap() {
         setEditMap(!editMap)
     }
@@ -579,12 +583,10 @@ export const MapPage = () => {
                 </MowerActions>
             </Col>
             <Col span={24} style={{height: '70%'}}>
-                <Map
+                <Map key={mapKey}
                     mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
                     initialViewState={{
-                        longitude: map_center[0],
-                        latitude: map_center[1],
-                        zoom: 25,
+                        bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
                     }}
                     style={{width: '100%', height: '100%'}}
                     mapStyle="mapbox://styles/mapbox/satellite-v9"
