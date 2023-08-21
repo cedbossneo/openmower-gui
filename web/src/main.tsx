@@ -9,6 +9,7 @@ import MapPage from "./pages/MapPage.tsx";
 import SetupPage from "./pages/SetupPage.tsx";
 import {App, Row, Spin} from "antd";
 import {MowerStatus} from "./components/MowerStatus.tsx";
+import UpdatesPage from "./pages/UpdatesPage.tsx";
 
 const router = createHashRouter([
     {
@@ -34,6 +35,10 @@ const router = createHashRouter([
             {
                 element: <SetupPage/>,
                 path: "/setup",
+            },
+            {
+                element: <UpdatesPage/>,
+                path: "/updates",
             }
         ]
     },

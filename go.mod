@@ -33,13 +33,16 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/abcum/lcp v0.0.0-20201209214815-7a3f3840be81 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/brutella/dnssd v1.2.7 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -56,7 +59,9 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gookit/color v1.5.3 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -66,6 +71,7 @@ require (
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -78,6 +84,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/plar/go-adaptive-radix-tree v1.0.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_golang v1.1.0 // indirect
+	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
+	github.com/prometheus/common v0.6.0 // indirect
+	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9 // indirect

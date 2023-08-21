@@ -20,6 +20,7 @@ type Container struct {
 	Names  []string          `json:"names"`
 	Labels map[string]string `json:"labels"`
 	State  string            `json:"state"`
+	Update bool              `json:"update"`
 }
 
 type ContainerListResponse struct {

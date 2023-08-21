@@ -152,6 +152,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/containers/updates": {
+            "get": {
+                "description": "check for container updates",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "containers"
+                ],
+                "summary": "check for container updates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ContainerListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/containers/{containerId}/logs": {
             "get": {
                 "description": "get container logs",
@@ -172,6 +198,41 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/containers/{containerId}/upgrade": {
+            "post": {
+                "description": "upgrade a container",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "containers"
+                ],
+                "summary": "upgrade a container",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "container id",
+                        "name": "containerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/containers/{containerId}/{command}": {
@@ -567,6 +628,9 @@ const docTemplate = `{
                 },
                 "state": {
                     "type": "string"
+                },
+                "update": {
+                    "type": "boolean"
                 }
             }
         },

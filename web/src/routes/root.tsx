@@ -1,6 +1,13 @@
 import {Outlet, useMatches, useNavigate} from "react-router-dom";
 import {Layout, Menu, MenuProps} from "antd";
-import {HeatMapOutlined, MessageOutlined, RobotOutlined, RocketOutlined, SettingOutlined} from '@ant-design/icons';
+import {
+    DownloadOutlined,
+    HeatMapOutlined,
+    MessageOutlined,
+    RobotOutlined,
+    RocketOutlined,
+    SettingOutlined
+} from '@ant-design/icons';
 import {useEffect} from "react";
 
 let menu: MenuProps['items'] = [
@@ -28,6 +35,11 @@ let menu: MenuProps['items'] = [
         key: '/logs',
         label: 'Logs',
         icon: <MessageOutlined/>
+    },
+    {
+        key: '/updates',
+        label: 'Updates',
+        icon: <DownloadOutlined/>
     }
 ];
 

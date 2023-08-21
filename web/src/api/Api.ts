@@ -14,6 +14,7 @@ export interface ApiContainer {
   labels?: Record<string, string>;
   names?: string[];
   state?: string;
+    update?: boolean;
 }
 
 export interface ApiContainerListResponse {
@@ -395,6 +396,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           }),
 
       /**
+       * @description check for container updates
+       *
+       * @tags containers
+       * @name UpdatesList
+       * @summary check for container updates
+       * @request GET:/containers/updates
+       */
+      updatesList: (params: RequestParams = {}) =>
+          this.request<ApiContainerListResponse, ApiErrorResponse>({
+              path: `/containers/updates`,
+              method: "GET",
+              format: "json",
+              ...params,
+          }),
+
+      /**
        * @description get container logs
        *
        * @tags containers
@@ -406,6 +423,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           this.request<any, any>({
               path: `/containers/${containerId}/logs`,
               method: "GET",
+              ...params,
+          }),
+
+      /**
+       * @description upgrade a container
+       *
+       * @tags containers
+       * @name UpgradeCreate
+       * @summary upgrade a container
+       * @request POST:/containers/{containerId}/upgrade
+       */
+      upgradeCreate: (containerId: string, params: RequestParams = {}) =>
+          this.request<ApiOkResponse, ApiErrorResponse>({
+              path: `/containers/${containerId}/upgrade`,
+              method: "POST",
+              format: "json",
               ...params,
           }),
 

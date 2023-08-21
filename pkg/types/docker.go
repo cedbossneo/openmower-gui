@@ -12,4 +12,6 @@ type IDockerProvider interface {
 	ContainerStart(ctx context.Context, containerID string) error
 	ContainerStop(ctx context.Context, containerID string) error
 	ContainerRestart(ctx context.Context, containerID string) error
+	ImageUpdateCheck(ctx context.Context, containerID string) (bool, error)
+	ContainerUpgrade(ctx context.Context, containerID string) error
 }
