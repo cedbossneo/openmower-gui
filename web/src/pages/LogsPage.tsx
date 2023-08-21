@@ -5,6 +5,7 @@ import AsyncButton from "../components/AsyncButton.tsx";
 import {useWS} from "../hooks/useWS.ts";
 import {useApi} from "../hooks/useApi.ts";
 import {StyledTerminal} from "../components/StyledTerminal.tsx";
+import ansiHTML from "../utils/ansi.ts";
 
 type ContainerList = { value: string, label: string, status: "started" | "stopped", labels: Record<string, string> };
 export const LogsPage = () => {
@@ -128,7 +129,9 @@ export const LogsPage = () => {
             <StyledTerminal>
                 <Terminal colorMode={ColorMode.Light}>
                     {data.map((line, index) => {
-                        return <TerminalOutput key={index}>{line}</TerminalOutput>
+                        return <TerminalOutput key={index}>
+                            <div dangerouslySetInnerHTML={{__html: ansiHTML(line)}}></div>
+                        </TerminalOutput>
                     })}
                 </Terminal>
             </StyledTerminal>
