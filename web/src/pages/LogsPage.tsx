@@ -6,11 +6,14 @@ import {useWS} from "../hooks/useWS.ts";
 import {useApi} from "../hooks/useApi.ts";
 import {StyledTerminal} from "../components/StyledTerminal.tsx";
 import ansiHTML from "../utils/ansi.ts";
+import {MowerActions} from "../components/MowerActions.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.tsx";
 
 type ContainerList = { value: string, label: string, status: "started" | "stopped", labels: Record<string, string> };
 export const LogsPage = () => {
     const guiApi = useApi();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
+    const highLevelStatus = useHighLevelStatus(notificationInstance);
     const [containers, setContainers] = useState<ContainerList[]>([]);
     const [containerId, setContainerId] = useState<string | undefined>(undefined);
     const [data, setData] = useState<string[]>([])
@@ -107,6 +110,9 @@ export const LogsPage = () => {
     return <Row>
         <Col span={24}>
             <Typography.Title level={2}>Container logs</Typography.Title>
+        </Col>
+        <Col span={24}>
+            <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus} showStatus/>
         </Col>
         <Col span={24} style={{marginBottom: 20}}>
             <Select<string> options={containers} value={containerId} style={{marginRight: 10}} onSelect={(value) => {

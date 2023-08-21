@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
@@ -28,6 +29,7 @@ func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	SetDockingPointRoute(group, provider)
 	ClearMapRoute(group, provider)
 	SubscriberRoute(group, provider)
+	PublisherRoute(group, provider)
 }
 
 // AddMapAreaRoute add a map area
@@ -157,6 +159,46 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		if err != nil {
 			c.Error(err)
 			return
+		}
+	})
+}
+
+// PublisherRoute publish to a topic
+//
+// @Summary publish to a topic
+// @Description publish to a topic
+// @Tags openmower
+// @Param topic path string true "topic to publish to, could be: joy"
+// @Router /openmower/publish/{topic} [get]
+func PublisherRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.GET("/publish/:topic", func(c *gin.Context) {
+		// create a node and connect to the master
+		var err error
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		// Read messages from the websocket connection and publish them to ROS
+		publisher, err := provider.Publisher("/joy_vel", &geometry_msgs.Twist{})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		defer publisher.Close()
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				c.Error(err)
+				break
+			}
+			var msgObj geometry_msgs.Twist
+			err = json.Unmarshal(msg, &msgObj)
+			if err != nil {
+				c.Error(err)
+				break
+			}
+			publisher.Write(&msgObj)
 		}
 	})
 }

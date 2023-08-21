@@ -1,30 +1,11 @@
 import {NotificationInstance} from "antd/es/notification/interface";
-import {useEffect, useState} from "react";
-import {ESCStatus, Status} from "../types/ros.ts";
-import {useWS} from "../hooks/useWS.ts";
+import {ESCStatus} from "../types/ros.ts";
 import {Card, Col, Row, Statistic} from "antd";
 import {booleanFormatter} from "./utils.tsx";
+import {useStatus} from "../hooks/useStatus.tsx";
 
 export function StatusComponent(props: { api: NotificationInstance }) {
-    const [status, setStatus] = useState<Status>({})
-    const statusStream = useWS<string>(() => {
-            props.api.info({
-                message: "Status Stream closed",
-            })
-        }, () => {
-            props.api.info({
-                message: "Status Stream connected",
-            })
-        },
-        (e) => {
-            setStatus(JSON.parse(e))
-        })
-    useEffect(() => {
-        statusStream.start("/api/openmower/subscribe/status",)
-        return () => {
-            statusStream.stop()
-        }
-    }, []);
+    const status = useStatus(props.api);
     const renderEscStatus = (escStatus: ESCStatus | undefined) => {
         return <Row gutter={[16, 16]}>
             <Col lg={8} xs={12}><Statistic title="Status" value={escStatus?.Status}/></Col>

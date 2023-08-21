@@ -171,14 +171,14 @@ definitions:
         type: string
     type: object
 info:
-  contact: { }
+  contact: {}
 paths:
   /config/envs:
     get:
       description: get config env from backend
       produces:
-        - application/json
-        - application/json
+      - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -190,21 +190,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: get config env from backend
       tags:
-        - config
+      - config
   /config/keys/get:
     post:
       description: get config from backend
       parameters:
-        - description: settings
-          in: body
-          name: settings
-          required: true
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+      - description: settings
+        in: body
+        name: settings
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -218,21 +218,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: get config from backend
       tags:
-        - config
+      - config
   /config/keys/set:
     post:
       description: set config to backend
       parameters:
-        - description: settings
-          in: body
-          name: settings
-          required: true
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+      - description: settings
+        in: body
+        name: settings
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -244,12 +244,12 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: set config to backend
       tags:
-        - config
+      - config
   /containers:
     get:
       description: list all containers
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -261,23 +261,23 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: list all containers
       tags:
-        - containers
+      - containers
   /containers/{containerId}/{command}:
     post:
       description: execute a command on a container
       parameters:
-        - description: container id
-          in: path
-          name: containerId
-          required: true
-          type: string
-        - description: command to execute (start/stop/restart)
-          in: path
-          name: command
-          required: true
-          type: string
+      - description: container id
+        in: path
+        name: containerId
+        required: true
+        type: string
+      - description: command to execute (start/stop/restart)
+        in: path
+        name: command
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -289,43 +289,43 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: execute a command on a container
       tags:
-        - containers
+      - containers
   /containers/{containerId}/logs:
     get:
       description: get container logs
       parameters:
-        - description: container id
-          in: path
-          name: containerId
-          required: true
-          type: string
+      - description: container id
+        in: path
+        name: containerId
+        required: true
+        type: string
       produces:
-        - text/event-stream
-      responses: { }
+      - text/event-stream
+      responses: {}
       summary: get container logs
       tags:
-        - containers
+      - containers
   /openmower/call/{command}:
     post:
       consumes:
-        - application/json
+      - application/json
       description: call a service
       parameters:
-        - description: 'command to call, could be: mower_start, mower_home, mower_s1,
+      - description: 'command to call, could be: mower_start, mower_home, mower_s1,
           mower_s2, emergency, mow'
-          in: path
-          name: command
-          required: true
-          type: string
-        - description: request body
-          in: body
-          name: CallReq
-          required: true
-          schema:
-            additionalProperties: true
-            type: object
+        in: path
+        name: command
+        required: true
+        type: string
+      - description: request body
+        in: body
+        name: CallReq
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -337,14 +337,14 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: call a service
       tags:
-        - openmower
+      - openmower
   /openmower/map:
     delete:
       consumes:
-        - application/json
+      - application/json
       description: clear the map
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -356,21 +356,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: clear the map
       tags:
-        - openmower
+      - openmower
   /openmower/map/area/add:
     post:
       consumes:
-        - application/json
+      - application/json
       description: add a map area
       parameters:
-        - description: request body
-          in: body
-          name: CallReq
-          required: true
-          schema:
-            $ref: '#/definitions/mower_map.AddMowingAreaSrvReq'
+      - description: request body
+        in: body
+        name: CallReq
+        required: true
+        schema:
+          $ref: '#/definitions/mower_map.AddMowingAreaSrvReq'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -382,21 +382,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: add a map area
       tags:
-        - openmower
+      - openmower
   /openmower/map/docking:
     post:
       consumes:
-        - application/json
+      - application/json
       description: set the docking point
       parameters:
-        - description: request body
-          in: body
-          name: CallReq
-          required: true
-          schema:
-            $ref: '#/definitions/mower_map.SetDockingPointSrvReq'
+      - description: request body
+        in: body
+        name: CallReq
+        required: true
+        schema:
+          $ref: '#/definitions/mower_map.SetDockingPointSrvReq'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -408,26 +408,39 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: set the docking point
       tags:
-        - openmower
+      - openmower
+  /openmower/publish/{topic}:
+    get:
+      description: publish to a topic
+      parameters:
+      - description: 'topic to publish to, could be: joy'
+        in: path
+        name: topic
+        required: true
+        type: string
+      responses: {}
+      summary: publish to a topic
+      tags:
+      - openmower
   /openmower/subscribe/{topic}:
     get:
       description: subscribe to a topic
       parameters:
-        - description: 'topic to subscribe to, could be: diagnostics, status, gps, imu,
+      - description: 'topic to subscribe to, could be: diagnostics, status, gps, imu,
           ticks, highLevelStatus'
-          in: path
-          name: topic
-          required: true
-          type: string
-      responses: { }
+        in: path
+        name: topic
+        required: true
+        type: string
+      responses: {}
       summary: subscribe to a topic
       tags:
-        - openmower
+      - openmower
   /settings:
     get:
       description: returns a JSON object with the settings
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -439,21 +452,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: returns a JSON object with the settings
       tags:
-        - settings
+      - settings
     post:
       consumes:
-        - application/json
+      - application/json
       description: saves the settings to the mower_config.sh file
       parameters:
-        - description: settings
-          in: body
-          name: settings
-          required: true
-          schema:
-            additionalProperties: true
-            type: object
+      - description: settings
+        in: body
+        name: settings
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -465,21 +478,21 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: saves the settings to the mower_config.sh file
       tags:
-        - settings
+      - settings
   /setup/flashBoard:
     post:
       consumes:
-        - application/json
+      - application/json
       description: flash the mower board with the given config
       parameters:
-        - description: config
-          in: body
-          name: settings
-          required: true
-          schema:
-            $ref: '#/definitions/types.FirmwareConfig'
+      - description: config
+        in: body
+        name: settings
+        required: true
+        schema:
+          $ref: '#/definitions/types.FirmwareConfig'
       produces:
-        - text/event-stream
+      - text/event-stream
       responses:
         "200":
           description: OK
@@ -491,14 +504,14 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: flash the mower board with the given config
       tags:
-        - setup
+      - setup
   /setup/flashGPS:
     post:
       consumes:
-        - application/json
+      - application/json
       description: flash the gps configuration
       produces:
-        - text/event-stream
+      - text/event-stream
       responses:
         "200":
           description: OK
@@ -510,5 +523,5 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: flash the gps configuration
       tags:
-        - setup
+      - setup
 swagger: "2.0"

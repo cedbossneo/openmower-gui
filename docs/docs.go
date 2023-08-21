@@ -373,6 +373,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/openmower/publish/{topic}": {
+            "get": {
+                "description": "publish to a topic",
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "publish to a topic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "topic to publish to, could be: joy",
+                        "name": "topic",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/openmower/subscribe/{topic}": {
             "get": {
                 "description": "subscribe to a topic",

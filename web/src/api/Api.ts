@@ -498,6 +498,21 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
           }),
 
       /**
+       * @description publish to a topic
+       *
+       * @tags openmower
+       * @name PublishDetail
+       * @summary publish to a topic
+       * @request GET:/openmower/publish/{topic}
+       */
+      publishDetail: (topic: string, params: RequestParams = {}) =>
+          this.request<any, any>({
+              path: `/openmower/publish/${topic}`,
+              method: "GET",
+              ...params,
+          }),
+
+      /**
        * @description subscribe to a topic
        *
        * @tags openmower

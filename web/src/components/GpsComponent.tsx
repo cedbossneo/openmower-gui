@@ -1,29 +1,9 @@
 import {NotificationInstance} from "antd/es/notification/interface";
-import {useEffect, useState} from "react";
-import {Gps} from "../types/ros.ts";
-import {useWS} from "../hooks/useWS.ts";
 import {Col, Row, Statistic} from "antd";
+import {useGPS} from "../hooks/useGPS.tsx";
 
 export function GpsComponent(props: { api: NotificationInstance }) {
-    const [gps, setGps] = useState<Gps>({})
-    const gpsStream = useWS<string>(() => {
-            props.api.info({
-                message: "GPS Stream closed",
-            })
-        }, () => {
-            props.api.info({
-                message: "GPS Stream connected",
-            })
-        },
-        (e) => {
-            setGps(JSON.parse(e))
-        })
-    useEffect(() => {
-        gpsStream.start("/api/openmower/subscribe/gps",)
-        return () => {
-            gpsStream.stop()
-        }
-    }, []);
+    const gps = useGPS(props.api);
     return <Row gutter={[16, 16]}>
         <Col lg={8} xs={24}><Statistic precision={9} title="Position X"
                                        value={gps.Pose?.Pose?.Position?.X}/></Col>

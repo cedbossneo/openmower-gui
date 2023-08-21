@@ -97,6 +97,19 @@ func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error
 	return nil
 }
 
+func (p *RosProvider) Publisher(topic string, obj interface{}) (*goroslib.Publisher, error) {
+	rosNode, err := p.getNode()
+	if err != nil {
+		return nil, err
+	}
+	publisher, err := goroslib.NewPublisher(goroslib.PublisherConf{
+		Node:  rosNode,
+		Topic: topic,
+		Msg:   obj,
+	})
+	return publisher, nil
+}
+
 func (p *RosProvider) UnSubscribe(topic string, id string) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
