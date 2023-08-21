@@ -38,14 +38,14 @@ export const LogsPage = () => {
                 throw new Error(containers.error.error)
             }
             let options = containers.data.containers?.flatMap<ContainerList>((container) => {
-                if (!container.labels?.app || !container.names || !container.id) {
+                if (!container.names || !container.id) {
                     return [];
                 }
                 return [{
-                    label: `${container.labels.app} ( ${container.names[0].replace("/", "")} )`,
+                    label: container.labels?.app ? `${container.labels.app} ( ${container.names[0].replace("/", "")} )` : container.names[0].replace("/", ""),
                     value: container.id,
                     status: container.state == "running" ? "started" : "stopped",
-                    labels: container.labels
+                    labels: container.labels ?? {}
                 }]
             });
             setContainers(options ?? []);

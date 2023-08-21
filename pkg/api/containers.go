@@ -39,17 +39,25 @@ func ContainerListRoutes(group *gin.RouterGroup, provider types2.IDockerProvider
 			c.JSON(500, ErrorResponse{Error: err.Error()})
 			return
 		}
-		containersFiltered := lo.Map(lo.Filter(containers, func(container types.Container, idx int) bool {
-			return container.Labels["project"] == "openmower"
-		}), func(container types.Container, idx int) Container {
+		c.JSON(200, ContainerListResponse{Containers: lo.Map(containers, func(container types.Container, idx int) Container {
+			if container.Labels == nil {
+				container.Labels = map[string]string{}
+			}
+			if lo.Contains(container.Names, "/openmower") {
+				container.Labels["project"] = "openmower"
+				container.Labels["app"] = "openmower"
+			}
+			if lo.Contains(container.Names, "/openmower-gui") {
+				container.Labels["project"] = "openmower"
+				container.Labels["app"] = "gui"
+			}
 			return Container{
 				ID:     container.ID,
 				Names:  container.Names,
 				Labels: container.Labels,
 				State:  container.State,
 			}
-		})
-		c.JSON(200, ContainerListResponse{Containers: containersFiltered})
+		})})
 	})
 }
 
