@@ -17,7 +17,7 @@ func NewUbloxProvider() *UbloxProvider {
 func (fp *UbloxProvider) FlashGPS(writer io.Writer) error {
 	//Build firmware
 	_, _ = writer.Write([]byte("------> Uploading GPS configuration...\n"))
-	cmd := execabs.Command("/bin/bash", "-c", "ubxload --port /dev/gps --baudrate 115200 --timeout 0.05 --infile Robot.txt.set.ubx --verbosity 3")
+	cmd := execabs.Command("/bin/bash", "-c", "ubxload --port /dev/gps --baudrate 115200 --timeout 0.05 --infile Robot.txt.get.ubx --verbosity 3")
 	cmd.Dir = "/app/setup"
 	cmd.Stdout = writer
 	cmd.Stderr = writer

@@ -50,7 +50,7 @@ def txt2ubx(fname: str):
                         # only convert CFG-VALGET
                         if not (cls == b"\x06" and mid == b"\x8b"):
                             continue
-                        layers = b"\x04"  # flash only
+                        layers = b"\x01"  # flash only
                         transaction = b"\x00"  # not transactional
                         reserved0 = b"\x00"
                         payload = version + layers + transaction + reserved0 + cfgdata
