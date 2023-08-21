@@ -92,6 +92,7 @@ export interface ProvidersFirmwareConfig {
     disableEmergency?: boolean;
     externalImuAcceleration?: boolean;
     externalImuAngular?: boolean;
+    file?: string;
     limitVoltage150MA?: number;
     masterJ18?: boolean;
     maxChargeCurrent?: number;
@@ -103,6 +104,7 @@ export interface ProvidersFirmwareConfig {
     repository?: string;
     stopButtonEmergencyMillis?: number;
     tiltEmergencyMillis?: number;
+    version?: string;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -437,6 +439,21 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
               body: CallReq,
               type: ContentType.Json,
               format: "json",
+              ...params,
+          }),
+
+      /**
+       * @description publish to a topic
+       *
+       * @tags openmower
+       * @name PublishDetail
+       * @summary publish to a topic
+       * @request GET:/openmower/publish/{topic}
+       */
+      publishDetail: (topic: string, params: RequestParams = {}) =>
+          this.request<any, any>({
+              path: `/openmower/publish/${topic}`,
+              method: "GET",
               ...params,
           }),
 

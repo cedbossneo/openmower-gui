@@ -3,6 +3,8 @@ import {Progress} from "antd";
 
 export const booleanFormatter = (value: any) => (value === "On" || value === "Yes") ?
     <CheckCircleTwoTone twoToneColor={"#01d30d"}/> : <CloseCircleTwoTone twoToneColor={"red"}/>;
+export const booleanFormatterInverted = (value: any) => (value === "On" || value === "Yes") ?
+    <CheckCircleTwoTone twoToneColor={"red"}/> : <CloseCircleTwoTone twoToneColor={"#01d30d"}/>;
 export const stateRenderer = (value: string | undefined) => {
     switch (value) {
         case "IDLE":

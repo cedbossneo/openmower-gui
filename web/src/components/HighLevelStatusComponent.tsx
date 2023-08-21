@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {HighLevelStatus} from "../types/ros.ts";
 import {useWS} from "../hooks/useWS.ts";
 import {Col, Row, Statistic} from "antd";
-import {booleanFormatter, progressFormatter, stateRenderer} from "./utils.tsx";
+import {booleanFormatter, booleanFormatterInverted, progressFormatter, stateRenderer} from "./utils.tsx";
 
 export function HighLevelStatusComponent(props: { api: NotificationInstance }) {
     const [highLevelStatus, setHighLevelStatus] = useState<HighLevelStatus>({})
@@ -35,6 +35,6 @@ export function HighLevelStatusComponent(props: { api: NotificationInstance }) {
         <Col lg={6} xs={12}><Statistic title="Charging" value={highLevelStatus.IsCharging ? "Yes" : "No"}
                                        formatter={booleanFormatter}/></Col>
         <Col lg={6} xs={12}><Statistic title="Emergency" value={highLevelStatus.Emergency ? "Yes" : "No"}
-                                       formatter={booleanFormatter}/></Col>
+                                       formatter={booleanFormatterInverted}/></Col>
     </Row>;
 }
