@@ -34,9 +34,16 @@ func (p *RosProvider) getNode() (*goroslib.Node, error) {
 	if p.node != nil {
 		return p.node, err
 	}
+
+	nodeName := os.Getenv("ROS_NODE_NAME")
+	if nodeName == "" {
+		nodeName = "openmower-gui"
+	}
+
 	p.node, err = goroslib.NewNode(goroslib.NodeConf{
-		Name:          "goroslib",
+		Name:          nodeName,
 		MasterAddress: os.Getenv("ROS_MASTER_URI"),
+		Host:          os.Getenv("ROS_NODE_HOST"),
 	})
 	return p.node, err
 

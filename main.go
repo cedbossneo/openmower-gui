@@ -19,6 +19,12 @@ import "github.com/gin-contrib/cors"
 
 func main() {
 	_ = godotenv.Load()
+
+	httpAddr := os.Getenv("HTTP_ADDR")
+	if httpAddr == "" {
+		httpAddr = ":4006"
+	}
+
 	// Launch a web server that serves the web/dist directory as static files and serve a route /api/settings that returns a JSON object with the settings.
 	// The web server should listen on port 8080.
 	gin.SetMode(gin.ReleaseMode)
@@ -40,5 +46,5 @@ func main() {
 	api.OpenMowerRoutes(apiGroup, rosProvider)
 	api.SetupRoutes(apiGroup, firmwareProvider, ubloxProvider)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	r.Run(":4006")
+	r.Run(httpAddr)
 }
