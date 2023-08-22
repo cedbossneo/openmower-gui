@@ -43,7 +43,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/container-gui.pid --cidfile %t
   --network=host \
   --env MOWER_CONFIG_FILE=/config/mower_config.sh \
   --env DOCKER_HOST=unix:///run/podman/podman.sock \
-  --env ROS_MASTER_URI=http://localhost:11311/ \
+  --env ROS_MASTER_URI=http://localhost:11311 \
   --volume /dev:/dev \
   --volume /run/podman/podman.sock:/run/podman/podman.sock \
   --volume /boot/openmower/mower_config.txt:/config/mower_config.sh \
