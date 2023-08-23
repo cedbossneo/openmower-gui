@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/types"
@@ -213,37 +214,36 @@ func ServiceRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	group.POST("/call/:command", func(c *gin.Context) {
 		// create a node and connect to the master
 		command := c.Param("command")
-		var CallReq map[string]interface{}
-		err := c.BindJSON(&CallReq)
-		if err != nil {
-			return
-		}
+		var err error
 		switch command {
-		case "mower_start":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
-				Command: 1,
-			}, &mower_msgs.HighLevelControlSrvRes{})
-		case "mower_home":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
-				Command: 2,
-			}, &mower_msgs.HighLevelControlSrvRes{})
-		case "mower_s1":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
-				Command: 3,
-			}, &mower_msgs.HighLevelControlSrvRes{})
-		case "mower_s2":
-			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{
-				Command: 4,
-			}, &mower_msgs.HighLevelControlSrvRes{})
+		case "high_level_control":
+			var CallReq mower_msgs.HighLevelControlSrvReq
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.CallService(c.Request.Context(), "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &CallReq, &mower_msgs.HighLevelControlSrvRes{})
 		case "emergency":
-			err = provider.CallService(c.Request.Context(), "/mower_service/emergency", &mower_msgs.EmergencyStopSrv{}, &mower_msgs.EmergencyStopSrvReq{
-				Emergency: uint8(CallReq["emergency"].(float64)),
-			}, &mower_msgs.EmergencyStopSrvRes{})
-		case "mow":
-			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &mower_msgs.MowerControlSrvReq{
-				MowEnabled:   uint8(CallReq["mow_enabled"].(float64)),
-				MowDirection: uint8(CallReq["mow_direction"].(float64)),
-			}, &mower_msgs.MowerControlSrvRes{})
+			var CallReq mower_msgs.EmergencyStopSrvReq
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.CallService(c.Request.Context(), "/mower_service/emergency", &mower_msgs.EmergencyStopSrv{}, &CallReq, &mower_msgs.EmergencyStopSrvRes{})
+		case "mower_logic":
+			var CallReq dynamic_reconfigure.ReconfigureReq
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.CallService(c.Request.Context(), "/mower_logic/set_parameters", &dynamic_reconfigure.Reconfigure{}, &CallReq, &dynamic_reconfigure.ReconfigureRes{})
+		case "mow_enabled":
+			var CallReq mower_msgs.MowerControlSrvReq
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &CallReq, &mower_msgs.MowerControlSrvRes{})
 		default:
 			err = errors.New("unknown command")
 		}
