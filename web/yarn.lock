@@ -1746,10 +1746,17 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.12.tgz#d70faba7039d5fca54c83c7dbab41051d2b6f6cb"
   integrity sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==
 
-"@types/mapbox-gl@*", "@types/mapbox-gl@>=1.0.0", "@types/mapbox-gl@^2.7.12":
+"@types/mapbox-gl@*", "@types/mapbox-gl@>=1.0.0":
   version "2.7.12"
   resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-2.7.12.tgz#df35dcf717bda00dc7177ba91fadbc8b9a53c5dc"
   integrity sha512-aEMMOWlSTn2lp0liLqHsI/vAkV8858mkhn4fFYZELdLO1o6PEKCkkUfQ/GBp603Xfc3xmasLZsoELJBbje+atw==
+  dependencies:
+    "@types/geojson" "*"
+
+"@types/mapbox-gl@^2.7.12":
+  version "2.7.13"
+  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-2.7.13.tgz#35f96ca3f8f651ff0258baf081f4bd501874a78b"
+  integrity sha512-qNffhTdYkeFl8QG9Q1zPPJmcs8PvHgmLa1PcwP1rxvcfMsIgcFr/FnrCttG0ZnH7Kzdd7xfECSRNTWSr4jC3PQ==
   dependencies:
     "@types/geojson" "*"
 
@@ -4445,6 +4452,11 @@ uri-js@^4.2.2:
   integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
   dependencies:
     punycode "^2.1.0"
+
+usng.js@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/usng.js/-/usng.js-0.4.5.tgz#49301e131baa9f7f7ab36c0539472c1aa1ecdae7"
+  integrity sha512-JTJcFFDy/JqA5iiU8DqMOV5gJiL3ZdXH0hCKYaRMDbbredhFna5Ok4C1YDFU07mTGAgm+5FzHaaOzQnO/3BzWQ==
 
 vite@^4.4.0:
   version "4.4.7"

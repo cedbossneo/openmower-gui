@@ -5,7 +5,7 @@ import {useWS} from "../hooks/useWS.ts";
 import {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
-import Map from 'react-map-gl';
+import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
 import {LineString, Polygon, Position} from "geojson";
 import {MowerActions} from "../components/MowerActions.tsx";
@@ -25,6 +25,7 @@ export const MapPage = () => {
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
 
     const guiApi = useApi()
+    const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
     const [features, setFeatures] = useState<Record<string, Feature>>({});
     const [mapKey, setMapKey] = useState<string>("origin")
@@ -34,6 +35,11 @@ export const MapPage = () => {
     useEffect(() => {
         (async () => {
             try {
+                const config = await guiApi.config.configList()
+                if (config.error) {
+                    throw new Error(config.error.error ?? "")
+                }
+                setTileUri(config.data.tileUri)
                 const settings = await guiApi.settings.settingsList()
                 if (settings.error) {
                     throw new Error(settings.error.error ?? "")
@@ -393,6 +399,7 @@ export const MapPage = () => {
     const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(datumLon, datumLat, map.MapCenterY, map.MapCenterX) : [datumLon, datumLat]
     const map_ne = transpose(map_center[0], map_center[1], ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
     const map_sw = transpose(map_center[0], map_center[1], -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
+
     function handleEditMap() {
         setEditMap(!editMap)
     }
@@ -584,13 +591,15 @@ export const MapPage = () => {
             </Col>
             <Col span={24} style={{height: '70%'}}>
                 <Map key={mapKey}
-                    mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
-                    initialViewState={{
-                        bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
-                    }}
-                    style={{width: '100%', height: '100%'}}
-                    mapStyle="mapbox://styles/mapbox/satellite-v9"
+                     mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
+                     initialViewState={{
+                         bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
+                     }}
+                     style={{width: '100%', height: '100%'}}
+                     mapStyle={"mapbox://styles/mapbox/satellite-streets-v12"}
                 >
+                    {tileUri ? <Source type={"raster"} id={"custom-raster"} tiles={[tileUri]} tileSize={256}/> : null}
+                    {tileUri ? <Layer type={"raster"} source={"custom-raster"} id={"custom-layer"}/> : null}
                     <DrawControl
                         styles={MapStyle}
                         userProperties={true}

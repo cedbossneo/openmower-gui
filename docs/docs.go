@@ -16,6 +16,33 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/config": {
+            "get": {
+                "description": "get config from backend",
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "get config from backend",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GetConfigResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/containers": {
             "get": {
                 "description": "list all containers",
@@ -460,6 +487,14 @@ const docTemplate = `{
                 }
             }
         },
+        "api.GetConfigResponse": {
+            "type": "object",
+            "properties": {
+                "tileUri": {
+                    "type": "string"
+                }
+            }
+        },
         "api.GetSettingsResponse": {
             "type": "object",
             "properties": {
@@ -633,6 +668,9 @@ const docTemplate = `{
                 "externalImuAngular": {
                     "type": "boolean"
                 },
+                "file": {
+                    "type": "string"
+                },
                 "limitVoltage150MA": {
                     "type": "number"
                 },
@@ -665,6 +703,9 @@ const docTemplate = `{
                 },
                 "tiltEmergencyMillis": {
                     "type": "integer"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         }

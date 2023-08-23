@@ -41,10 +41,14 @@ func main() {
 	firmwareProvider := providers.NewFirmwareProvider()
 	ubloxProvider := providers.NewUbloxProvider()
 	providers.NewHomeKitProvider(rosProvider)
+	api.ConfigRoute(apiGroup)
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup, dockerProvider)
 	api.OpenMowerRoutes(apiGroup, rosProvider)
 	api.SetupRoutes(apiGroup, firmwareProvider, ubloxProvider)
+	if os.Getenv("MAP_TILE_SERVER") != "" {
+		api.TilesProxy(r)
+	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	r.Run(httpAddr)
 }

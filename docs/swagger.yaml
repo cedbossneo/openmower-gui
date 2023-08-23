@@ -26,6 +26,11 @@ definitions:
       error:
         type: string
     type: object
+  api.GetConfigResponse:
+    properties:
+      tileUri:
+        type: string
+    type: object
   api.GetSettingsResponse:
     properties:
       settings:
@@ -138,6 +143,8 @@ definitions:
         type: boolean
       externalImuAngular:
         type: boolean
+      file:
+        type: string
       limitVoltage150MA:
         type: number
       masterJ18:
@@ -160,10 +167,30 @@ definitions:
         type: integer
       tiltEmergencyMillis:
         type: integer
+      version:
+        type: string
     type: object
 info:
   contact: { }
 paths:
+  /config:
+    get:
+      description: get config from backend
+      produces:
+        - application/json
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GetConfigResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: get config from backend
+      tags:
+        - config
   /containers:
     get:
       description: list all containers

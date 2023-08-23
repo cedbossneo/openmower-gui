@@ -24,6 +24,10 @@ export interface ApiErrorResponse {
   error?: string;
 }
 
+export interface ApiGetConfigResponse {
+    tileUri?: string;
+}
+
 export interface ApiGetSettingsResponse {
     settings?: Record<string, string>;
 }
@@ -322,6 +326,23 @@ export class HttpClient<SecurityDataType = unknown> {
  * @contact
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
+    config = {
+        /**
+         * @description get config from backend
+         *
+         * @tags config
+         * @name ConfigList
+         * @summary get config from backend
+         * @request GET:/config
+         */
+        configList: (params: RequestParams = {}) =>
+            this.request<ApiGetConfigResponse, ApiErrorResponse>({
+                path: `/config`,
+                method: "GET",
+                format: "json",
+                ...params,
+            }),
+    };
   containers = {
       /**
        * @description list all containers
@@ -439,21 +460,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
               body: CallReq,
               type: ContentType.Json,
               format: "json",
-              ...params,
-          }),
-
-      /**
-       * @description publish to a topic
-       *
-       * @tags openmower
-       * @name PublishDetail
-       * @summary publish to a topic
-       * @request GET:/openmower/publish/{topic}
-       */
-      publishDetail: (topic: string, params: RequestParams = {}) =>
-          this.request<any, any>({
-              path: `/openmower/publish/${topic}`,
-              method: "GET",
               ...params,
           }),
 

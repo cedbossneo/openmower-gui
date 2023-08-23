@@ -11,6 +11,10 @@ type GetSettingsResponse struct {
 	Settings map[string]string `json:"settings,omitempty"`
 }
 
+type GetConfigResponse struct {
+	TileUri string `json:"tileUri"`
+}
+
 type Container struct {
 	ID     string            `json:"id"`
 	Names  []string          `json:"names"`

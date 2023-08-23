@@ -80,3 +80,17 @@ docker-compose up -d
 Once the container is running, you can access the GUI by opening a browser and going
 to `http://<ip of the machine running the container>:4006`
 
+### HomeKit
+
+The password to use OpenMower in iOS home app is 00102003
+
+### Env variables
+
+- MOWER_CONFIG_FILE=mower_config.sh : config file location
+- DOCKER_HOST=unix:///var/run/docker.sock : socker socket
+- ROS_MASTER_URI=http://localhost:11311 : ros master uri
+- ROS_NODE_NAME=openmower-gui : node name
+- ROS_NODE_HOST=:4006 : listening port
+- MAP_TILE_SERVER=http://localhost:5000 : custom map tile server (see https://github.com/2m/openmower-map-tiles for
+  usage)
+- MAP_TILE_URI=/tiles/vt/lyrs=s,h&x={x}&y={y}&z={z}

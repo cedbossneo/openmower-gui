@@ -1,8 +1,11 @@
 import {Quaternion} from "../types/ros.ts";
+import {Converter} from 'usng.js'
 
-export const earth = 6378.137;  //radius of the earth in kilometer
+// @ts-ignore
+var converter = new Converter();
+export const earth = 6371008.8;  //radius of the earth in kilometer
 export const pi = Math.PI;
-export const meterInDegree = (1 / ((2 * pi / 360) * earth)) / 1000;  //1 meter in degree
+export const meterInDegree = (1 / ((2 * pi / 360) * earth));  //1 meter in degree
 
 export function getQuaternionFromHeading(heading: number): Quaternion {
     const q = {
@@ -24,13 +27,17 @@ export function drawLine(longitude: number, latitude: number, orientation: numbe
 }
 
 export const transpose = (datumLon: number, datumLat: number, y: number, x: number) => {
-    const new_latitude = datumLat + (y * meterInDegree);
-    const new_longitude = datumLon + ((x * meterInDegree) / Math.cos(datumLat * (pi / 180)));
-    return [new_longitude, new_latitude]
+    const coords: [number, number, number] = [0, 0, 0]
+    debugger
+    converter.LLtoUTM(datumLat, datumLon, coords)
+    coords[0] += x
+    coords[1] += y
+    let utMtoLL = converter.UTMtoLL(coords[1], coords[0], coords[2]);
+    return [utMtoLL.lon, utMtoLL.lat]
 };
 export const itranspose = (datumLon: number, datumLat: number, y: number, x: number) => {
     //Inverse the transpose function
-    const new_latitude = (y - datumLat) / meterInDegree;
-    const new_longitude = (x - datumLon) / (meterInDegree / Math.cos(datumLat * (pi / 180)));
-    return [new_longitude, new_latitude]
+    const coords: [number, number, number] = [0, 0, 0]
+    converter.LLtoUTM(y - datumLat, x - datumLon, coords)
+    return [coords[0], coords[1]]
 };
