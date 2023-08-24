@@ -28,7 +28,6 @@ export function drawLine(longitude: number, latitude: number, orientation: numbe
 
 export const transpose = (datumLon: number, datumLat: number, y: number, x: number) => {
     const coords: [number, number, number] = [0, 0, 0]
-    debugger
     converter.LLtoUTM(datumLat, datumLon, coords)
     coords[0] += x
     coords[1] += y
@@ -37,7 +36,9 @@ export const transpose = (datumLon: number, datumLat: number, y: number, x: numb
 };
 export const itranspose = (datumLon: number, datumLat: number, y: number, x: number) => {
     //Inverse the transpose function
+    const coordsDatum: [number, number, number] = [0, 0, 0]
+    converter.LLtoUTM(datumLat, datumLon, coordsDatum)
     const coords: [number, number, number] = [0, 0, 0]
-    converter.LLtoUTM(y - datumLat, x - datumLon, coords)
-    return [coords[0], coords[1]]
+    converter.LLtoUTM(y, x, coords)
+    return [coords[0] - coordsDatum[0], coords[1] - coordsDatum[1]]
 };
