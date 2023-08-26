@@ -2,12 +2,12 @@ package api
 
 import (
 	"bufio"
-	"github.com/cedbossneo/openmower-gui/pkg/providers"
+	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/gin-gonic/gin"
 	"io"
 )
 
-func SetupRoutes(r *gin.RouterGroup, provider *providers.FirmwareProvider, ubloxProvider *providers.UbloxProvider) {
+func SetupRoutes(r *gin.RouterGroup, provider types.IFirmwareProvider, ubloxProvider types.IGpsProvider) {
 	group := r.Group("/setup")
 	FlashBoard(group, provider)
 	FlashGPS(group, ubloxProvider)
@@ -23,7 +23,7 @@ func SetupRoutes(r *gin.RouterGroup, provider *providers.FirmwareProvider, ublox
 // @Success 200 {object} OkResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /setup/flashGPS [post]
-func FlashGPS(group *gin.RouterGroup, provider *providers.UbloxProvider) gin.IRoutes {
+func FlashGPS(group *gin.RouterGroup, provider types.IGpsProvider) gin.IRoutes {
 	return group.POST("/flashGPS", func(context *gin.Context) {
 		reader, writer := io.Pipe()
 		rd := bufio.NewReader(reader)
@@ -58,13 +58,13 @@ func FlashGPS(group *gin.RouterGroup, provider *providers.UbloxProvider) gin.IRo
 // @Tags setup
 // @Accept  json
 // @Produce  text/event-stream
-// @Param settings body providers.FirmwareConfig true "config"
+// @Param settings body types.FirmwareConfig true "config"
 // @Success 200 {object} OkResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /setup/flashBoard [post]
-func FlashBoard(r *gin.RouterGroup, provider *providers.FirmwareProvider) gin.IRoutes {
+func FlashBoard(r *gin.RouterGroup, provider types.IFirmwareProvider) gin.IRoutes {
 	return r.POST("/flashBoard", func(c *gin.Context) {
-		var config providers.FirmwareConfig
+		var config types.FirmwareConfig
 		var err error
 		err = c.BindJSON(&config)
 		if err != nil {

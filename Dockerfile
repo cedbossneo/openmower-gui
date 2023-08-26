@@ -20,5 +20,6 @@ COPY ./setup /app/setup
 COPY --from=build-web /web/dist /app/web
 COPY --from=build-go /app/openmower-gui /app/openmower-gui
 ENV WEB_DIR=/app/web
+ENV DB_PATH=/app/db
 WORKDIR /app
 CMD ["/app/openmower-gui"]

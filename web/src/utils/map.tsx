@@ -2,7 +2,7 @@ import {Quaternion} from "../types/ros.ts";
 import {Converter} from 'usng.js'
 
 // @ts-ignore
-var converter = new Converter();
+export var converter = new Converter();
 export const earth = 6371008.8;  //radius of the earth in kilometer
 export const pi = Math.PI;
 export const meterInDegree = (1 / ((2 * pi / 360) * earth));  //1 meter in degree
@@ -26,19 +26,13 @@ export function drawLine(longitude: number, latitude: number, orientation: numbe
     return [endLongitude, endLatitude];
 }
 
-export const transpose = (datumLon: number, datumLat: number, y: number, x: number) => {
-    const coords: [number, number, number] = [0, 0, 0]
-    converter.LLtoUTM(datumLat, datumLon, coords)
-    coords[0] += x
-    coords[1] += y
-    let utMtoLL = converter.UTMtoLL(coords[1], coords[0], coords[2]);
+export const transpose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number) => {
+    let utMtoLL = converter.UTMtoLL(datum[1] + y + offsetY, datum[0] + x + offsetX, datum[2]);
     return [utMtoLL.lon, utMtoLL.lat]
 };
-export const itranspose = (datumLon: number, datumLat: number, y: number, x: number) => {
+export const itranspose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number) => {
     //Inverse the transpose function
-    const coordsDatum: [number, number, number] = [0, 0, 0]
-    converter.LLtoUTM(datumLat, datumLon, coordsDatum)
     const coords: [number, number, number] = [0, 0, 0]
     converter.LLtoUTM(y, x, coords)
-    return [coords[0] - coordsDatum[0], coords[1] - coordsDatum[1]]
+    return [coords[0] - datum[0] - offsetX, coords[1] - datum[1] - offsetY]
 };

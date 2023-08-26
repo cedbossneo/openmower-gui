@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -8,7 +9,7 @@ import (
 
 func TestBuildBoard(t *testing.T) {
 	firmwareProvider := NewFirmwareProvider()
-	config := FirmwareConfig{
+	config := types.FirmwareConfig{
 		BoardType:                      "BOARD_YARDFORCE500",
 		PanelType:                      "PANEL_TYPE_YARDFORCE_500_CLASSIC",
 		DebugType:                      "NONE",

@@ -3,6 +3,7 @@ module github.com/cedbossneo/openmower-gui
 go 1.20
 
 require (
+	git.mills.io/prologic/bitcask v1.0.2
 	github.com/bluenviron/goroslib/v2 v2.1.0
 	github.com/brutella/hap v0.0.27-0.20230522083132-4ea1de40019c
 	github.com/docker/distribution v2.8.2+incompatible
@@ -30,6 +31,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/abcum/lcp v0.0.0-20201209214815-7a3f3840be81 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/brutella/dnssd v1.2.7 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
@@ -52,6 +54,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gookit/color v1.5.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
@@ -73,6 +76,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/plar/go-adaptive-radix-tree v1.0.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect

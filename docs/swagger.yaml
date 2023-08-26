@@ -125,7 +125,7 @@ definitions:
       msg.Package:
         type: integer
     type: object
-  providers.FirmwareConfig:
+  types.FirmwareConfig:
     properties:
       batChargeCutoffVoltage:
         type: number
@@ -173,9 +173,9 @@ definitions:
 info:
   contact: { }
 paths:
-  /config:
+  /config/envs:
     get:
-      description: get config from backend
+      description: get config env from backend
       produces:
         - application/json
         - application/json
@@ -188,7 +188,61 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorResponse'
+      summary: get config env from backend
+      tags:
+        - config
+  /config/keys/get:
+    post:
+      description: get config from backend
+      parameters:
+        - description: settings
+          in: body
+          name: settings
+          required: true
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
       summary: get config from backend
+      tags:
+        - config
+  /config/keys/set:
+    post:
+      description: set config to backend
+      parameters:
+        - description: settings
+          in: body
+          name: settings
+          required: true
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: set config to backend
       tags:
         - config
   /containers:
@@ -423,7 +477,7 @@ paths:
           name: settings
           required: true
           schema:
-            $ref: '#/definitions/providers.FirmwareConfig'
+            $ref: '#/definitions/types.FirmwareConfig'
       produces:
         - text/event-stream
       responses:

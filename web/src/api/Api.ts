@@ -87,7 +87,7 @@ export interface MowerMapSetDockingPointSrvReq {
     "msg.Package"?: number;
 }
 
-export interface ProvidersFirmwareConfig {
+export interface TypesFirmwareConfig {
     batChargeCutoffVoltage?: number;
     boardType?: string;
     bothWheelsLiftEmergencyMillis?: number;
@@ -328,17 +328,51 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
     config = {
         /**
+         * @description get config env from backend
+         *
+         * @tags config
+         * @name EnvsList
+         * @summary get config env from backend
+         * @request GET:/config/envs
+         */
+        envsList: (params: RequestParams = {}) =>
+            this.request<ApiGetConfigResponse, ApiErrorResponse>({
+                path: `/config/envs`,
+                method: "GET",
+                format: "json",
+                ...params,
+            }),
+
+        /**
          * @description get config from backend
          *
          * @tags config
-         * @name ConfigList
+         * @name KeysGetCreate
          * @summary get config from backend
-         * @request GET:/config
+         * @request POST:/config/keys/get
          */
-        configList: (params: RequestParams = {}) =>
-            this.request<ApiGetConfigResponse, ApiErrorResponse>({
-                path: `/config`,
-                method: "GET",
+        keysGetCreate: (settings: Record<string, string>, params: RequestParams = {}) =>
+            this.request<Record<string, string>, ApiErrorResponse>({
+                path: `/config/keys/get`,
+                method: "POST",
+                body: settings,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description set config to backend
+         *
+         * @tags config
+         * @name KeysSetCreate
+         * @summary set config to backend
+         * @request POST:/config/keys/set
+         */
+        keysSetCreate: (settings: Record<string, string>, params: RequestParams = {}) =>
+            this.request<ApiOkResponse, ApiErrorResponse>({
+                path: `/config/keys/set`,
+                method: "POST",
+                body: settings,
                 format: "json",
                 ...params,
             }),
@@ -522,7 +556,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @summary flash the mower board with the given config
          * @request POST:/setup/flashBoard
          */
-        flashBoardCreate: (settings: ProvidersFirmwareConfig, params: RequestParams = {}) =>
+        flashBoardCreate: (settings: TypesFirmwareConfig, params: RequestParams = {}) =>
             this.request<ApiOkResponse, ApiErrorResponse>({
                 path: `/setup/flashBoard`,
                 method: "POST",

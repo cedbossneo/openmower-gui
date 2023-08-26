@@ -1,6 +1,6 @@
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
-import {Button, Col, Modal, notification, Row, Typography} from "antd";
+import {Button, Col, Modal, notification, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray} from "../types/ros.ts";
@@ -12,17 +12,17 @@ import {MowerActions} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {MapStyle} from "./MapStyle.tsx";
-import {drawLine, getQuaternionFromHeading, itranspose, meterInDegree, transpose} from "../utils/map.tsx";
-
-/*
-function getHeading(quaternion: Quaternion): number {
-    return Math.atan2(2.0 * (quaternion.W!! * quaternion.Z!! + quaternion.X!! * quaternion.Y!!), 1.0 - 2.0 * (quaternion.Y!! * quaternion.Y!! + quaternion.Z!! * quaternion.Z!!));
-}*/
+import {converter, drawLine, getQuaternionFromHeading, itranspose, meterInDegree, transpose} from "../utils/map.tsx";
 
 export const MapPage = () => {
+    const [offsetX, setOffsetX] = useState(0);
+    const [offsetY, setOffsetY] = useState(0);
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [modalOpen, setModalOpen] = useState<boolean>(false)
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
+    const [offsetYTimeout, setOffsetYTimeout] = useState<number | null>(null)
+    const [offsetXTimeout, setOffsetXTimeout] = useState<number | null>(null)
+
 
     const guiApi = useApi()
     const [tileUri, setTileUri] = useState<string | undefined>()
@@ -35,11 +35,20 @@ export const MapPage = () => {
     useEffect(() => {
         (async () => {
             try {
-                const config = await guiApi.config.configList()
+                const config = await guiApi.config.envsList()
                 if (config.error) {
                     throw new Error(config.error.error ?? "")
                 }
                 setTileUri(config.data.tileUri)
+                const offsetConfig = await guiApi.config.keysGetCreate({
+                    "gui.map.offset.x": "0",
+                    "gui.map.offset.y": "0",
+                })
+                if (offsetConfig.error) {
+                    throw new Error(offsetConfig.error.error ?? "")
+                }
+                setOffsetX(parseFloat(offsetConfig.data["gui.map.offset.x"] ?? 0))
+                setOffsetY(parseFloat(offsetConfig.data["gui.map.offset.y"] ?? 0))
                 const settings = await guiApi.settings.settingsList()
                 if (settings.error) {
                     throw new Error(settings.error.error ?? "")
@@ -79,7 +88,7 @@ export const MapPage = () => {
         },
         (e) => {
             const gps = JSON.parse(e) as Gps
-            const mower_lonlat = transpose(datumLon, datumLat, gps.Pose?.Pose?.Position?.Y!!, gps.Pose?.Pose?.Position?.X!!)
+            const mower_lonlat = transpose(offsetX, offsetY, datum, gps.Pose?.Pose?.Position?.Y!!, gps.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
                 let orientation = gps.MotionHeading!!;
                 const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation, meterInDegree / 2)
@@ -119,7 +128,7 @@ export const MapPage = () => {
                 },
                 geometry: {
                     coordinates: [area.Area?.Points?.map((point) => {
-                        return transpose(datumLon, datumLat, point.Y!!, point.X!!)
+                        return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                     })],
                     type: "Polygon"
                 }
@@ -133,7 +142,7 @@ export const MapPage = () => {
                     },
                     geometry: {
                         coordinates: [obstacle.Points?.map((point) => {
-                            return transpose(datumLon, datumLat, point.Y!!, point.X!!)
+                            return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                         })],
                         type: "Polygon"
                     }
@@ -201,7 +210,7 @@ export const MapPage = () => {
             const workingAreas = buildFeatures(map.WorkingArea, "area")
             const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
             newFeatures = {...workingAreas, ...navigationAreas}
-            const dock_lonlat = transpose(datumLon, datumLat, map?.DockY!!, map?.DockX!!)
+            const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
             newFeatures["dock"] = {
                 id: "dock",
                 type: "Feature",
@@ -217,7 +226,7 @@ export const MapPage = () => {
         if (path) {
             path.Markers.forEach((marker, index) => {
                 const line: Position[] = marker.Points.map(point => {
-                    return transpose(datumLon, datumLat, point.Y!!, point.X!!)
+                    return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                 })
                 const feature: Feature<LineString> = {
                     id: "path-" + index,
@@ -235,7 +244,7 @@ export const MapPage = () => {
             })
         }
         setFeatures(newFeatures)
-    }, [map, path]);
+    }, [map, path, offsetX, offsetY]);
 
     function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
         const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
@@ -391,14 +400,18 @@ export const MapPage = () => {
         });
     }, []);
 
-    const datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
-    const datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
-    if (datumLon == 0 || datumLat == 0) {
+    const _datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
+    const _datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
+    if (_datumLon == 0 || _datumLat == 0) {
         return <>Loading</>
     }
-    const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(datumLon, datumLat, map.MapCenterY, map.MapCenterX) : [datumLon, datumLat]
-    const map_ne = transpose(map_center[0], map_center[1], ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
-    const map_sw = transpose(map_center[0], map_center[1], -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
+    const datum: [number, number, number] = [0, 0, 0]
+    converter.LLtoUTM(_datumLat, _datumLon, datum)
+    const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(offsetX, offsetY, datum, map.MapCenterY, map.MapCenterX) : [_datumLon, _datumLat]
+    const center: [number, number, number] = [0, 0, 0]
+    converter.LLtoUTM(map_center[1], map_center[0], center)
+    const map_ne = transpose(offsetX, offsetY, center, ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
+    const map_sw = transpose(offsetX, offsetY, center, -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
 
     function handleEditMap() {
         setEditMap(!editMap)
@@ -420,7 +433,7 @@ export const MapPage = () => {
 
             const feature = f as Feature<Polygon>
             const points = feature.geometry.coordinates[0].map((point) => {
-                return itranspose(datumLon, datumLat, point[1], point[0])
+                return itranspose(offsetX, offsetY, datum, point[1], point[0])
             })
             if (component == "area") {
                 areas[type][index].area = {
@@ -547,6 +560,52 @@ export const MapPage = () => {
         })
         input.click();
     };
+    const handleOffsetX = (value: number) => {
+        if (offsetXTimeout != null) {
+            clearTimeout(offsetXTimeout)
+        }
+        setOffsetXTimeout(setTimeout(() => {
+            (async () => {
+                try {
+                    const offsetConfig = await guiApi.config.keysSetCreate({
+                        "gui.map.offset.x": value.toString(),
+                    })
+                    if (offsetConfig.error) {
+                        throw new Error(offsetConfig.error.error ?? "")
+                    }
+                } catch (e: any) {
+                    notificationInstance.error({
+                        message: "Failed to save offset",
+                        description: e.message,
+                    })
+                }
+            })()
+        }, 1000))
+        setOffsetX(value)
+    }
+    const handleOffsetY = (value: number) => {
+        if (offsetYTimeout != null) {
+            clearTimeout(offsetYTimeout)
+        }
+        setOffsetYTimeout(setTimeout(() => {
+            (async () => {
+                try {
+                    const offsetConfig = await guiApi.config.keysSetCreate({
+                        "gui.map.offset.y": value.toString(),
+                    })
+                    if (offsetConfig.error) {
+                        throw new Error(offsetConfig.error.error ?? "")
+                    }
+                } catch (e: any) {
+                    notificationInstance.error({
+                        message: "Failed to save offset",
+                        description: e.message,
+                    })
+                }
+            })()
+        }, 1000))
+        setOffsetY(value)
+    }
     return (
         <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
             <Modal
@@ -589,8 +648,22 @@ export const MapPage = () => {
                             style={{marginRight: 10}}>Restore Map</Button>
                 </MowerActions>
             </Col>
+            <Col span={24}>
+                <Row>
+                    <Col span={12}>
+                        <Slider value={offsetX} onChange={handleOffsetX} min={-30} max={30} step={0.01}/>
+                    </Col>
+                    <Col span={12}>
+                        <Slider value={offsetY} onChange={handleOffsetY} min={-30} max={30} step={0.01}/>
+                    </Col>
+                </Row>
+            </Col>
             <Col span={24} style={{height: '70%'}}>
                 <Map key={mapKey}
+                     antialias
+                     projection={{
+                         name: "globe"
+                     }}
                      mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
                      initialViewState={{
                          bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],

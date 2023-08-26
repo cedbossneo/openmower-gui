@@ -16,9 +16,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/config": {
+        "/config/envs": {
             "get": {
-                "description": "get config from backend",
+                "description": "get config env from backend",
                 "produces": [
                     "application/json",
                     "application/json"
@@ -26,12 +26,95 @@ const docTemplate = `{
                 "tags": [
                     "config"
                 ],
-                "summary": "get config from backend",
+                "summary": "get config env from backend",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.GetConfigResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/keys/get": {
+            "post": {
+                "description": "get config from backend",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "get config from backend",
+                "parameters": [
+                    {
+                        "description": "settings",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/config/keys/set": {
+            "post": {
+                "description": "set config to backend",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "set config to backend",
+                "parameters": [
+                    {
+                        "description": "settings",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
                         }
                     },
                     "500": {
@@ -394,7 +477,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/providers.FirmwareConfig"
+                            "$ref": "#/definitions/types.FirmwareConfig"
                         }
                     }
                 ],
@@ -641,7 +724,7 @@ const docTemplate = `{
                 }
             }
         },
-        "providers.FirmwareConfig": {
+        "types.FirmwareConfig": {
             "type": "object",
             "properties": {
                 "batChargeCutoffVoltage": {

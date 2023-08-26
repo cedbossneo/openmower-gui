@@ -16,10 +16,12 @@ import (
 type HomeKitProvider struct {
 	rosProvider types2.IRosProvider
 	mower       *accessory.Switch
+	db          types2.IDBProvider
 }
 
-func NewHomeKitProvider(rosProvider types2.IRosProvider) *HomeKitProvider {
+func NewHomeKitProvider(rosProvider types2.IRosProvider, idbProvider types2.IDBProvider) *HomeKitProvider {
 	h := &HomeKitProvider{}
+	h.db = idbProvider
 	h.rosProvider = rosProvider
 	h.Init()
 	return h
@@ -54,10 +56,9 @@ func (hc *HomeKitProvider) registerAccessories() *accessory.A {
 
 func (hc *HomeKitProvider) launchServer(as *accessory.A) {
 	// Store the data in the "./db" directory.
-	fs := hap.NewFsStore("./db")
 	log2.Debug.Enable()
 	// Create the hap server.
-	server, err := hap.NewServer(fs, as)
+	server, err := hap.NewServer(hc.db, as)
 	server.Addr = ":8000"
 	if err != nil {
 		// stop if an error happens

@@ -2,6 +2,7 @@ package providers
 
 import (
 	"bytes"
+	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"golang.org/x/sys/execabs"
@@ -10,30 +11,6 @@ import (
 	"os"
 	"text/template"
 )
-
-type FirmwareConfig struct {
-	File                           string  `json:"file"`
-	Repository                     string  `json:"repository"`
-	Branch                         string  `json:"branch"`
-	Version                        string  `json:"version"`
-	BoardType                      string  `json:"boardType"`
-	PanelType                      string  `json:"panelType"`
-	DebugType                      string  `json:"debugType"`
-	DisableEmergency               bool    `json:"disableEmergency"`
-	MaxMps                         float32 `json:"maxMps"`
-	MaxChargeCurrent               float32 `json:"maxChargeCurrent"`
-	LimitVoltage150MA              float32 `json:"limitVoltage150MA"`
-	MaxChargeVoltage               float32 `json:"maxChargeVoltage"`
-	BatChargeCutoffVoltage         float32 `json:"batChargeCutoffVoltage"`
-	OneWheelLiftEmergencyMillis    int     `json:"oneWheelLiftEmergencyMillis"`
-	BothWheelsLiftEmergencyMillis  int     `json:"bothWheelsLiftEmergencyMillis"`
-	TiltEmergencyMillis            int     `json:"tiltEmergencyMillis"`
-	StopButtonEmergencyMillis      int     `json:"stopButtonEmergencyMillis"`
-	PlayButtonClearEmergencyMillis int     `json:"playButtonClearEmergencyMillis"`
-	ExternalImuAcceleration        bool    `json:"externalImuAcceleration"`
-	ExternalImuAngular             bool    `json:"externalImuAngular"`
-	MasterJ18                      bool    `json:"masterJ18"`
-}
 
 type FirmwareProvider struct {
 }
@@ -44,7 +21,7 @@ func NewFirmwareProvider() *FirmwareProvider {
 }
 
 // BuildBoardHeader Open file ../../setup/board.h, apply go template to it with config and return the result
-func (fp *FirmwareProvider) buildBoardHeader(templateFile string, config FirmwareConfig) ([]byte, error) {
+func (fp *FirmwareProvider) buildBoardHeader(templateFile string, config types.FirmwareConfig) ([]byte, error) {
 	if config.BatChargeCutoffVoltage > 29 {
 		config.BatChargeCutoffVoltage = 29
 	}
@@ -69,7 +46,7 @@ func (fp *FirmwareProvider) buildBoardHeader(templateFile string, config Firmwar
 	return buffer.Bytes(), nil
 }
 
-func (fp *FirmwareProvider) FlashFirmware(writer io.Writer, config FirmwareConfig) error {
+func (fp *FirmwareProvider) FlashFirmware(writer io.Writer, config types.FirmwareConfig) error {
 	if config.Repository == "" && config.File == "" {
 		return xerrors.Errorf("repository or file is required")
 	}
@@ -84,7 +61,7 @@ func (fp *FirmwareProvider) FlashFirmware(writer io.Writer, config FirmwareConfi
 	}
 }
 
-func (fp *FirmwareProvider) flashMowgli(writer io.Writer, config FirmwareConfig) error {
+func (fp *FirmwareProvider) flashMowgli(writer io.Writer, config types.FirmwareConfig) error {
 	_, _ = writer.Write([]byte("------> Cloning repository " + config.Repository + "@" + config.Branch + "...\n"))
 	//Clone git repository, checkout branch, build board.h, build firmware with platformio, flash firmware with platformio
 	referenceName := plumbing.ReferenceName("refs/heads/" + config.Branch)
@@ -137,7 +114,7 @@ func (fp *FirmwareProvider) flashMowgli(writer io.Writer, config FirmwareConfig)
 	return nil
 }
 
-func (fp *FirmwareProvider) flashVermut(writer io.Writer, config FirmwareConfig) error {
+func (fp *FirmwareProvider) flashVermut(writer io.Writer, config types.FirmwareConfig) error {
 	// Download the firmware from https://github.com/ClemensElflein/OpenMower/releases/download/latest/firmware.zip to /tmp/firmware.zip
 	// Unzip /tmp/firmware.zip to /tmp/firmware
 	// Flash the firmware by running command openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program ./firmware_download/firmware/$OM_HARDWARE_VERSION/firmware.elf verify reset exit"
