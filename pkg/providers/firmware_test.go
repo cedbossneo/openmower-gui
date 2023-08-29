@@ -8,7 +8,8 @@ import (
 )
 
 func TestBuildBoard(t *testing.T) {
-	firmwareProvider := NewFirmwareProvider()
+	dbProvider := NewDBProvider()
+	firmwareProvider := NewFirmwareProvider(dbProvider)
 	config := types.FirmwareConfig{
 		BoardType:                      "BOARD_YARDFORCE500",
 		PanelType:                      "PANEL_TYPE_YARDFORCE_500_CLASSIC",

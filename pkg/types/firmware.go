@@ -30,4 +30,6 @@ type FirmwareConfig struct {
 	ExternalImuAcceleration        bool    `json:"externalImuAcceleration"`
 	ExternalImuAngular             bool    `json:"externalImuAngular"`
 	MasterJ18                      bool    `json:"masterJ18"`
+	TickPerM                       float32 `json:"tickPerM"`
+	WheelBase                      float32 `json:"wheelBase"`
 }

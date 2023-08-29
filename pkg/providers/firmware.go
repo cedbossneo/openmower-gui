@@ -2,6 +2,7 @@ package providers
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -13,10 +14,13 @@ import (
 )
 
 type FirmwareProvider struct {
+	db types.IDBProvider
 }
 
-func NewFirmwareProvider() *FirmwareProvider {
-	u := &FirmwareProvider{}
+func NewFirmwareProvider(db types.IDBProvider) *FirmwareProvider {
+	u := &FirmwareProvider{
+		db: db,
+	}
 	return u
 }
 
@@ -52,6 +56,14 @@ func (fp *FirmwareProvider) FlashFirmware(writer io.Writer, config types.Firmwar
 	}
 	if config.Branch == "" && config.Repository != "" {
 		return xerrors.Errorf("branch is empty")
+	}
+	configJson, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	err = fp.db.Set("gui.firmware.config", configJson)
+	if err != nil {
+		return err
 	}
 	switch config.BoardType {
 	case "BOARD_VERMUT_YARDFORCE500":

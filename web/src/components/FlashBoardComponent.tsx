@@ -1,11 +1,12 @@
 import {Button, Col, Modal, notification, Row} from "antd";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
 import {createSchemaField, FormProvider} from "@formily/react";
 import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Submit} from "@formily/antd-v5";
 import {StyledTerminal} from "./StyledTerminal.tsx";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import {createForm, onFieldValueChange} from "@formily/core";
+import {useApi} from "../hooks/useApi.ts";
 
 const SchemaField = createSchemaField({
     components: {
@@ -38,12 +39,14 @@ type Config = {
     externalImuAcceleration: boolean,
     externalImuAngular: boolean,
     masterJ18: boolean,
+    tickPerM: number,
+    wheelBase: number
 }
 
 const form = createForm<Config>({
     effects() {
         onFieldValueChange('boardType', (field) => {
-            form.setFieldState('*(panelType,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18)', (state) => {
+            form.setFieldState('*(panelType,tickPerM,wheelBase,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18)', (state) => {
                 //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
                 state.display = field.value !== "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
             })
@@ -55,8 +58,34 @@ const form = createForm<Config>({
     },
 })
 export const FlashBoardComponent = (props: { onNext: () => void }) => {
+    const guiApi = useApi();
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
     const [data, setData] = useState<string[]>()
+    useEffect(() => {
+        (async () => {
+            try {
+                debugger
+                const config = await guiApi.config.keysGetCreate({
+                    "gui.firmware.config": ""
+                })
+                const jsonConfig = config.data["gui.firmware.config"]
+                if (jsonConfig) {
+                    form.setValues(JSON.parse(jsonConfig))
+                }
+                if (config.error) {
+                    throw new Error(config.error.error)
+                }
+                notificationInstance.info({
+                    message: "Retrieved config",
+                });
+            } catch (e: any) {
+                notificationInstance.error({
+                    message: "Error retrieving config",
+                    description: e.toString(),
+                });
+            }
+        })()
+    }, []);
     const flashFirmware = async (values: Config) => {
         form.setLoading(true)
         try {
@@ -260,6 +289,26 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                             default={0.5}
                             x-decorator-props={{tooltip: "Max speed in meters per second"}}
                             x-component-props={{step: 0.1, max: 1.0}}
+                            x-component="NumberPicker"
+                            x-decorator="FormItem"/>
+                    </SchemaField>
+                    <SchemaField>
+                        <SchemaField.Number
+                            name={"tickPerM"}
+                            title={"Tick per meter"}
+                            default={300.0}
+                            x-decorator-props={{tooltip: "Number of wheel ticks per meter"}}
+                            x-component-props={{step: 0.1}}
+                            x-component="NumberPicker"
+                            x-decorator="FormItem"/>
+                    </SchemaField>
+                    <SchemaField>
+                        <SchemaField.Number
+                            name={"wheelBase"}
+                            title={"Wheel base"}
+                            default={0.325}
+                            x-decorator-props={{tooltip: "Wheel base in meters"}}
+                            x-component-props={{step: 0.001}}
                             x-component="NumberPicker"
                             x-decorator="FormItem"/>
                     </SchemaField>
