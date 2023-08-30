@@ -33,5 +33,5 @@ export const useWS = <T>(onError: (e: Error) => void, onInfo: (msg: string) => v
         setUri(null)
         setFirst(false)
     }
-    return {start, stop}
+    return {start, stop, sendJsonMessage: ws.sendJsonMessage}
 }

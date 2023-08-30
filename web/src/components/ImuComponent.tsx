@@ -1,29 +1,9 @@
 import {NotificationInstance} from "antd/es/notification/interface";
-import {useEffect, useState} from "react";
-import {Imu} from "../types/ros.ts";
-import {useWS} from "../hooks/useWS.ts";
 import {Col, Row, Statistic} from "antd";
+import {useImu} from "../hooks/useImu.tsx";
 
 export function ImuComponent(props: { api: NotificationInstance }) {
-    const [imu, setImu] = useState<Imu>({})
-    const imuStream = useWS<string>(() => {
-            props.api.info({
-                message: "IMU Stream closed",
-            })
-        }, () => {
-            props.api.info({
-                message: "IMU Stream connected",
-            })
-        },
-        (e) => {
-            setImu(JSON.parse(e))
-        })
-    useEffect(() => {
-        imuStream.start("/api/openmower/subscribe/imu",)
-        return () => {
-            imuStream.stop()
-        }
-    }, []);
+    const imu = useImu(props.api);
     return <Row gutter={[16, 16]}>
         <Col lg={8} xs={24}><Statistic precision={9} title="Angular Velocity X"
                                        value={imu.AngularVelocity?.X}/></Col>

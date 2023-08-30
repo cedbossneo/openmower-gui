@@ -5,10 +5,11 @@ import {HighLevelStatusComponent} from "../components/HighLevelStatusComponent.t
 import {ImuComponent} from "../components/ImuComponent.tsx";
 import {WheelTicksComponent} from "../components/WheelTicksComponent.tsx";
 import {GpsComponent} from "../components/GpsComponent.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.tsx";
 
 export const OpenMowerPage = () => {
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
-
+    const highLevelStatus = useHighLevelStatus(notificationInstance);
 
     return <Row gutter={[16, 16]}>
         {notificationContextHolder}
@@ -16,7 +17,7 @@ export const OpenMowerPage = () => {
             <Typography.Title level={2}>OpenMower</Typography.Title>
         </Col>
         <Col span={24}>
-            <MowerActions api={notificationInstance}/>
+            <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus}/>
         </Col>
         <Col span={24}>
             <Card title={"High Level Status"}>

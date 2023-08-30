@@ -1,30 +1,10 @@
 import {NotificationInstance} from "antd/es/notification/interface";
-import {useEffect, useState} from "react";
-import {HighLevelStatus} from "../types/ros.ts";
-import {useWS} from "../hooks/useWS.ts";
 import {Col, Row, Statistic} from "antd";
 import {booleanFormatter, booleanFormatterInverted, progressFormatter, stateRenderer} from "./utils.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.tsx";
 
 export function HighLevelStatusComponent(props: { api: NotificationInstance }) {
-    const [highLevelStatus, setHighLevelStatus] = useState<HighLevelStatus>({})
-    const highLevelStatusStream = useWS<string>(() => {
-            props.api.info({
-                message: "High Level Status Stream closed",
-            })
-        }, () => {
-            props.api.info({
-                message: "High Level Status Stream connected",
-            })
-        },
-        (e) => {
-            setHighLevelStatus(JSON.parse(e))
-        })
-    useEffect(() => {
-        highLevelStatusStream.start("/api/openmower/subscribe/highLevelStatus",)
-        return () => {
-            highLevelStatusStream.stop()
-        }
-    }, []);
+    const highLevelStatus = useHighLevelStatus(props.api)
     return <Row gutter={[16, 16]}>
         <Col lg={6} xs={12}><Statistic title="State" valueStyle={{color: '#3f8600'}}
                                        value={stateRenderer(highLevelStatus.StateName)}/></Col>

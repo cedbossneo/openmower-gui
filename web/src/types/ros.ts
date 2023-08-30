@@ -5,6 +5,15 @@ export type ColorRGBA = {
     A: number
 }
 
+export type Joy = {
+    /*
+    Axes        []float32
+	Buttons     []int32
+     */
+    Axes?: number[]
+    Buttons?: number[]
+}
+
 export type Marker = {
     /*
     Header                   std_msgs.Header
@@ -52,6 +61,11 @@ export type Point32 = {
     X?: number
     Y?: number
     Z?: number
+}
+
+export type Twist = {
+    Linear?: Vector3
+    Angular?: Vector3
 }
 
 export type Polygon = {

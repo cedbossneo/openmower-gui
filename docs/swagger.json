@@ -4,116 +4,116 @@
         "contact": {}
     },
     "paths": {
-      "/config/envs": {
-        "get": {
-          "description": "get config env from backend",
-          "produces": [
-            "application/json",
-            "application/json"
-          ],
-          "tags": [
-            "config"
-          ],
-          "summary": "get config env from backend",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "schema": {
-                "$ref": "#/definitions/api.GetConfigResponse"
-              }
-            },
-            "500": {
-              "description": "Internal Server Error",
-              "schema": {
-                "$ref": "#/definitions/api.ErrorResponse"
-              }
-            }
-          }
-        }
-      },
-      "/config/keys/get": {
-        "post": {
-          "description": "get config from backend",
-          "produces": [
-            "application/json"
-          ],
-          "tags": [
-            "config"
-          ],
-          "summary": "get config from backend",
-          "parameters": [
-            {
-              "description": "settings",
-              "name": "settings",
-              "in": "body",
-              "required": true,
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
+        "/config/envs": {
+            "get": {
+                "description": "get config env from backend",
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "get config env from backend",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GetConfigResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
                 }
-              }
             }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
+        },
+        "/config/keys/get": {
+            "post": {
+                "description": "get config from backend",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "get config from backend",
+                "parameters": [
+                    {
+                        "description": "settings",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
                 }
-              }
-            },
-            "500": {
-              "description": "Internal Server Error",
-              "schema": {
-                "$ref": "#/definitions/api.ErrorResponse"
-              }
             }
-          }
-        }
-      },
-      "/config/keys/set": {
-        "post": {
-          "description": "set config to backend",
-          "produces": [
-            "application/json"
-          ],
-          "tags": [
-            "config"
-          ],
-          "summary": "set config to backend",
-          "parameters": [
-            {
-              "description": "settings",
-              "name": "settings",
-              "in": "body",
-              "required": true,
-              "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
+        },
+        "/config/keys/set": {
+            "post": {
+                "description": "set config to backend",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "set config to backend",
+                "parameters": [
+                    {
+                        "description": "settings",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
                 }
-              }
             }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "schema": {
-                "$ref": "#/definitions/api.OkResponse"
-              }
-            },
-            "500": {
-              "description": "Internal Server Error",
-              "schema": {
-                "$ref": "#/definitions/api.ErrorResponse"
-              }
-            }
-          }
-        }
-      },
+        },
         "/containers": {
             "get": {
                 "description": "list all containers",
@@ -361,6 +361,25 @@
                 }
             }
         },
+        "/openmower/publish/{topic}": {
+            "get": {
+                "description": "publish to a topic",
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "publish to a topic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "topic to publish to, could be: joy",
+                        "name": "topic",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/openmower/subscribe/{topic}": {
             "get": {
                 "description": "subscribe to a topic",
@@ -429,75 +448,75 @@
                         }
                     }
                 ],
-              "responses": {
-                "200": {
-                  "description": "OK",
-                  "schema": {
-                    "$ref": "#/definitions/api.OkResponse"
-                  }
-                },
-                "500": {
-                  "description": "Internal Server Error",
-                  "schema": {
-                    "$ref": "#/definitions/api.ErrorResponse"
-                  }
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
                 }
-              }
             }
         },
-      "/setup/flashBoard": {
-        "post": {
-          "description": "flash the mower board with the given config",
-          "consumes": [
-            "application/json"
-          ],
-          "produces": [
-            "text/event-stream"
-          ],
-          "tags": [
-            "setup"
-          ],
-          "summary": "flash the mower board with the given config",
-          "parameters": [
-            {
-              "description": "config",
-              "name": "settings",
-              "in": "body",
-              "required": true,
-              "schema": {
-                "$ref": "#/definitions/types.FirmwareConfig"
-              }
+        "/setup/flashBoard": {
+            "post": {
+                "description": "flash the mower board with the given config",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "setup"
+                ],
+                "summary": "flash the mower board with the given config",
+                "parameters": [
+                    {
+                        "description": "config",
+                        "name": "settings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.FirmwareConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
             }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK",
-              "schema": {
-                "$ref": "#/definitions/api.OkResponse"
-              }
-            },
-            "500": {
-              "description": "Internal Server Error",
-              "schema": {
-                "$ref": "#/definitions/api.ErrorResponse"
-              }
-            }
-          }
-        }
-      },
-      "/setup/flashGPS": {
-        "post": {
-          "description": "flash the gps configuration",
-          "consumes": [
-            "application/json"
-          ],
-          "produces": [
-            "text/event-stream"
-          ],
-          "tags": [
-            "setup"
-          ],
-          "summary": "flash the gps configuration",
+        },
+        "/setup/flashGPS": {
+            "post": {
+                "description": "flash the gps configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "setup"
+                ],
+                "summary": "flash the gps configuration",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -558,11 +577,11 @@
                 }
             }
         },
-      "api.GetConfigResponse": {
-        "type": "object",
-        "properties": {
-          "tileUri": {
-            "type": "string"
+        "api.GetConfigResponse": {
+            "type": "object",
+            "properties": {
+                "tileUri": {
+                    "type": "string"
                 }
             }
         },
@@ -712,71 +731,71 @@
                 }
             }
         },
-      "types.FirmwareConfig": {
-        "type": "object",
-        "properties": {
-          "batChargeCutoffVoltage": {
-            "type": "number"
-          },
-          "boardType": {
-            "type": "string"
-          },
-          "bothWheelsLiftEmergencyMillis": {
-            "type": "integer"
-          },
-          "branch": {
-            "type": "string"
-          },
-          "debugType": {
-            "type": "string"
-          },
-          "disableEmergency": {
-            "type": "boolean"
-          },
-          "externalImuAcceleration": {
-            "type": "boolean"
-          },
-          "externalImuAngular": {
-            "type": "boolean"
-          },
-          "file": {
-            "type": "string"
-          },
-          "limitVoltage150MA": {
-            "type": "number"
-          },
-          "masterJ18": {
-            "type": "boolean"
-          },
-          "maxChargeCurrent": {
-            "type": "number"
-          },
-          "maxChargeVoltage": {
-            "type": "number"
-          },
-          "maxMps": {
-            "type": "number"
-          },
-          "oneWheelLiftEmergencyMillis": {
-            "type": "integer"
-          },
-          "panelType": {
-            "type": "string"
-          },
-          "playButtonClearEmergencyMillis": {
-            "type": "integer"
-          },
-          "repository": {
-            "type": "string"
-          },
-          "stopButtonEmergencyMillis": {
-            "type": "integer"
-          },
-          "tiltEmergencyMillis": {
-            "type": "integer"
-          },
-          "version": {
-            "type": "string"
+        "types.FirmwareConfig": {
+            "type": "object",
+            "properties": {
+                "batChargeCutoffVoltage": {
+                    "type": "number"
+                },
+                "boardType": {
+                    "type": "string"
+                },
+                "bothWheelsLiftEmergencyMillis": {
+                    "type": "integer"
+                },
+                "branch": {
+                    "type": "string"
+                },
+                "debugType": {
+                    "type": "string"
+                },
+                "disableEmergency": {
+                    "type": "boolean"
+                },
+                "externalImuAcceleration": {
+                    "type": "boolean"
+                },
+                "externalImuAngular": {
+                    "type": "boolean"
+                },
+                "file": {
+                    "type": "string"
+                },
+                "limitVoltage150MA": {
+                    "type": "number"
+                },
+                "masterJ18": {
+                    "type": "boolean"
+                },
+                "maxChargeCurrent": {
+                    "type": "number"
+                },
+                "maxChargeVoltage": {
+                    "type": "number"
+                },
+                "maxMps": {
+                    "type": "number"
+                },
+                "oneWheelLiftEmergencyMillis": {
+                    "type": "integer"
+                },
+                "panelType": {
+                    "type": "string"
+                },
+                "playButtonClearEmergencyMillis": {
+                    "type": "integer"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "stopButtonEmergencyMillis": {
+                    "type": "integer"
+                },
+                "tiltEmergencyMillis": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         }

@@ -24,3 +24,7 @@ export const stateRenderer = (value: string | undefined) => {
 export const progressFormatter = (value: any) => {
     return <Progress steps={3} percent={value} size={25} showInfo={false}/>
 };
+
+export const progressFormatterSmall = (value: any) => {
+    return <Progress steps={3} percent={value} size={14} showInfo={false}/>
+};
