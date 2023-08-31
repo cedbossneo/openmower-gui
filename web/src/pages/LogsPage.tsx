@@ -7,7 +7,7 @@ import {useApi} from "../hooks/useApi.ts";
 import {StyledTerminal} from "../components/StyledTerminal.tsx";
 import ansiHTML from "../utils/ansi.ts";
 import {MowerActions} from "../components/MowerActions.tsx";
-import {useHighLevelStatus} from "../hooks/useHighLevelStatus.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 
 type ContainerList = { value: string, label: string, status: "started" | "stopped", labels: Record<string, string> };
 export const LogsPage = () => {
@@ -112,7 +112,7 @@ export const LogsPage = () => {
             <Typography.Title level={2}>Container logs</Typography.Title>
         </Col>
         <Col span={24}>
-            <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus} showStatus/>
+            <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus.highLevelStatus} showStatus/>
         </Col>
         <Col span={24} style={{marginBottom: 20}}>
             <Select<string> options={containers} value={containerId} style={{marginRight: 10}} onSelect={(value) => {

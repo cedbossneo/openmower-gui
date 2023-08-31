@@ -2,7 +2,7 @@ import {NotificationInstance} from "antd/es/notification/interface";
 import {ESCStatus} from "../types/ros.ts";
 import {Card, Col, Row, Statistic} from "antd";
 import {booleanFormatter} from "./utils.tsx";
-import {useStatus} from "../hooks/useStatus.tsx";
+import {useStatus} from "../hooks/useStatus.ts";
 
 export function StatusComponent(props: { api: NotificationInstance }) {
     const status = useStatus(props.api);

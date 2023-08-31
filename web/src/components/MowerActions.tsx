@@ -158,10 +158,10 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
                     <Divider type={"vertical"} style={{marginLeft: 20}}/>
                     <Col><Statistic prefix="State :" valueStyle={{color: '#3f8600', fontSize: "14px"}}
                                     value={stateRenderer(props.highLevelStatus.StateName)}/></Col>
-                    <Col><Statistic prefix="GPS Quality :" valueStyle={{fontSize: "14px"}}
+                    <Col><Statistic prefix="GPS Quality :" valueStyle={{fontSize: "14px"}} precision={2}
                                     value={(props.highLevelStatus.GpsQualityPercent ?? 0) * 100}
                                     suffix={"%"}/></Col>
-                    <Col><Statistic prefix="Battery :" valueStyle={{fontSize: "14px"}}
+                    <Col><Statistic prefix="Battery :" valueStyle={{fontSize: "14px"}} precision={2}
                                     value={(props.highLevelStatus.BatteryPercent ?? 0) * 100}
                                     formatter={progressFormatterSmall}/></Col>
                     <Col><Statistic prefix="Charging :" valueStyle={{fontSize: "14px"}}

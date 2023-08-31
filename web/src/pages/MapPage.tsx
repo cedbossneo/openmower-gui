@@ -14,8 +14,8 @@ import AsyncButton from "../components/AsyncButton.tsx";
 import {MapStyle} from "./MapStyle.tsx";
 import {converter, drawLine, getQuaternionFromHeading, itranspose, meterInDegree, transpose} from "../utils/map.tsx";
 import {Joystick} from "react-joystick-component";
-import {IJoystickUpdateEvent} from "react-joystick-component/src/Joystick.tsx";
-import {useHighLevelStatus} from "../hooks/useHighLevelStatus.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
+import {IJoystickUpdateEvent} from "react-joystick-component/build/lib/Joystick";
 
 export const MapPage = () => {
     const [notificationInstance, notificationContextHolder] = notification.useNotification();
@@ -30,9 +30,9 @@ export const MapPage = () => {
 
 
     const guiApi = useApi()
+    const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
-    const [recordTimer, setRecordTimer] = useState<number | undefined>()
     const [features, setFeatures] = useState<Record<string, Feature>>({});
     const [mapKey, setMapKey] = useState<string>("origin")
     const [map, setMap] = useState<MapType | undefined>(undefined)
@@ -73,16 +73,26 @@ export const MapPage = () => {
             mapStream.stop()
             gpsStream.stop()
             pathStream.stop()
+            highLevelStatus.stop()
             setPath(undefined)
         } else {
             if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
                 return
             }
+            highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
             gpsStream.start("/api/openmower/subscribe/gps",)
             mapStream.start("/api/openmower/subscribe/map",)
             pathStream.start("/api/openmower/subscribe/path")
         }
     }, [editMap])
+    useEffect(() => {
+        if (highLevelStatus.highLevelStatus.StateName == "AREA_RECORDING") {
+            joyStream.start("/api/openmower/publish/joy")
+            setEditMap(false)
+            return
+        }
+        joyStream.stop()
+    }, [highLevelStatus.highLevelStatus.StateName])
     const gpsStream = useWS<string>(() => {
             notificationInstance.info({
                 message: "GPS Stream closed",
@@ -579,52 +589,61 @@ export const MapPage = () => {
         })
         input.click();
     };
-    const handleRecordingMode = async () => {
-        setEditMap(false)
+    const handleManualMode = async () => {
         await mowerAction(
             "high_level_control",
             {
                 Command: 3,
             }
         )()
-        joyStream.start("/api/openmower/publish/joy")
+        setManualMode(setInterval(() => {
+            (async () => {
+                await mowerAction("mow_enabled", {MowEnabled: 1, MowDirection: 0})()
+            })()
+        }, 10000))
     };
 
-    const handleStopRecordingMode = async () => {
-        setEditMap(false)
-        clearInterval(recordTimer)
+    const handleStopManualMode = async () => {
         await mowerAction(
             "high_level_control",
             {
                 Command: 2,
             }
         )()
-        joyStream.stop()
+        clearInterval(manualMode)
+        setManualMode(undefined)
+        await mowerAction("mow_enabled", {MowEnabled: 0, MowDirection: 0})()
     };
 
     const handleJoyMove = (event: IJoystickUpdateEvent) => {
         let newVar: Twist = {
             Linear: {
-                X: event.x ?? 0,
-                Y: event.y ?? 0,
+                X: event.y ?? 0,
+                Y: 0,
+                Z: 0
             },
+            Angular: {
+                Z: (event.x ?? 0) * -1,
+                X: 0,
+                Y: 0
+            }
         };
-        clearInterval(recordTimer)
-        setRecordTimer(setInterval(() => {
-            joyStream.sendJsonMessage(newVar)
-        }, 10))
+        joyStream.sendJsonMessage(newVar)
     };
     const handleJoyStop = () => {
         let newVar: Twist = {
             Linear: {
                 X: 0,
                 Y: 0,
+                Z: 0
             },
+            Angular: {
+                Z: 0,
+                X: 0,
+                Y: 0
+            }
         };
-        clearInterval(recordTimer)
-        setRecordTimer(setInterval(() => {
-            joyStream.sendJsonMessage(newVar)
-        }, 10))
+        joyStream.sendJsonMessage(newVar)
     };
 
     const handleOffsetX = (value: number) => {
@@ -702,19 +721,19 @@ export const MapPage = () => {
                     use</Typography.Title>
             </Col>
             <Col span={24}>
-                <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus} showStatus>
+                <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus.highLevelStatus} showStatus>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
                                          style={{marginRight: 10}}>Edit Map</Button>}
                     {editMap && <AsyncButton size={"small"} type="primary" onAsyncClick={handleSaveMap}
                                              style={{marginRight: 10}}>Save Map</AsyncButton>}
                     {editMap && <Button size={"small"} onClick={handleEditMap}
                                         style={{marginRight: 10}}>Cancel Map Edition</Button>}
-                    {highLevelStatus.StateName !== "AREA_RECORDING" &&
-                        <AsyncButton size={"small"} onAsyncClick={handleRecordingMode}
-                                                 style={{marginRight: 10}}>Recording Mode</AsyncButton>}
-                    {highLevelStatus.StateName === "AREA_RECORDING" &&
-                        <AsyncButton size={"small"} onAsyncClick={handleStopRecordingMode}
-                                     style={{marginRight: 10}}>Stop Recording Mode</AsyncButton>}
+                    {!manualMode &&
+                        <AsyncButton size={"small"} onAsyncClick={handleManualMode}
+                                     style={{marginRight: 10}}>Manual mowing</AsyncButton>}
+                    {manualMode &&
+                        <AsyncButton size={"small"} onAsyncClick={handleStopManualMode}
+                                     style={{marginRight: 10}}>Stop Manual Mowing</AsyncButton>}
                     <Button size={"small"} onClick={handleBackupMap}
                             style={{marginRight: 10}}>Backup Map</Button>
                     <Button size={"small"} onClick={handleRestoreMap}
@@ -763,7 +782,7 @@ export const MapPage = () => {
                         onDelete={onDelete}
                     />
                 </Map>
-                {highLevelStatus.StateName === "AREA_RECORDING" &&
+                {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
                     <Joystick move={handleJoyMove} stop={handleJoyStop}/>
                 </div>}

@@ -1,6 +1,6 @@
 import {NotificationInstance} from "antd/es/notification/interface";
 import {Col, Row, Statistic} from "antd";
-import {useImu} from "../hooks/useImu.tsx";
+import {useImu} from "../hooks/useImu.ts";
 
 export function ImuComponent(props: { api: NotificationInstance }) {
     const imu = useImu(props.api);

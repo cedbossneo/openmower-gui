@@ -23,5 +23,5 @@ export const useHighLevelStatus = (api: NotificationInstance) => {
             highLevelStatusStream.stop()
         }
     }, []);
-    return highLevelStatus
+    return {highLevelStatus, stop: highLevelStatusStream.stop, start: highLevelStatusStream.start};
 }

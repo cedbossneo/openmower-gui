@@ -1,6 +1,6 @@
 import {NotificationInstance} from "antd/es/notification/interface";
 import {Col, Row, Statistic} from "antd";
-import {useGPS} from "../hooks/useGPS.tsx";
+import {useGPS} from "../hooks/useGPS.ts";
 
 export function GpsComponent(props: { api: NotificationInstance }) {
     const gps = useGPS(props.api);

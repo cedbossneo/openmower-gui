@@ -1,6 +1,6 @@
 import {NotificationInstance} from "antd/es/notification/interface";
 import {Col, Row, Statistic} from "antd";
-import {useWheelTicks} from "../hooks/useWheelTicks.tsx";
+import {useWheelTicks} from "../hooks/useWheelTicks.ts";
 
 export function WheelTicksComponent(props: { api: NotificationInstance }) {
     const wheelTicks = useWheelTicks(props.api);
