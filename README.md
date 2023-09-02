@@ -48,7 +48,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/container-gui.pid --cidfile %t
   --volume /run/podman/podman.sock:/run/podman/podman.sock \
   --volume /boot/openmower/db:/app/db \
   --volume /boot/openmower/mower_config.txt:/config/mower_config.sh \
-  --label io.containers.autoupdate=registry \
+  --label io.containers.autoupdate=image \
   ghcr.io/cedbossneo/openmower-gui:master
 
 #ExecStartPost=/usr/bin/podman image prune --all --force
