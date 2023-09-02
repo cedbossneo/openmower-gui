@@ -16,6 +16,12 @@ If you are using mowgli-docker, you can skip this part as it's now included in t
 
 OpenMowerOS uses podman and containers are managed by systemd.
 
+First, create the /boot/openmower/db directory :
+
+```bash
+mkdir /boot/openmower/db
+```
+
 Create a gui.service file in `/etc/systemd/system/` with the following content:
 
 ```bash
