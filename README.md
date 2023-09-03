@@ -8,11 +8,11 @@ A GUI for the OpenMower project.
 
 ## Installation
 
-### mowgli-docker
+### If you are using Mowgli-Docker
 
 If you are using mowgli-docker, you can skip this part as it's now included in the docker-compose file.
 
-### OpenMowerOS
+### If your are using OpenMowerOS
 
 OpenMowerOS uses podman and containers are managed by systemd.
 
@@ -72,14 +72,6 @@ Then enable and start the service:
 ```bash
 sudo systemctl enable gui.service
 sudo systemctl start gui.service
-```
-
-### Docker-compose
-
-Adjust the docker-compose file to your needs and run:
-
-```bash
-docker-compose up -d
 ```
 
 ## Usage
