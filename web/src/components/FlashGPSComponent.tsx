@@ -1,4 +1,4 @@
-import {Button, Col, Modal, notification, Row, Typography} from "antd";
+import {App, Button, Col, Modal, Row, Typography} from "antd";
 import {useState} from "react";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
 import {FormButtonGroup} from "@formily/antd-v5";
@@ -7,11 +7,11 @@ import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import AsyncButton from "./AsyncButton.tsx";
 
 export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () => void }) => {
-    const [notificationInstance, notificationContextHolder] = notification.useNotification();
+    const {notification} = App.useApp();
     const [data, setData] = useState<string[]>()
     const flashGPS = async () => {
         try {
-            notificationInstance.info({
+            console.log({
                 message: "Flashing firmware",
             });
             await fetchEventSource(`/api/setup/flashGPS`, {
@@ -22,7 +22,7 @@ export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () =>
                 },
                 onopen(res) {
                     if (res.ok && res.status === 200) {
-                        notificationInstance.info({
+                        console.log({
                             message: "Connected to log stream",
                         });
                     } else if (
@@ -30,7 +30,7 @@ export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () =>
                         res.status < 500 &&
                         res.status !== 429
                     ) {
-                        notificationInstance.error({
+                        notification.error({
                             message: "Error retrieving log stream",
                             description: res.statusText,
                         });
@@ -40,7 +40,7 @@ export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () =>
                 },
                 onmessage(event) {
                     if (event.event == "end") {
-                        notificationInstance.success({
+                        notification.success({
                             message: "GPS flashed",
                         });
                         setTimeout(() => {
@@ -48,7 +48,7 @@ export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () =>
                         }, 10000);
                         return;
                     } else if (event.event == "error") {
-                        notificationInstance.error({
+                        notification.error({
                             message: "Error flashing gps",
                             description: event.data,
                         });
@@ -58,26 +58,25 @@ export const FlashGPSComponent = (props: { onNext: () => void, onPrevious: () =>
                     }
                 },
                 onclose() {
-                    notificationInstance.success({
+                    notification.success({
                         message: "Logs stream closed",
                     });
                 },
                 onerror(err) {
-                    notificationInstance.error({
+                    notification.error({
                         message: "Error retrieving log stream",
                         description: err.toString(),
                     });
                 },
             });
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Error flashing gps",
                 description: e.toString(),
             });
         }
     };
     return <Row>
-        {notificationContextHolder}
         <Col span={24} style={{textAlign: "center"}}>
             <Typography.Title level={4}>
                 Click on the button below to flash your uBlox Z-F9P GPS Configuration.

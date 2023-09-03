@@ -5,6 +5,7 @@ export const useWS = <T>(onError: (e: Error) => void, onInfo: (msg: string) => v
     const [uri, setUri] = useState<string | null>(null);
     const [first, setFirst] = useState(false)
     const ws = useWebSocket(uri, {
+        share: true,
         onOpen: () => {
             console.log(`Opened stream ${uri}`)
             onInfo("Stream connected")

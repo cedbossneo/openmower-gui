@@ -81,6 +81,8 @@ func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error
 	if err != nil {
 		return err
 	}
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
 	subscriber, hasSubscriber := p.subscribers[topic]
 	if !hasSubscriber {
 		p.subscribers[topic] = make(map[string]func(msg any))

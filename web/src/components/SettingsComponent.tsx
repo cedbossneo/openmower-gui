@@ -122,7 +122,7 @@ export OM_HEATMAP_SENSOR_IDS=om_gps_accuracy
 import {createSchemaField, FormProvider} from "@formily/react";
 import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select} from "@formily/antd-v5";
 import {useApi} from "../hooks/useApi.ts";
-import {Card, Col, notification, Row} from "antd";
+import {App, Card, Col, Row} from "antd";
 import React, {CSSProperties, useEffect} from "react";
 import {createForm, Form, onFieldValueChange} from "@formily/core";
 
@@ -400,7 +400,7 @@ const SchemaField = createSchemaField({
 })
 export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>, save: (values: SettingsConfig) => Promise<void>, restart: () => Promise<void>) => React.ReactElement[], contentStyle?: CSSProperties }> = (props) => {
     const guiApi = useApi()
-    const [notificationInstance, notificationContextHolder] = notification.useNotification();
+    const {notification} = App.useApp();
     useEffect(() => {
         (async () => {
             try {
@@ -425,7 +425,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                 })
                 form.setValues(newSettings)
             } catch (e: any) {
-                notificationInstance.error({
+                notification.error({
                     message: "Failed to load settings",
                     description: e.message,
                 })
@@ -441,11 +441,11 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
             if (res.error) {
                 throw new Error(res.error.error)
             }
-            notificationInstance.success({
+            notification.success({
                 message: "Settings saved",
             })
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Failed to save settings",
                 description: e.message,
             })
@@ -465,14 +465,14 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                 if (res.error) {
                     throw new Error(res.error.error)
                 }
-                notificationInstance.success({
+                notification.success({
                     message: "OpenMower restarted",
                 })
             } else {
                 throw new Error("OpenMower container not found")
             }
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Failed to restart OpenMower",
                 description: e.message,
             })
@@ -489,7 +489,6 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
     }, {} as Record<string, string[]>)
 
     return <Row>
-        {notificationContextHolder}
         <FormProvider form={form}>
             <Col span={24} style={{height: '80vh', overflowY: 'auto', ...props.contentStyle}}>
                 <FormLayout layout="vertical">

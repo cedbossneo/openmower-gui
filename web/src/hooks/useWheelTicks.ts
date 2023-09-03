@@ -1,16 +1,15 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {useEffect, useState} from "react";
 import {WheelTick} from "../types/ros.ts";
 import {useWS} from "./useWS.ts";
 
-export const useWheelTicks = (api: NotificationInstance) => {
+export const useWheelTicks = () => {
     const [wheelTicks, setWheelTicks] = useState<WheelTick>({})
     const ticksStream = useWS<string>(() => {
-            api.info({
+            console.log({
                 message: "Wheel Ticks Stream closed",
             })
         }, () => {
-            api.info({
+            console.log({
                 message: "Wheel Ticks Stream connected",
             })
         },

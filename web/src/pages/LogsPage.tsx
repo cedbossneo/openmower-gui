@@ -1,4 +1,4 @@
-import {Col, notification, Row, Select, Typography} from "antd";
+import {App, Col, Row, Select, Typography} from "antd";
 import {useEffect, useState} from "react";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -7,22 +7,20 @@ import {useApi} from "../hooks/useApi.ts";
 import {StyledTerminal} from "../components/StyledTerminal.tsx";
 import ansiHTML from "../utils/ansi.ts";
 import {MowerActions} from "../components/MowerActions.tsx";
-import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 
 type ContainerList = { value: string, label: string, status: "started" | "stopped", labels: Record<string, string> };
 export const LogsPage = () => {
     const guiApi = useApi();
-    const [notificationInstance, notificationContextHolder] = notification.useNotification();
-    const highLevelStatus = useHighLevelStatus(notificationInstance);
+    const {notification} = App.useApp();
     const [containers, setContainers] = useState<ContainerList[]>([]);
     const [containerId, setContainerId] = useState<string | undefined>(undefined);
     const [data, setData] = useState<string[]>([])
     const stream = useWS<string>(() => {
-        notificationInstance.error({
+        notification.error({
             message: "Logs stream closed",
         });
     }, () => {
-        notificationInstance.info({
+        console.log({
             message: "Logs stream connected",
         })
     }, (e, first) => {
@@ -56,7 +54,7 @@ export const LogsPage = () => {
                 setContainerId(options[0].value)
             }
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Failed to list containers",
                 description: e.message
             })
@@ -95,12 +93,12 @@ export const LogsPage = () => {
                     stream?.stop();
                 }
                 await listContainers();
-                notificationInstance.success({
+                notification.success({
                     message: messages[command],
                 })
             }
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: `Failed to ${command} container`,
                 description: e.message
             })
@@ -112,7 +110,7 @@ export const LogsPage = () => {
             <Typography.Title level={2}>Container logs</Typography.Title>
         </Col>
         <Col span={24}>
-            <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus.highLevelStatus} showStatus/>
+            <MowerActions/>
         </Col>
         <Col span={24} style={{marginBottom: 20}}>
             <Select<string> options={containers} value={containerId} style={{marginRight: 10}} onSelect={(value) => {
@@ -131,7 +129,6 @@ export const LogsPage = () => {
             }
         </Col>
         <Col span={24}>
-            {notificationContextHolder}
             <StyledTerminal>
                 <Terminal colorMode={ColorMode.Light}>
                     {data.map((line, index) => {

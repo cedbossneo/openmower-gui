@@ -1,16 +1,15 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {useEffect, useState} from "react";
 import {Status} from "../types/ros.ts";
 import {useWS} from "./useWS.ts";
 
-export const useStatus = (api: NotificationInstance) => {
+export const useStatus = () => {
     const [status, setStatus] = useState<Status>({})
     const statusStream = useWS<string>(() => {
-            api.info({
+            console.log({
                 message: "Status Stream closed",
             })
         }, () => {
-            api.info({
+            console.log({
                 message: "Status Stream connected",
             })
         },

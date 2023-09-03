@@ -1,12 +1,10 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {useApi} from "../hooks/useApi.ts";
-import {Card, Col, Divider, Row, Statistic} from "antd";
+import {Card, Col, Divider, Row} from "antd";
 import AsyncButton from "./AsyncButton.tsx";
 import React from "react";
 import styled from "styled-components";
 import AsyncDropDownButton from "./AsyncDropDownButton.tsx";
-import {HighLevelStatus} from "../types/ros.ts";
-import {booleanFormatter, progressFormatterSmall, stateRenderer} from "./utils.tsx";
+import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 
 const ActionsCard = styled(Card)`
   .ant-card-body > button {
@@ -29,7 +27,8 @@ export const useMowerAction = () => {
     };
 };
 
-export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationInstance, highLevelStatus: HighLevelStatus, showStatus?: boolean }>> = (props) => {
+export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
+    const {highLevelStatus} = useHighLevelStatus();
     const mowerAction = useMowerAction()
     let actionMenuItems: {
         key: string,
@@ -58,9 +57,9 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
             }]
         },
         {
-            key: props.highLevelStatus.StateName == "IDLE" ? "continue" : "pause",
-            label: props.highLevelStatus.StateName == "IDLE" ? "Continue" : "Pause",
-            actions: props.highLevelStatus.StateName == "IDLE" ? [{
+            key: highLevelStatus.StateName == "IDLE" ? "continue" : "pause",
+            label: highLevelStatus.StateName == "IDLE" ? "Continue" : "Pause",
+            actions: highLevelStatus.StateName == "IDLE" ? [{
                 command: "mower_logic", args: {
                     Config: {
                         Bools: [{
@@ -122,25 +121,35 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
             }]
         },
     ];
+    let children = props.children;
+    if (children && Array.isArray(children)) {
+        children = children.map(c => {
+            return c ? <Col>{c}</Col> : null
+        })
+    } else if (children) {
+        children = <Col>{children}</Col>
+    }
     return <ActionsCard title={"Actions"} size={"small"}>
-        <Row>
-            {props.children ? <Col>
-                {props.children}
-                <Divider type={"vertical"} style={{marginRight: 20}}/>
-            </Col> : null}
+        <Row gutter={[8, 8]} justify={"start"}>
+            {children}
+            {children ? <Col><Divider type={"vertical"}/></Col> : null}
             <Col>
-                {props.highLevelStatus.StateName == "IDLE" ? <AsyncButton size={"small"} type="primary"
+                {highLevelStatus.StateName == "IDLE" ? <AsyncButton size={"small"} type="primary"
                                                                           onAsyncClick={mowerAction("high_level_control", {Command: 1})}
-                                                                          style={{marginRight: 10}}>Start</AsyncButton> : null}
-                {props.highLevelStatus.StateName !== "IDLE" ? <AsyncButton size={"small"} type="primary"
+                >Start</AsyncButton> : null}
+                {highLevelStatus.StateName !== "IDLE" ? <AsyncButton size={"small"} type="primary"
                                                                            onAsyncClick={mowerAction("high_level_control", {Command: 2})}
-                                                                           style={{marginRight: 10}}>Home</AsyncButton> : null}
-                {!props.highLevelStatus.Emergency ?
+                >Home</AsyncButton> : null}
+            </Col>
+            <Col>
+                {!highLevelStatus.Emergency ?
                     <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 1})}
-                                 style={{marginRight: 10}}>Emergency On</AsyncButton> : null}
-                {props.highLevelStatus.Emergency ?
+                    >Emergency On</AsyncButton> : null}
+                {highLevelStatus.Emergency ?
                     <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 1})}
-                                 style={{marginRight: 10}}>Emergency Off</AsyncButton> : null}
+                    >Emergency Off</AsyncButton> : null}
+            </Col>
+            <Col>
                 <AsyncDropDownButton style={{display: "inline"}} size={"small"} menu={{
                     items: actionMenuItems,
                     onAsyncClick: async (e) => {
@@ -153,22 +162,6 @@ export const MowerActions: React.FC<React.PropsWithChildren<{ api: NotificationI
                     More
                 </AsyncDropDownButton>
             </Col>
-            {props.showStatus ? <Col>
-                <Row gutter={[16, 16]}>
-                    <Divider type={"vertical"} style={{marginLeft: 20}}/>
-                    <Col><Statistic prefix="State :" valueStyle={{color: '#3f8600', fontSize: "14px"}}
-                                    value={stateRenderer(props.highLevelStatus.StateName)}/></Col>
-                    <Col><Statistic prefix="GPS Quality :" valueStyle={{fontSize: "14px"}} precision={2}
-                                    value={(props.highLevelStatus.GpsQualityPercent ?? 0) * 100}
-                                    suffix={"%"}/></Col>
-                    <Col><Statistic prefix="Battery :" valueStyle={{fontSize: "14px"}} precision={2}
-                                    value={(props.highLevelStatus.BatteryPercent ?? 0) * 100}
-                                    formatter={progressFormatterSmall}/></Col>
-                    <Col><Statistic prefix="Charging :" valueStyle={{fontSize: "14px"}}
-                                    value={props.highLevelStatus.IsCharging ? "Yes" : "No"}
-                                    formatter={booleanFormatter}/></Col>
-                </Row>
-            </Col> : null}
         </Row>
     </ActionsCard>;
 };

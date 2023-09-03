@@ -1,9 +1,8 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {Col, Row, Statistic} from "antd";
 import {useImu} from "../hooks/useImu.ts";
 
-export function ImuComponent(props: { api: NotificationInstance }) {
-    const imu = useImu(props.api);
+export function ImuComponent() {
+    const imu = useImu();
     return <Row gutter={[16, 16]}>
         <Col lg={8} xs={24}><Statistic precision={9} title="Angular Velocity X"
                                        value={imu.AngularVelocity?.X}/></Col>

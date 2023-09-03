@@ -1,4 +1,4 @@
-import {Button, Col, Modal, notification, Row} from "antd";
+import {App, Button, Col, Modal, Row} from "antd";
 import {useEffect, useState} from "react";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
 import {createSchemaField, FormProvider} from "@formily/react";
@@ -59,12 +59,11 @@ const form = createForm<Config>({
 })
 export const FlashBoardComponent = (props: { onNext: () => void }) => {
     const guiApi = useApi();
-    const [notificationInstance, notificationContextHolder] = notification.useNotification();
+    const {notification} = App.useApp();
     const [data, setData] = useState<string[]>()
     useEffect(() => {
         (async () => {
             try {
-                debugger
                 const config = await guiApi.config.keysGetCreate({
                     "gui.firmware.config": ""
                 })
@@ -75,11 +74,11 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                 if (config.error) {
                     throw new Error(config.error.error)
                 }
-                notificationInstance.info({
+                console.log({
                     message: "Retrieved config",
                 });
             } catch (e: any) {
-                notificationInstance.error({
+                notification.error({
                     message: "Error retrieving config",
                     description: e.toString(),
                 });
@@ -89,7 +88,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
     const flashFirmware = async (values: Config) => {
         form.setLoading(true)
         try {
-            notificationInstance.info({
+            console.log({
                 message: "Flashing firmware",
             });
             await fetchEventSource(`/api/setup/flashBoard`, {
@@ -101,7 +100,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                 },
                 onopen(res) {
                     if (res.ok && res.status === 200) {
-                        notificationInstance.info({
+                        console.log({
                             message: "Connected to log stream",
                         });
                     } else if (
@@ -109,7 +108,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                         res.status < 500 &&
                         res.status !== 429
                     ) {
-                        notificationInstance.error({
+                        notification.error({
                             message: "Error retrieving log stream",
                             description: res.statusText,
                         });
@@ -119,7 +118,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                 },
                 onmessage(event) {
                     if (event.event == "end") {
-                        notificationInstance.success({
+                        notification.success({
                             message: "Firmware flashed",
                         });
                         setTimeout(() => {
@@ -128,7 +127,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                         form.setLoading(false)
                         return;
                     } else if (event.event == "error") {
-                        notificationInstance.error({
+                        notification.error({
                             message: "Error flashing firmware",
                             description: event.data,
                         });
@@ -139,12 +138,12 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                     }
                 },
                 onclose() {
-                    notificationInstance.success({
+                    notification.success({
                         message: "Logs stream closed",
                     });
                 },
                 onerror(err) {
-                    notificationInstance.error({
+                    notification.error({
                         message: "Error retrieving log stream",
                         description: err.toString(),
                     });
@@ -152,7 +151,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                 },
             });
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Error flashing firmware",
                 description: e.toString(),
             });
@@ -160,7 +159,6 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
         }
     };
     return <FormProvider form={form}>
-        {notificationContextHolder}
         <Row>
             <Col span={24} style={{height: "55vh", overflowY: "auto"}}>
                 <FormLayout layout="vertical">

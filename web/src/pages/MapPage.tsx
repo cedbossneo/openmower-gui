@@ -1,6 +1,6 @@
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
-import {Button, Col, Modal, notification, Row, Slider, Typography} from "antd";
+import {App, Button, Col, Modal, Row, Slider, Spin, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray, Twist} from "../types/ros.ts";
@@ -18,9 +18,9 @@ import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 import {IJoystickUpdateEvent} from "react-joystick-component/build/lib/Joystick";
 
 export const MapPage = () => {
-    const [notificationInstance, notificationContextHolder] = notification.useNotification();
+    const {notification} = App.useApp();
     const mowerAction = useMowerAction()
-    const highLevelStatus = useHighLevelStatus(notificationInstance)
+    const highLevelStatus = useHighLevelStatus()
     const [offsetX, setOffsetX] = useState(0);
     const [offsetY, setOffsetY] = useState(0);
     const [modalOpen, setModalOpen] = useState<boolean>(false)
@@ -61,7 +61,7 @@ export const MapPage = () => {
                 }
                 setSettings(settings.data.settings ?? {})
             } catch (e: any) {
-                notificationInstance.error({
+                notification.error({
                     message: "Failed to load settings",
                     description: e.message,
                 })
@@ -94,11 +94,11 @@ export const MapPage = () => {
         joyStream.stop()
     }, [highLevelStatus.highLevelStatus.StateName])
     const gpsStream = useWS<string>(() => {
-            notificationInstance.info({
+            console.log({
                 message: "GPS Stream closed",
             })
         }, () => {
-            notificationInstance.info({
+            console.log({
                 message: "GPS Stream connected",
             })
         },
@@ -175,11 +175,11 @@ export const MapPage = () => {
     }
 
     const mapStream = useWS<string>(() => {
-            notificationInstance.info({
+            console.log({
                 message: "MAP Stream closed",
             })
         }, () => {
-            notificationInstance.info({
+            console.log({
                 message: "MAP Stream connected",
             })
         },
@@ -190,11 +190,11 @@ export const MapPage = () => {
         });
 
     const pathStream = useWS<string>(() => {
-            notificationInstance.info({
+            console.log({
                 message: "PATH Stream closed",
             })
         }, () => {
-            notificationInstance.info({
+            console.log({
                 message: "PATH Stream connected",
             })
         },
@@ -204,11 +204,11 @@ export const MapPage = () => {
         });
 
     const joyStream = useWS<string>(() => {
-            notificationInstance.info({
+            console.log({
                 message: "Joystick Stream closed",
             })
         }, () => {
-            notificationInstance.info({
+            console.log({
                 message: "Joystick Stream connected",
             })
         },
@@ -432,7 +432,7 @@ export const MapPage = () => {
     const _datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
     const _datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
     if (_datumLon == 0 || _datumLat == 0) {
-        return <>Loading</>
+        return <Spin/>
     }
     const datum: [number, number, number] = [0, 0, 0]
     converter.LLtoUTM(_datumLat, _datumLon, datum)
@@ -488,12 +488,12 @@ export const MapPage = () => {
         }
         try {
             await guiApi.openmower.deleteOpenmower()
-            notificationInstance.success({
+            notification.success({
                 message: "Map deleted",
             })
             setEditMap(false)
         } catch (e: any) {
-            notificationInstance.error({
+            notification.error({
                 message: "Failed to delete map",
                 description: e.message,
             })
@@ -505,12 +505,12 @@ export const MapPage = () => {
                         area: area,
                         isNavigationArea: type == "navigation",
                     })
-                    notificationInstance.success({
+                    notification.success({
                         message: "Area saved",
                     })
                     setEditMap(false)
                 } catch (e: any) {
-                    notificationInstance.error({
+                    notification.error({
                         message: "Failed to save area",
                         description: e.message,
                     })
@@ -660,7 +660,7 @@ export const MapPage = () => {
                         throw new Error(offsetConfig.error.error ?? "")
                     }
                 } catch (e: any) {
-                    notificationInstance.error({
+                    notification.error({
                         message: "Failed to save offset",
                         description: e.message,
                     })
@@ -683,7 +683,7 @@ export const MapPage = () => {
                         throw new Error(offsetConfig.error.error ?? "")
                     }
                 } catch (e: any) {
-                    notificationInstance.error({
+                    notification.error({
                         message: "Failed to save offset",
                         description: e.message,
                     })
@@ -714,30 +714,29 @@ export const MapPage = () => {
                 onOk={saveMowingArea}
                 onCancel={deleteFeature}
             />
-            {notificationContextHolder}
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
                 <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
                     use</Typography.Title>
             </Col>
             <Col span={24}>
-                <MowerActions api={notificationInstance} highLevelStatus={highLevelStatus.highLevelStatus} showStatus>
+                <MowerActions>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
-                                         style={{marginRight: 10}}>Edit Map</Button>}
+                    >Edit Map</Button>}
                     {editMap && <AsyncButton size={"small"} type="primary" onAsyncClick={handleSaveMap}
-                                             style={{marginRight: 10}}>Save Map</AsyncButton>}
+                    >Save Map</AsyncButton>}
                     {editMap && <Button size={"small"} onClick={handleEditMap}
-                                        style={{marginRight: 10}}>Cancel Map Edition</Button>}
+                    >Cancel Map Edition</Button>}
                     {!manualMode &&
                         <AsyncButton size={"small"} onAsyncClick={handleManualMode}
-                                     style={{marginRight: 10}}>Manual mowing</AsyncButton>}
+                        >Manual mowing</AsyncButton>}
                     {manualMode &&
                         <AsyncButton size={"small"} onAsyncClick={handleStopManualMode}
-                                     style={{marginRight: 10}}>Stop Manual Mowing</AsyncButton>}
+                        >Stop Manual Mowing</AsyncButton>}
                     <Button size={"small"} onClick={handleBackupMap}
-                            style={{marginRight: 10}}>Backup Map</Button>
+                    >Backup Map</Button>
                     <Button size={"small"} onClick={handleRestoreMap}
-                            style={{marginRight: 10}}>Restore Map</Button>
+                    >Restore Map</Button>
                 </MowerActions>
             </Col>
             <Col span={24}>

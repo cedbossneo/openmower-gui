@@ -1,16 +1,16 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {useEffect, useState} from "react";
 import {Gps} from "../types/ros.ts";
 import {useWS} from "./useWS.ts";
 
-export const useGPS = (api: NotificationInstance) => {
+export const useGPS = () => {
     const [gps, setGps] = useState<Gps>({})
     const gpsStream = useWS<string>(() => {
-            api.info({
+            console.log({
                 message: "GPS Stream closed",
+
             })
         }, () => {
-            api.info({
+            console.log({
                 message: "GPS Stream connected",
             })
         },

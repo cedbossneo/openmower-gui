@@ -1,11 +1,10 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {ESCStatus} from "../types/ros.ts";
 import {Card, Col, Row, Statistic} from "antd";
 import {booleanFormatter} from "./utils.tsx";
 import {useStatus} from "../hooks/useStatus.ts";
 
-export function StatusComponent(props: { api: NotificationInstance }) {
-    const status = useStatus(props.api);
+export function StatusComponent() {
+    const status = useStatus();
     const renderEscStatus = (escStatus: ESCStatus | undefined) => {
         return <Row gutter={[16, 16]}>
             <Col lg={8} xs={12}><Statistic title="Status" value={escStatus?.Status}/></Col>

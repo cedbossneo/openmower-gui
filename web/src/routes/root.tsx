@@ -1,5 +1,5 @@
 import {Outlet, useMatches, useNavigate} from "react-router-dom";
-import {Col, Menu, MenuProps, Row} from "antd";
+import {Layout, Menu, MenuProps} from "antd";
 import {HeatMapOutlined, MessageOutlined, RobotOutlined, RocketOutlined, SettingOutlined} from '@ant-design/icons';
 import {useEffect} from "react";
 
@@ -42,18 +42,22 @@ export default () => {
         }
     }, [route, navigate])
     return (
-        <Row style={{height: '100%'}}>
-            <Col span={4} style={{height: '100%'}}>
-                <Menu style={{height: '100%'}} onClick={(info) =>
+        <Layout style={{height: "100%"}}>
+            <Layout.Sider breakpoint="lg"
+                          collapsedWidth="0"
+                          zeroWidthTriggerStyle={{top: 0}}
+            >
+                <Menu theme="dark"
+                      mode="inline"
+                      onClick={(info) =>
                     navigate({
                         pathname: info.key,
-                    })} selectedKeys={route.map(r => r.pathname)} mode="vertical" items={menu}/>
-            </Col>
-            <Col span={20} style={{
-                padding: '0 24px',
-                height: '100%',
-            }}>
-                <Outlet/>
-            </Col>
-        </Row>);
+                    })} selectedKeys={route.map(r => r.pathname)} items={menu}/>
+            </Layout.Sider>
+            <Layout style={{height: "100%"}}>
+                <Layout.Content style={{padding: "10px 24px 0px 24px", height: "100%", backgroundColor: 'white'}}>
+                    <Outlet/>
+                </Layout.Content>
+            </Layout>
+        </Layout>);
 }

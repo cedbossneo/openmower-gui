@@ -1,16 +1,15 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {useEffect, useState} from "react";
 import {HighLevelStatus} from "../types/ros.ts";
 import {useWS} from "./useWS.ts";
 
-export const useHighLevelStatus = (api: NotificationInstance) => {
+export const useHighLevelStatus = () => {
     const [highLevelStatus, setHighLevelStatus] = useState<HighLevelStatus>({})
     const highLevelStatusStream = useWS<string>(() => {
-            api.info({
+            console.log({
                 message: "High Level Status Stream closed",
             })
         }, () => {
-            api.info({
+            console.log({
                 message: "High Level Status Stream connected",
             })
         },

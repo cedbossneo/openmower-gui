@@ -1,9 +1,8 @@
-import {NotificationInstance} from "antd/es/notification/interface";
 import {Col, Row, Statistic} from "antd";
 import {useGPS} from "../hooks/useGPS.ts";
 
-export function GpsComponent(props: { api: NotificationInstance }) {
-    const gps = useGPS(props.api);
+export function GpsComponent() {
+    const gps = useGPS();
     return <Row gutter={[16, 16]}>
         <Col lg={8} xs={24}><Statistic precision={9} title="Position X"
                                        value={gps.Pose?.Pose?.Position?.X}/></Col>
