@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"github.com/bluenviron/goroslib/v2"
+	"github.com/bluenviron/goroslib/v2/pkg/msgs/nav_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/sensor_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/visualization_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
@@ -23,6 +24,7 @@ type RosProvider struct {
 	ticksSubscriber           *goroslib.Subscriber
 	mapSubscriber             *goroslib.Subscriber
 	pathSubscriber            *goroslib.Subscriber
+	currentPathSubscriber     *goroslib.Subscriber
 	subscribers               map[string]map[string]func(msg any)
 	lastMessage               map[string]any
 }
@@ -176,6 +178,13 @@ func (p *RosProvider) initSubscribers() error {
 			Node:     node,
 			Topic:    "/slic3r_coverage_planner/path_marker_array",
 			Callback: cbHandler[*visualization_msgs.MarkerArray](p, "/slic3r_coverage_planner/path_marker_array"),
+		})
+	}
+	if p.currentPathSubscriber == nil {
+		p.currentPathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
+			Node:     node,
+			Topic:    "/move_base_flex/FTCPlanner/global_plan",
+			Callback: cbHandler[*nav_msgs.Path](p, "/move_base_flex/FTCPlanner/global_plan"),
 		})
 	}
 	return nil

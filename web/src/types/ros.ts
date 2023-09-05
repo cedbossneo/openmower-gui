@@ -48,6 +48,21 @@ export type Marker = {
     MeshUseEmbeddedMaterials: boolean
 }
 
+export type PoseStamped = {
+    /*
+    	Pose        Pose
+     */
+    Pose?: Pose
+}
+
+export type Path = {
+    /*
+    	Poses       []geometry_msgs.PoseStamped
+
+     */
+    Poses?: PoseStamped[]
+}
+
 export type MarkerArray = {
     Markers: Marker[]
 }

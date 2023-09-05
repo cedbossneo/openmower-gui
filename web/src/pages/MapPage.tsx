@@ -3,7 +3,7 @@ import {useApi} from "../hooks/useApi.ts";
 import {App, Button, Col, Modal, Row, Slider, Spin, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import {ChangeEvent, useCallback, useEffect, useState} from "react";
-import {Gps, Map as MapType, MapArea, MarkerArray, Twist} from "../types/ros.ts";
+import {Gps, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
@@ -37,62 +37,8 @@ export const MapPage = () => {
     const [mapKey, setMapKey] = useState<string>("origin")
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
+    const [plan, setPlan] = useState<Path | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
-    useEffect(() => {
-        (async () => {
-            try {
-                const config = await guiApi.config.envsList()
-                if (config.error) {
-                    throw new Error(config.error.error ?? "")
-                }
-                setTileUri(config.data.tileUri)
-                const offsetConfig = await guiApi.config.keysGetCreate({
-                    "gui.map.offset.x": "0",
-                    "gui.map.offset.y": "0",
-                })
-                if (offsetConfig.error) {
-                    throw new Error(offsetConfig.error.error ?? "")
-                }
-                setOffsetX(parseFloat(offsetConfig.data["gui.map.offset.x"] ?? 0))
-                setOffsetY(parseFloat(offsetConfig.data["gui.map.offset.y"] ?? 0))
-                const settings = await guiApi.settings.settingsList()
-                if (settings.error) {
-                    throw new Error(settings.error.error ?? "")
-                }
-                setSettings(settings.data.settings ?? {})
-            } catch (e: any) {
-                notification.error({
-                    message: "Failed to load settings",
-                    description: e.message,
-                })
-            }
-        })()
-    }, [])
-    useEffect(() => {
-        if (editMap) {
-            mapStream.stop()
-            gpsStream.stop()
-            pathStream.stop()
-            highLevelStatus.stop()
-            setPath(undefined)
-        } else {
-            if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
-                return
-            }
-            highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
-            gpsStream.start("/api/openmower/subscribe/gps",)
-            mapStream.start("/api/openmower/subscribe/map",)
-            pathStream.start("/api/openmower/subscribe/path")
-        }
-    }, [editMap])
-    useEffect(() => {
-        if (highLevelStatus.highLevelStatus.StateName == "AREA_RECORDING") {
-            joyStream.start("/api/openmower/publish/joy")
-            setEditMap(false)
-            return
-        }
-        joyStream.stop()
-    }, [highLevelStatus.highLevelStatus.StateName])
     const gpsStream = useWS<string>(() => {
             console.log({
                 message: "GPS Stream closed",
@@ -134,6 +80,199 @@ export const MapPage = () => {
             })
         });
 
+    const mapStream = useWS<string>(() => {
+            console.log({
+                message: "MAP Stream closed",
+            })
+        }, () => {
+            console.log({
+                message: "MAP Stream connected",
+            })
+        },
+        (e) => {
+            let parse = JSON.parse(e) as MapType;
+            setMap(parse)
+            setMapKey("live")
+        });
+
+    const pathStream = useWS<string>(() => {
+            console.log({
+                message: "PATH Stream closed",
+            })
+        }, () => {
+            console.log({
+                message: "PATH Stream connected",
+            })
+        },
+        (e) => {
+            let parse = JSON.parse(e) as MarkerArray;
+            setPath(parse)
+        });
+    const planStream = useWS<string>(() => {
+            console.log({
+                message: "PATH Stream closed",
+            })
+        }, () => {
+            console.log({
+                message: "PATH Stream connected",
+            })
+        },
+        (e) => {
+            let parse = JSON.parse(e) as Path;
+            setPlan(parse)
+        });
+
+    const joyStream = useWS<string>(() => {
+            console.log({
+                message: "Joystick Stream closed",
+            })
+        }, () => {
+            console.log({
+                message: "Joystick Stream connected",
+            })
+        },
+        () => {
+        });
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const config = await guiApi.config.envsList()
+                if (config.error) {
+                    throw new Error(config.error.error ?? "")
+                }
+                setTileUri(config.data.tileUri)
+                const offsetConfig = await guiApi.config.keysGetCreate({
+                    "gui.map.offset.x": "0",
+                    "gui.map.offset.y": "0",
+                })
+                if (offsetConfig.error) {
+                    throw new Error(offsetConfig.error.error ?? "")
+                }
+                setOffsetX(parseFloat(offsetConfig.data["gui.map.offset.x"] ?? 0))
+                setOffsetY(parseFloat(offsetConfig.data["gui.map.offset.y"] ?? 0))
+                const settings = await guiApi.settings.settingsList()
+                if (settings.error) {
+                    throw new Error(settings.error.error ?? "")
+                }
+                setSettings(settings.data.settings ?? {})
+            } catch (e: any) {
+                notification.error({
+                    message: "Failed to load settings",
+                    description: e.message,
+                })
+            }
+        })()
+    }, [])
+    useEffect(() => {
+        if (editMap) {
+            mapStream.stop()
+            gpsStream.stop()
+            pathStream.stop()
+            planStream.stop()
+            highLevelStatus.stop()
+            setPath(undefined)
+            setPlan(undefined)
+        } else {
+            if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
+                return
+            }
+            highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
+            gpsStream.start("/api/openmower/subscribe/gps",)
+            mapStream.start("/api/openmower/subscribe/map",)
+            pathStream.start("/api/openmower/subscribe/path")
+            planStream.start("/api/openmower/subscribe/plan")
+        }
+    }, [editMap])
+    useEffect(() => {
+        if (highLevelStatus.highLevelStatus.StateName == "AREA_RECORDING") {
+            joyStream.start("/api/openmower/publish/joy")
+            setEditMap(false)
+            return
+        }
+        joyStream.stop()
+    }, [highLevelStatus.highLevelStatus.StateName])
+
+    useEffect(() => {
+        if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
+            return
+        }
+        highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
+        gpsStream.start("/api/openmower/subscribe/gps",)
+        mapStream.start("/api/openmower/subscribe/map",)
+        pathStream.start("/api/openmower/subscribe/path")
+        planStream.start("/api/openmower/subscribe/plan")
+    }, [settings]);
+
+    useEffect(() => {
+        return () => {
+            gpsStream.stop()
+            mapStream.stop()
+            pathStream.stop()
+            joyStream.stop()
+            planStream.stop()
+            highLevelStatus.stop()
+        }
+    }, [])
+
+    useEffect(() => {
+        let newFeatures: Record<string, Feature> = {}
+        if (map) {
+            const workingAreas = buildFeatures(map.WorkingArea, "area")
+            const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
+            newFeatures = {...workingAreas, ...navigationAreas}
+            const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
+            newFeatures["dock"] = {
+                id: "dock",
+                type: "Feature",
+                properties: {
+                    "color": "#ff00f2",
+                },
+                geometry: {
+                    coordinates: dock_lonlat,
+                    type: "Point",
+                }
+            }
+        }
+        if (path) {
+            path.Markers.forEach((marker, index) => {
+                const line: Position[] = marker.Points.map(point => {
+                    return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
+                })
+                const feature: Feature<LineString> = {
+                    id: "path-" + index,
+                    type: 'Feature',
+                    properties: {
+                        color: `rgba(${marker.Color.R * 255}, ${marker.Color.G * 255}, ${marker.Color.B * 255}, ${marker.Color.A * 255})`
+                    },
+                    geometry: {
+                        coordinates: line,
+                        type: 'LineString'
+                    }
+                }
+                newFeatures[feature.id as string] = feature
+                return feature
+            })
+        }
+        if (plan?.Poses) {
+            const feature: Feature<LineString> = {
+                id: "currentPath",
+                type: 'Feature',
+                properties: {
+                    color: `blue`
+                },
+                geometry: {
+                    coordinates: plan.Poses.map((pose) => {
+                        return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
+                    }),
+                    type: "LineString"
+                }
+            }
+            newFeatures[feature.id as string] = feature
+        }
+        setFeatures(newFeatures)
+    }, [map, path, plan, offsetX, offsetY]);
+
     function buildFeatures(areas: MapArea[] | undefined, type: string) {
         return areas?.flatMap((area, index) => {
             const map = {
@@ -174,106 +313,6 @@ export const MapPage = () => {
         }, {} as Record<string, Feature>);
     }
 
-    const mapStream = useWS<string>(() => {
-            console.log({
-                message: "MAP Stream closed",
-            })
-        }, () => {
-            console.log({
-                message: "MAP Stream connected",
-            })
-        },
-        (e) => {
-            let parse = JSON.parse(e) as MapType;
-            setMap(parse)
-            setMapKey("live")
-        });
-
-    const pathStream = useWS<string>(() => {
-            console.log({
-                message: "PATH Stream closed",
-            })
-        }, () => {
-            console.log({
-                message: "PATH Stream connected",
-            })
-        },
-        (e) => {
-            let parse = JSON.parse(e) as MarkerArray;
-            setPath(parse)
-        });
-
-    const joyStream = useWS<string>(() => {
-            console.log({
-                message: "Joystick Stream closed",
-            })
-        }, () => {
-            console.log({
-                message: "Joystick Stream connected",
-            })
-        },
-        () => {
-        });
-
-    useEffect(() => {
-        if (settings["OM_DATUM_LONG"] == undefined || settings["OM_DATUM_LAT"] == undefined) {
-            return
-        }
-        gpsStream.start("/api/openmower/subscribe/gps",)
-        mapStream.start("/api/openmower/subscribe/map",)
-        pathStream.start("/api/openmower/subscribe/path")
-    }, [settings]);
-
-    useEffect(() => {
-        return () => {
-            gpsStream.stop()
-            mapStream.stop()
-            pathStream.stop()
-            joyStream.stop()
-        }
-    }, [])
-
-    useEffect(() => {
-        let newFeatures: Record<string, Feature> = {}
-        if (map) {
-            const workingAreas = buildFeatures(map.WorkingArea, "area")
-            const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
-            newFeatures = {...workingAreas, ...navigationAreas}
-            const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
-            newFeatures["dock"] = {
-                id: "dock",
-                type: "Feature",
-                properties: {
-                    "color": "#ff00f2",
-                },
-                geometry: {
-                    coordinates: dock_lonlat,
-                    type: "Point",
-                }
-            }
-        }
-        if (path) {
-            path.Markers.forEach((marker, index) => {
-                const line: Position[] = marker.Points.map(point => {
-                    return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
-                })
-                const feature: Feature<LineString> = {
-                    id: "path-" + index,
-                    type: 'Feature',
-                    properties: {
-                        color: `rgb(${marker.Color.R}, ${marker.Color.G}, ${marker.Color.B}, ${marker.Color.A})`
-                    },
-                    geometry: {
-                        coordinates: line,
-                        type: 'LineString'
-                    }
-                }
-                newFeatures[feature.id as string] = feature
-                return feature
-            })
-        }
-        setFeatures(newFeatures)
-    }, [map, path, offsetX, offsetY]);
 
     function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
         const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
@@ -783,8 +822,8 @@ export const MapPage = () => {
                 </Map>
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
-                    <Joystick move={handleJoyMove} stop={handleJoyStop}/>
-                </div>}
+                        <Joystick move={handleJoyMove} stop={handleJoyStop}/>
+                    </div>}
             </Col>
         </Row>
     );
