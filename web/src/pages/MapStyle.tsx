@@ -254,6 +254,22 @@ export const MapStyle = [
         }
     },
     {
+        'id': 'gl-draw-line-color-picker-width',
+        'type': 'line',
+        'filter': ['all',
+            ['==', 'active', 'false'],
+            ['==', '$type', 'LineString'],
+            ['==', 'meta', 'feature'],
+            ['!=', 'mode', 'static'],
+            ['has', 'user_color'],
+            ['has', 'user_width']
+        ],
+        'paint': {
+            'line-color': ['get', 'user_color'],
+            'line-width': ['get', 'user_width']
+        }
+    },
+    {
         'id': 'gl-draw-line-color-picker',
         'type': 'line',
         'filter': ['all',

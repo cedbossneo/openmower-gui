@@ -39,6 +39,7 @@ export const MapPage = () => {
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
     const [plan, setPlan] = useState<Path | undefined>(undefined)
     const [settings, setSettings] = useState<Record<string, any>>({})
+    const mowingToolWidth = parseFloat(settings["OM_TOOL_WIDTH"] ?? "0.13") * 100;
     const gpsStream = useWS<string>(() => {
             console.log({
                 message: "GPS Stream closed",
@@ -110,16 +111,49 @@ export const MapPage = () => {
         });
     const planStream = useWS<string>(() => {
             console.log({
-                message: "PATH Stream closed",
+                message: "PLAN Stream closed",
             })
         }, () => {
             console.log({
-                message: "PATH Stream connected",
+                message: "PLAN Stream connected",
             })
         },
         (e) => {
             let parse = JSON.parse(e) as Path;
             setPlan(parse)
+        });
+    const mowingPathStream = useWS<string>(() => {
+            console.log({
+                message: "Mowing PATH Stream closed",
+            })
+        }, () => {
+            console.log({
+                message: "Mowing PATH Stream connected",
+            })
+        },
+        (e) => {
+            const mowingPaths = JSON.parse(e) as Path[];
+            mowingPaths.forEach((mowingPath, index) => {
+                if (mowingPath?.Poses) {
+                    const feature: Feature<LineString> = {
+                        id: "mowingPath-" + index,
+                        type: 'Feature',
+                        properties: {
+                            color: `yellow`,
+                            width: mowingToolWidth,
+                        },
+                        geometry: {
+                            coordinates: mowingPath.Poses.map((pose) => {
+                                return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
+                            }),
+                            type: "LineString"
+                        }
+                    }
+                    setFeatures(oldFeatures => {
+                        return {...oldFeatures, [feature.id as string]: feature}
+                    })
+                }
+            })
         });
 
     const joyStream = useWS<string>(() => {
@@ -170,6 +204,7 @@ export const MapPage = () => {
             gpsStream.stop()
             pathStream.stop()
             planStream.stop()
+            mowingPathStream.stop()
             highLevelStatus.stop()
             setPath(undefined)
             setPlan(undefined)
@@ -182,6 +217,7 @@ export const MapPage = () => {
             mapStream.start("/api/openmower/subscribe/map",)
             pathStream.start("/api/openmower/subscribe/path")
             planStream.start("/api/openmower/subscribe/plan")
+            mowingPathStream.start("/api/openmower/subscribe/mowingPath")
         }
     }, [editMap])
     useEffect(() => {
@@ -202,6 +238,7 @@ export const MapPage = () => {
         mapStream.start("/api/openmower/subscribe/map",)
         pathStream.start("/api/openmower/subscribe/path")
         planStream.start("/api/openmower/subscribe/plan")
+        mowingPathStream.start("/api/openmower/subscribe/mowingPath")
     }, [settings]);
 
     useEffect(() => {
@@ -211,6 +248,7 @@ export const MapPage = () => {
             pathStream.stop()
             joyStream.stop()
             planStream.stop()
+            mowingPathStream.stop()
             highLevelStatus.stop()
         }
     }, [])
@@ -256,7 +294,7 @@ export const MapPage = () => {
         }
         if (plan?.Poses) {
             const feature: Feature<LineString> = {
-                id: "currentPath",
+                id: "plan",
                 type: 'Feature',
                 properties: {
                     color: `blue`
