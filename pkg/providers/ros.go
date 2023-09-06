@@ -61,39 +61,41 @@ func NewRosProvider() types2.IRosProvider {
 		logrus.Error(err)
 		return r
 	}
-	err = r.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg any) {
-		pose := msg.(*xbot_msgs.AbsolutePose)
-		hlsLastMessage, ok := r.lastMessage["/mower_logic/current_state"]
-		if ok {
-			highLevelStatus := hlsLastMessage.(*mower_msgs.HighLevelStatus)
-			switch highLevelStatus.StateName {
-			case "MOWING":
-				sLastMessage, ok := r.lastMessage["/mower/status"]
-				if ok {
-					status := sLastMessage.(*mower_msgs.Status)
-					if status.MowEscStatus.Tacho > 0 {
-						if r.mowingPath == nil {
-							r.mowingPath = &nav_msgs.Path{}
-							r.mowingPaths = append(r.mowingPaths, r.mowingPath)
-						}
-						r.mowingPath.Poses = append(r.mowingPath.Poses, geometry_msgs.PoseStamped{
-							Pose: pose.Pose.Pose,
-						})
-						r.lastMessage["/mowing_path"] = r.mowingPaths
-						subscribers, hasSubscriber := r.subscribers["/mowing_path"]
-						if hasSubscriber {
-							for _, cb := range subscribers {
-								cb(r.mowingPaths)
-							}
-						}
-					} else {
-						r.mowingPath = nil
-					}
-				}
+	err = r.Subscribe("/mower_logic/current_state", "gui", func(msg any) {
+		hlsLastMessage := msg.(*mower_msgs.HighLevelStatus)
+		switch hlsLastMessage.StateName {
+		case "MOWING":
+			poseMessage, ok := r.lastMessage["/xbot_positioning/xb_pose"]
+			if !ok {
 				break
-			default:
-				r.mowingPaths = []*nav_msgs.Path{}
 			}
+			pose := poseMessage.(*xbot_msgs.AbsolutePose)
+			sLastMessage, ok := r.lastMessage["/mower/status"]
+			if ok {
+				status := sLastMessage.(*mower_msgs.Status)
+				if status.MowEscStatus.Tacho > 0 {
+					if r.mowingPath == nil {
+						r.mowingPath = &nav_msgs.Path{}
+						r.mowingPaths = append(r.mowingPaths, r.mowingPath)
+					}
+					r.mowingPath.Poses = append(r.mowingPath.Poses, geometry_msgs.PoseStamped{
+						Pose: pose.Pose.Pose,
+					})
+					r.lastMessage["/mowing_path"] = r.mowingPaths
+					subscribers, hasSubscriber := r.subscribers["/mowing_path"]
+					if hasSubscriber {
+						for _, cb := range subscribers {
+							cb(r.mowingPaths)
+						}
+					}
+				} else {
+					r.mowingPath = nil
+				}
+			}
+			break
+		default:
+			r.mowingPaths = []*nav_msgs.Path{}
+			break
 		}
 	})
 	if err != nil {
