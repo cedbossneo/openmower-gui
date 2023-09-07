@@ -297,7 +297,8 @@ export const MapPage = () => {
                 id: "plan",
                 type: 'Feature',
                 properties: {
-                    color: `blue`
+                    color: `orange`,
+                    width: 3,
                 },
                 geometry: {
                     coordinates: plan.Poses.map((pose) => {
