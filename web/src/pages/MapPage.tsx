@@ -353,26 +353,31 @@ export const MapPage = () => {
     }
 
 
-    function getNewId(currFeatures: Record<string, Feature>, type: string, component: string) {
-        const maxArea = Object.values<Feature>(currFeatures).filter((f) => {
-            let idDetails = (f.id as string).split("-")
-            if (idDetails.length != 4) {
-                return false
-            }
-            let areaType = idDetails[0]
-            let areaComponent = idDetails[2]
-            return areaType == type && component == areaComponent
-        }).reduce((acc, val) => {
-            let idDetails = (val.id as string).split("-")
-            if (idDetails.length != 4) {
+    function getNewId(currFeatures: Record<string, Feature>, type: string, index: string | null, component: string) {
+        let maxArea = 0
+        if (index != null) {
+            maxArea = parseInt(index) - 1
+        } else {
+            maxArea = Object.values<Feature>(currFeatures).filter((f) => {
+                let idDetails = (f.id as string).split("-")
+                if (idDetails.length != 4) {
+                    return false
+                }
+                let areaType = idDetails[0]
+                let areaComponent = idDetails[2]
+                return areaType == type && component == areaComponent
+            }).reduce((acc, val) => {
+                let idDetails = (val.id as string).split("-")
+                if (idDetails.length != 4) {
+                    return acc
+                }
+                let index = parseInt(idDetails[1])
+                if (index > acc) {
+                    return index
+                }
                 return acc
-            }
-            let index = parseInt(idDetails[1])
-            if (index > acc) {
-                return index
-            }
-            return acc
-        }, 0)
+            }, 0)
+        }
         const maxComponent = Object.values<Feature>(currFeatures).filter((f) => {
             return (f.id as string).startsWith(type + "-" + (maxArea + 1) + "-" + component + "-")
         }).reduce((acc, val) => {
@@ -394,7 +399,7 @@ export const MapPage = () => {
             return
         }
         setFeatures(currFeatures => {
-            let id = getNewId(currFeatures, "navigation", "area");
+            let id = getNewId(currFeatures, "navigation", null, "area");
             currentFeature.id = id
             currentFeature.properties = {
                 color: "white",
@@ -410,7 +415,7 @@ export const MapPage = () => {
             return
         }
         setFeatures(currFeatures => {
-            let id = getNewId(currFeatures, "area", "area");
+            let id = getNewId(currFeatures, "area", null, "area");
             currentFeature.id = id
             currentFeature.properties = {
                 color: "#01d30d",
@@ -456,6 +461,7 @@ export const MapPage = () => {
             return
         }
         setFeatures(currFeatures => {
+            debugger
             const currentLayerCoordinates = (currentFeature as Feature<Polygon>).geometry.coordinates[0]
             // find the area that contains the obstacle
             const area = Object.values<Feature>(currFeatures).find((f) => {
@@ -469,7 +475,8 @@ export const MapPage = () => {
                 return currFeatures
             }
             const areaType = (area.id as string).split("-")[0]
-            let id = getNewId(currFeatures, areaType, "obstacle");
+            const areaIndex = (area.id as string).split("-")[1]
+            let id = getNewId(currFeatures, areaType, areaIndex, "obstacle");
             currentFeature.id = id
             currentFeature.properties = {
                 color: "#bf0000",
