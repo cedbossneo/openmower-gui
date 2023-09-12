@@ -3,9 +3,10 @@ import {Submit} from '@formily/antd-v5'
 import {CheckCircleOutlined} from '@ant-design/icons'
 import {Button, Card, Col, Row, Steps, Typography} from "antd";
 import {FlashBoardComponent} from "../components/FlashBoardComponent.tsx";
-import {SettingsComponent, SettingsConfig} from "../components/SettingsComponent.tsx";
+import {SettingsComponent} from "../components/SettingsComponent.tsx";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {FlashGPSComponent} from "../components/FlashGPSComponent.tsx";
+import {SettingsConfig} from "../hooks/useSettings.ts";
 
 const {Step} = Steps;
 

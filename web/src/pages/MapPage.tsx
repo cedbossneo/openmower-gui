@@ -16,6 +16,9 @@ import {converter, drawLine, getQuaternionFromHeading, itranspose, meterInDegree
 import {Joystick} from "react-joystick-component";
 import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 import {IJoystickUpdateEvent} from "react-joystick-component/build/lib/Joystick";
+import {useSettings} from "../hooks/useSettings.ts";
+import {useConfig} from "../hooks/useConfig.tsx";
+import {useEnv} from "../hooks/useEnv.tsx";
 
 export const MapPage = () => {
     const {notification} = App.useApp();
@@ -28,7 +31,9 @@ export const MapPage = () => {
     const [offsetYTimeout, setOffsetYTimeout] = useState<number | null>(null)
     const [offsetXTimeout, setOffsetXTimeout] = useState<number | null>(null)
 
-
+    const {settings} = useSettings()
+    const {config, setConfig} = useConfig(["gui.map.offset.x", "gui.map.offset.y"])
+    const envs = useEnv()
     const guiApi = useApi()
     const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
@@ -38,7 +43,6 @@ export const MapPage = () => {
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
     const [plan, setPlan] = useState<Path | undefined>(undefined)
-    const [settings, setSettings] = useState<Record<string, any>>({})
     const mowingToolWidth = parseFloat(settings["OM_TOOL_WIDTH"] ?? "0.13") * 100;
     const gpsStream = useWS<string>(() => {
             console.log({
@@ -169,35 +173,16 @@ export const MapPage = () => {
         });
 
     useEffect(() => {
-        (async () => {
-            try {
-                const config = await guiApi.config.envsList()
-                if (config.error) {
-                    throw new Error(config.error.error ?? "")
-                }
-                setTileUri(config.data.tileUri)
-                const offsetConfig = await guiApi.config.keysGetCreate({
-                    "gui.map.offset.x": "0",
-                    "gui.map.offset.y": "0",
-                })
-                if (offsetConfig.error) {
-                    throw new Error(offsetConfig.error.error ?? "")
-                }
-                setOffsetX(parseFloat(offsetConfig.data["gui.map.offset.x"] ?? 0))
-                setOffsetY(parseFloat(offsetConfig.data["gui.map.offset.y"] ?? 0))
-                const settings = await guiApi.settings.settingsList()
-                if (settings.error) {
-                    throw new Error(settings.error.error ?? "")
-                }
-                setSettings(settings.data.settings ?? {})
-            } catch (e: any) {
-                notification.error({
-                    message: "Failed to load settings",
-                    description: e.message,
-                })
-            }
-        })()
-    }, [])
+        if (envs) {
+            setTileUri(envs.tileUri)
+        }
+    }, [envs]);
+
+    useEffect(() => {
+        setOffsetX(parseFloat(config["gui.map.offset.x"] ?? 0))
+        setOffsetY(parseFloat(config["gui.map.offset.y"] ?? 0))
+    }, [config]);
+
     useEffect(() => {
         if (editMap) {
             mapStream.stop()
@@ -738,12 +723,9 @@ export const MapPage = () => {
         setOffsetXTimeout(setTimeout(() => {
             (async () => {
                 try {
-                    const offsetConfig = await guiApi.config.keysSetCreate({
+                    await setConfig({
                         "gui.map.offset.x": value.toString(),
                     })
-                    if (offsetConfig.error) {
-                        throw new Error(offsetConfig.error.error ?? "")
-                    }
                 } catch (e: any) {
                     notification.error({
                         message: "Failed to save offset",
@@ -761,12 +743,9 @@ export const MapPage = () => {
         setOffsetYTimeout(setTimeout(() => {
             (async () => {
                 try {
-                    const offsetConfig = await guiApi.config.keysSetCreate({
+                    await setConfig({
                         "gui.map.offset.y": value.toString(),
                     })
-                    if (offsetConfig.error) {
-                        throw new Error(offsetConfig.error.error ?? "")
-                    }
                 } catch (e: any) {
                     notification.error({
                         message: "Failed to save offset",
