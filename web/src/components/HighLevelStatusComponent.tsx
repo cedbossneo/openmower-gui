@@ -27,7 +27,7 @@ export function HighLevelStatusComponent() {
         if (remaining < 0) {
             return "∞"
         }
-        return remaining.toFixed(1) + "h"
+        return Date.now() + remaining * (1000 * 60 * 60)
     };
     return <Row gutter={[16, 16]}>
         <Col lg={6} xs={12}><Statistic title="State" valueStyle={{color: '#3f8600'}}
@@ -37,7 +37,7 @@ export function HighLevelStatusComponent() {
                                        suffix={"%"}/></Col>
         <Col lg={6} xs={12}><Statistic title="Battery" value={(highLevelStatus.BatteryPercent ?? 0) * 100}
                                        formatter={progressFormatter}/></Col>
-        <Col lg={6} xs={12}><Statistic title="Charging time left"
+        <Col lg={6} xs={12}><Statistic.Countdown title="Charging time left" format={"HH:mm"}
                                        value={highLevelStatus.IsCharging ? estimateRemainingChargingTime() : "-"}/></Col>
         <Col lg={6} xs={12}><Statistic title="Charging" value={highLevelStatus.IsCharging ? "Yes" : "No"}
                                        formatter={booleanFormatter}/></Col>

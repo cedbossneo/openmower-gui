@@ -290,6 +290,13 @@ func ServiceRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 				return
 			}
 			err = provider.CallService(c.Request.Context(), "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &CallReq, &mower_msgs.MowerControlSrvRes{})
+		case "start_in_area":
+			var CallReq mower_msgs.StartInAreaSrvReq
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.CallService(c.Request.Context(), "/mower_service/start_in_area", &mower_msgs.StartInAreaSrv{}, &CallReq, &mower_msgs.StartInAreaSrvRes{})
 		default:
 			err = errors.New("unknown command")
 		}

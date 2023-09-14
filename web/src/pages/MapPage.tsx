@@ -1,13 +1,15 @@
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
-import {App, Button, Col, Modal, Row, Slider, Spin, Typography} from "antd";
+import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
+// @ts-ignore
+import centroid from "@turf/centroid";
 import {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
-import {LineString, Polygon, Position} from "geojson";
+import {FeatureCollection, LineString, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -19,6 +21,8 @@ import {IJoystickUpdateEvent} from "react-joystick-component/build/lib/Joystick"
 import {useSettings} from "../hooks/useSettings.ts";
 import {useConfig} from "../hooks/useConfig.tsx";
 import {useEnv} from "../hooks/useEnv.tsx";
+import {Spinner} from "../components/Spinner.tsx";
+import AsyncDropDownButton from "../components/AsyncDropDownButton.tsx";
 
 export const MapPage = () => {
     const {notification} = App.useApp();
@@ -32,6 +36,10 @@ export const MapPage = () => {
     const [offsetXTimeout, setOffsetXTimeout] = useState<number | null>(null)
 
     const {settings} = useSettings()
+    const [labelsCollection, setLabelsCollection] = useState<FeatureCollection>({
+        type: "FeatureCollection",
+        features: []
+    })
     const {config, setConfig} = useConfig(["gui.map.offset.x", "gui.map.offset.y"])
     const envs = useEnv()
     const guiApi = useApi()
@@ -238,12 +246,27 @@ export const MapPage = () => {
         }
     }, [])
 
+    const buildLabels = (param: Feature[]) => {
+        return param.flatMap((feature) => {
+            if (feature.properties?.title == undefined) {
+                return []
+            }
+            const centroidPt = centroid(feature);
+            centroidPt.properties.title = feature.properties?.title;
+            return [centroidPt];
+        })
+    };
     useEffect(() => {
         let newFeatures: Record<string, Feature> = {}
         if (map) {
             const workingAreas = buildFeatures(map.WorkingArea, "area")
             const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
             newFeatures = {...workingAreas, ...navigationAreas}
+            const labels = buildLabels(Object.values(newFeatures))
+            setLabelsCollection({
+                type: "FeatureCollection",
+                features: labels
+            });
             const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
             newFeatures["dock"] = {
                 id: "dock",
@@ -304,6 +327,8 @@ export const MapPage = () => {
                 type: 'Feature',
                 properties: {
                     "color": type == "navigation" ? "white" : "#01d30d",
+                    title: type == "area" ? type + " " + index : undefined,
+                    index,
                 },
                 geometry: {
                     coordinates: [area.Area?.Points?.map((point) => {
@@ -502,7 +527,7 @@ export const MapPage = () => {
     const _datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
     const _datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
     if (_datumLon == 0 || _datumLat == 0) {
-        return <Spin/>
+        return <Spinner/>
     }
     const datum: [number, number, number] = [0, 0, 0]
     converter.LLtoUTM(_datumLat, _datumLon, datum)
@@ -756,6 +781,16 @@ export const MapPage = () => {
         }, 1000))
         setOffsetY(value)
     }
+    let mowingAreas = labelsCollection.features.flatMap(feat => {
+        if (feat.properties?.title == undefined) {
+            return []
+        }
+        return [{
+            key: feat.id as string,
+            label: feat.properties?.title,
+            feat
+        }]
+    });
     return (
         <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
             <Modal
@@ -791,6 +826,15 @@ export const MapPage = () => {
                     >Save Map</AsyncButton>}
                     {editMap && <Button size={"small"} onClick={handleEditMap}
                     >Cancel Map Edition</Button>}
+                    <AsyncDropDownButton size={"small"} menu={{
+                        items: mowingAreas,
+                        onAsyncClick: (e) => {
+                            const item = mowingAreas.find(item => item.key == e.key)
+                            return mowerAction("start_in_area", {
+                                area: item!!.feat.properties?.index,
+                            })()
+                        }
+                    }}>Mow area</AsyncDropDownButton>
                     {!manualMode &&
                         <AsyncButton size={"small"} onAsyncClick={handleManualMode}
                         >Manual mowing</AsyncButton>}
@@ -814,20 +858,30 @@ export const MapPage = () => {
                 </Row>
             </Col>
             <Col span={24} style={{height: '70%'}}>
-                <Map key={mapKey}
-                     antialias
-                     projection={{
-                         name: "globe"
-                     }}
-                     mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
-                     initialViewState={{
-                         bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
-                     }}
-                     style={{width: '100%', height: '100%'}}
-                     mapStyle={"mapbox://styles/mapbox/satellite-streets-v12"}
+                {map_sw?.length && map_ne?.length ? <Map key={mapKey}
+                                                         reuseMaps
+                                                         antialias
+                                                         projection={{
+                                                             name: "globe"
+                                                         }}
+                                                         mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
+                                                         initialViewState={{
+                                                             bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
+                                                         }}
+                                                         style={{width: '100%', height: '100%'}}
+                                                         mapStyle={"mapbox://styles/mapbox/satellite-streets-v12"}
                 >
                     {tileUri ? <Source type={"raster"} id={"custom-raster"} tiles={[tileUri]} tileSize={256}/> : null}
                     {tileUri ? <Layer type={"raster"} source={"custom-raster"} id={"custom-layer"}/> : null}
+                    <Source type={"geojson"} id={"labels"} data={labelsCollection}/>
+                    <Layer type={"symbol"} id={"mower"} source={"labels"} layout={{
+                        "text-field": ['get', 'title'], //This will get "t" property from your geojson
+                        "text-rotation-alignment": "auto",
+                        "text-allow-overlap": true,
+                        "text-anchor": "top"
+                    }} paint={{
+                        "text-color": "black",
+                    }}/>
                     <DrawControl
                         styles={MapStyle}
                         userProperties={true}
@@ -844,7 +898,7 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onDelete={onDelete}
                     />
-                </Map>
+                </Map> : <Spinner/>}
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
                         <Joystick move={handleJoyMove} stop={handleJoyStop}/>
