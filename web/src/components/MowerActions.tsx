@@ -38,7 +38,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
     }[] = [
         {
             key: "mower_s1",
-            label: "S1",
+            label: "Area Recording",
             actions: [{
                 command: "high_level_control",
                 args: {
@@ -48,7 +48,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
         },
         {
             key: "mower_s2",
-            label: "S2",
+            label: "Mow Next Area",
             actions: [{
                 command: "high_level_control",
                 args: {

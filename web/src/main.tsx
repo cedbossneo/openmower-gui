@@ -7,8 +7,9 @@ import LogsPage from "./pages/LogsPage.tsx";
 import OpenMowerPage from "./pages/OpenMowerPage.tsx";
 import MapPage from "./pages/MapPage.tsx";
 import SetupPage from "./pages/SetupPage.tsx";
-import {App, Row, Spin} from "antd";
+import {App, Row} from "antd";
 import {MowerStatus} from "./components/MowerStatus.tsx";
+import {Spinner} from "./components/Spinner.tsx";
 
 const router = createHashRouter([
     {
@@ -46,7 +47,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               style={{height: '25px', borderBottom: '1px solid #1677ff', position: "absolute", top: 0, right: 0, zIndex: 100, marginLeft: 50, paddingRight: 10, paddingTop: 2}}>
               <MowerStatus/>
           </Row>
-          <React.Suspense fallback={<Spin/>}>
+          <React.Suspense fallback={<Spinner/>}>
               <RouterProvider router={router}/>
           </React.Suspense>
       </App>

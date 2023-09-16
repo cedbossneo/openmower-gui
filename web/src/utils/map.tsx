@@ -26,11 +26,11 @@ export function drawLine(longitude: number, latitude: number, orientation: numbe
     return [endLongitude, endLatitude];
 }
 
-export const transpose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number) => {
+export const transpose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number): [number, number] => {
     let utMtoLL = converter.UTMtoLL(datum[1] + y + offsetY, datum[0] + x + offsetX, datum[2]);
     return [utMtoLL.lon, utMtoLL.lat]
 };
-export const itranspose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number) => {
+export const itranspose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number): [number, number] => {
     //Inverse the transpose function
     const coords: [number, number, number] = [0, 0, 0]
     converter.LLtoUTM(y, x, coords)
