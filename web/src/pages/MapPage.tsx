@@ -251,6 +251,12 @@ export const MapPage = () => {
             if (feature.properties?.title == undefined) {
                 return []
             }
+            if (feature.geometry.type !== "Polygon") {
+                return []
+            }
+            if (feature.geometry.coordinates.length == 0) {
+                return []
+            }
             const centroidPt = centroid(feature);
             centroidPt.properties.title = feature.properties?.title;
             return [centroidPt];
@@ -322,6 +328,9 @@ export const MapPage = () => {
 
     function buildFeatures(areas: MapArea[] | undefined, type: string) {
         return areas?.flatMap((area, index) => {
+            if (!area.Area?.Points?.length) {
+                return []
+            }
             const map = {
                 id: type + "-" + index + "-area-0",
                 type: 'Feature',
