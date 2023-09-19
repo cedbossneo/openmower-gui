@@ -187,8 +187,13 @@ export const MapPage = () => {
     }, [envs]);
 
     useEffect(() => {
-        setOffsetX(parseFloat(config["gui.map.offset.x"] ?? 0))
-        setOffsetY(parseFloat(config["gui.map.offset.y"] ?? 0))
+        let offX = parseFloat(config["gui.map.offset.x"] ?? 0);
+        let offY = parseFloat(config["gui.map.offset.y"] ?? 0);
+        if (isNaN(offX) || isNaN(offY)) {
+            return
+        }
+        setOffsetX(offX)
+        setOffsetY(offY)
     }, [config]);
 
     useEffect(() => {
@@ -257,13 +262,9 @@ export const MapPage = () => {
             if (feature.geometry.coordinates.length == 0) {
                 return []
             }
-            try {
-                const centroidPt = centroid(feature);
-                centroidPt.properties.title = feature.properties?.title;
-                return [centroidPt];
-            } catch (e) {
-                return []
-            }
+            const centroidPt = centroid(feature);
+            centroidPt.properties.title = feature.properties?.title;
+            return [centroidPt];
         })
     };
     useEffect(() => {
