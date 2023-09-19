@@ -257,9 +257,13 @@ export const MapPage = () => {
             if (feature.geometry.coordinates.length == 0) {
                 return []
             }
-            const centroidPt = centroid(feature);
-            centroidPt.properties.title = feature.properties?.title;
-            return [centroidPt];
+            try {
+                const centroidPt = centroid(feature);
+                centroidPt.properties.title = feature.properties?.title;
+                return [centroidPt];
+            } catch (e) {
+                return []
+            }
         })
     };
     useEffect(() => {
