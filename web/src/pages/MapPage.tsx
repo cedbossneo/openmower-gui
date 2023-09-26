@@ -264,6 +264,7 @@ export const MapPage = () => {
             }
             const centroidPt = centroid(feature);
             centroidPt.properties.title = feature.properties?.title;
+            centroidPt.id = feature.id
             return [centroidPt];
         })
     };
