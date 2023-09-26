@@ -10,6 +10,9 @@ import (
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/xbot_msgs"
 	types2 "github.com/cedbossneo/openmower-gui/pkg/types"
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/simplify"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
@@ -30,6 +33,7 @@ type RosProvider struct {
 	lastMessage               map[string]any
 	mowingPaths               []*nav_msgs.Path
 	mowingPath                *nav_msgs.Path
+	mowingPathOrigin          orb.LineString
 }
 
 func (p *RosProvider) getNode() (*goroslib.Node, error) {
@@ -74,20 +78,24 @@ func NewRosProvider() types2.IRosProvider {
 					if status.MowEscStatus.Tacho > 0 {
 						if r.mowingPath == nil {
 							r.mowingPath = &nav_msgs.Path{}
+							r.mowingPathOrigin = orb.LineString{}
 							r.mowingPaths = append(r.mowingPaths, r.mowingPath)
 						}
-						// Compute distance between last point and the new one
-						if len(r.mowingPath.Poses) > 0 {
-							lastPose := r.mowingPath.Poses[len(r.mowingPath.Poses)-1]
-							distance := (pose.Pose.Pose.Position.X-lastPose.Pose.Position.X)*(pose.Pose.Pose.Position.X-lastPose.Pose.Position.X) + (pose.Pose.Pose.Position.Y-lastPose.Pose.Position.Y)*(pose.Pose.Pose.Position.Y-lastPose.Pose.Position.Y)
-							if distance > 0.30 {
-								r.mowingPath.Poses = append(r.mowingPath.Poses, geometry_msgs.PoseStamped{
-									Pose: pose.Pose.Pose,
-								})
-							}
-						} else {
-							r.mowingPath.Poses = append(r.mowingPath.Poses, geometry_msgs.PoseStamped{
-								Pose: pose.Pose.Pose,
+						r.mowingPathOrigin = append(r.mowingPathOrigin, orb.Point{
+							pose.Pose.Pose.Position.X, pose.Pose.Pose.Position.Y,
+						})
+						if len(r.mowingPathOrigin)%5 == 0 {
+							// low threshold just removes the colinear point
+							reduced := simplify.DouglasPeucker(0.7).LineString(r.mowingPathOrigin)
+							r.mowingPath.Poses = lo.Map(reduced, func(p orb.Point, idx int) geometry_msgs.PoseStamped {
+								return geometry_msgs.PoseStamped{
+									Pose: geometry_msgs.Pose{
+										Position: geometry_msgs.Point{
+											X: p[0],
+											Y: p[1],
+										},
+									},
+								}
 							})
 						}
 						r.lastMessage["/mowing_path"] = r.mowingPaths
@@ -99,11 +107,15 @@ func NewRosProvider() types2.IRosProvider {
 						}
 					} else {
 						r.mowingPath = nil
+						r.mowingPathOrigin = nil
 					}
 				}
 				break
 			default:
 				r.mowingPaths = []*nav_msgs.Path{}
+				r.mowingPath = &nav_msgs.Path{}
+				r.mowingPathOrigin = orb.LineString{}
+				r.mowingPaths = append(r.mowingPaths, r.mowingPath)
 			}
 		}
 	})
@@ -185,58 +197,66 @@ func (p *RosProvider) initSubscribers() error {
 	}
 	if p.statusSubscriber == nil {
 		p.statusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/mower/status",
-			Callback: cbHandler[*mower_msgs.Status](p, "/mower/status"),
+			Node:      node,
+			Topic:     "/mower/status",
+			Callback:  cbHandler[*mower_msgs.Status](p, "/mower/status"),
+			QueueSize: 1,
 		})
 	}
 	if p.highLevelStatusSubscriber == nil {
 		p.highLevelStatusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/mower_logic/current_state",
-			Callback: cbHandler[*mower_msgs.HighLevelStatus](p, "/mower_logic/current_state"),
+			Node:      node,
+			Topic:     "/mower_logic/current_state",
+			Callback:  cbHandler[*mower_msgs.HighLevelStatus](p, "/mower_logic/current_state"),
+			QueueSize: 1,
 		})
 	}
 	if p.gpsSubscriber == nil {
 		p.gpsSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/xbot_positioning/xb_pose",
-			Callback: cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),
+			Node:      node,
+			Topic:     "/xbot_positioning/xb_pose",
+			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),
+			QueueSize: 1,
 		})
 	}
 	if p.imuSubscriber == nil {
 		p.imuSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/imu/data_raw",
-			Callback: cbHandler[*sensor_msgs.Imu](p, "/imu/data_raw"),
+			Node:      node,
+			Topic:     "/imu/data_raw",
+			Callback:  cbHandler[*sensor_msgs.Imu](p, "/imu/data_raw"),
+			QueueSize: 1,
 		})
 	}
 	if p.ticksSubscriber == nil {
 		p.ticksSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/mower/wheel_ticks",
-			Callback: cbHandler[*xbot_msgs.WheelTick](p, "/mower/wheel_ticks"),
+			Node:      node,
+			Topic:     "/mower/wheel_ticks",
+			Callback:  cbHandler[*xbot_msgs.WheelTick](p, "/mower/wheel_ticks"),
+			QueueSize: 1,
 		})
 	}
 	if p.mapSubscriber == nil {
 		p.mapSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/xbot_monitoring/map",
-			Callback: cbHandler[*xbot_msgs.Map](p, "/xbot_monitoring/map"),
+			Node:      node,
+			Topic:     "/xbot_monitoring/map",
+			Callback:  cbHandler[*xbot_msgs.Map](p, "/xbot_monitoring/map"),
+			QueueSize: 1,
 		})
 	}
 	if p.pathSubscriber == nil {
 		p.pathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/slic3r_coverage_planner/path_marker_array",
-			Callback: cbHandler[*visualization_msgs.MarkerArray](p, "/slic3r_coverage_planner/path_marker_array"),
+			Node:      node,
+			Topic:     "/slic3r_coverage_planner/path_marker_array",
+			Callback:  cbHandler[*visualization_msgs.MarkerArray](p, "/slic3r_coverage_planner/path_marker_array"),
+			QueueSize: 1,
 		})
 	}
 	if p.currentPathSubscriber == nil {
 		p.currentPathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
-			Node:     node,
-			Topic:    "/move_base_flex/FTCPlanner/global_plan",
-			Callback: cbHandler[*nav_msgs.Path](p, "/move_base_flex/FTCPlanner/global_plan"),
+			Node:      node,
+			Topic:     "/move_base_flex/FTCPlanner/global_plan",
+			Callback:  cbHandler[*nav_msgs.Path](p, "/move_base_flex/FTCPlanner/global_plan"),
+			QueueSize: 1,
 		})
 	}
 	return nil

@@ -4,7 +4,7 @@ import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 // @ts-ignore
 import centroid from "@turf/centroid";
-import {ChangeEvent, useCallback, useEffect, useState} from "react";
+import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {Gps, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
@@ -52,6 +52,7 @@ export const MapPage = () => {
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
     const [plan, setPlan] = useState<Path | undefined>(undefined)
     const mowingToolWidth = parseFloat(settings["OM_TOOL_WIDTH"] ?? "0.13") * 100;
+    const [mowingAreas, setMowingAreas] = useState<{ key: string, label: string, feat: Feature }[]>([])
     const gpsStream = useWS<string>(() => {
             console.log({
                 message: "GPS Stream closed",
@@ -145,26 +146,27 @@ export const MapPage = () => {
         },
         (e) => {
             const mowingPaths = JSON.parse(e) as Path[];
-            mowingPaths.forEach((mowingPath, index) => {
-                if (mowingPath?.Poses) {
-                    const feature: Feature<LineString> = {
-                        id: "mowingPath-" + index,
-                        type: 'Feature',
-                        properties: {
-                            color: `yellow`,
-                            width: mowingToolWidth,
-                        },
-                        geometry: {
-                            coordinates: mowingPath.Poses.map((pose) => {
-                                return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
-                            }),
-                            type: "LineString"
-                        }
+            setFeatures(oldFeatures => {
+                const newFeatures = {...oldFeatures};
+                mowingPaths.forEach((mowingPath, index) => {
+                    if (mowingPath?.Poses) {
+                        newFeatures["mowingPath-" + index] = {
+                            id: "mowingPath-" + index,
+                            type: 'Feature',
+                            properties: {
+                                color: `yellow`,
+                                width: mowingToolWidth,
+                            },
+                            geometry: {
+                                coordinates: mowingPath.Poses.map((pose) => {
+                                    return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
+                                }),
+                                type: "LineString"
+                            }
+                        };
                     }
-                    setFeatures(oldFeatures => {
-                        return {...oldFeatures, [feature.id as string]: feature}
-                    })
-                }
+                })
+                return newFeatures
             })
         });
 
@@ -279,6 +281,16 @@ export const MapPage = () => {
                 type: "FeatureCollection",
                 features: labels
             });
+            setMowingAreas(labels.flatMap(feat => {
+                if (feat.properties?.title == undefined) {
+                    return []
+                }
+                return [{
+                    key: feat.id as string,
+                    label: feat.properties?.title,
+                    feat
+                }]
+            }))
             const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
             newFeatures["dock"] = {
                 id: "dock",
@@ -486,7 +498,6 @@ export const MapPage = () => {
             return
         }
         setFeatures(currFeatures => {
-            debugger
             const currentLayerCoordinates = (currentFeature as Feature<Polygon>).geometry.coordinates[0]
             // find the area that contains the obstacle
             const area = Object.values<Feature>(currFeatures).find((f) => {
@@ -541,16 +552,19 @@ export const MapPage = () => {
 
     const _datumLon = parseFloat(settings["OM_DATUM_LONG"] ?? 0)
     const _datumLat = parseFloat(settings["OM_DATUM_LAT"] ?? 0)
-    if (_datumLon == 0 || _datumLat == 0) {
-        return <Spinner/>
-    }
-    const datum: [number, number, number] = [0, 0, 0]
-    converter.LLtoUTM(_datumLat, _datumLon, datum)
-    const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(offsetX, offsetY, datum, map.MapCenterY, map.MapCenterX) : [_datumLon, _datumLat]
-    const center: [number, number, number] = [0, 0, 0]
-    converter.LLtoUTM(map_center[1], map_center[0], center)
-    const map_ne = transpose(offsetX, offsetY, center, ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
-    const map_sw = transpose(offsetX, offsetY, center, -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
+    const [map_ne, map_sw, datum] = useMemo<[[number, number], [number, number], [number, number, number]]>(() => {
+        if (_datumLon == 0 || _datumLat == 0) {
+            return [[0, 0], [0, 0], [0, 0, 0]]
+        }
+        const datum: [number, number, number] = [0, 0, 0]
+        converter.LLtoUTM(_datumLat, _datumLon, datum)
+        const map_center = (map && map.MapCenterY && map.MapCenterX) ? transpose(offsetX, offsetY, datum, map.MapCenterY, map.MapCenterX) : [_datumLon, _datumLat]
+        const center: [number, number, number] = [0, 0, 0]
+        converter.LLtoUTM(map_center[1], map_center[0], center)
+        const map_sw = transpose(offsetX, offsetY, center, -((map?.MapHeight ?? 10) / 2), -((map?.MapWidth ?? 10) / 2))
+        const map_ne = transpose(offsetX, offsetY, center, ((map?.MapHeight ?? 10) / 2), ((map?.MapWidth ?? 10) / 2))
+        return [map_ne, map_sw, datum]
+    }, [_datumLat, _datumLon, map, offsetX, offsetY])
 
     function handleEditMap() {
         setEditMap(!editMap)
@@ -796,16 +810,10 @@ export const MapPage = () => {
         }, 1000))
         setOffsetY(value)
     }
-    let mowingAreas = labelsCollection.features.flatMap(feat => {
-        if (feat.properties?.title == undefined) {
-            return []
-        }
-        return [{
-            key: feat.id as string,
-            label: feat.properties?.title,
-            feat
-        }]
-    });
+
+    if (_datumLon == 0 || _datumLat == 0) {
+        return <Spinner/>
+    }
     return (
         <Row gutter={[16, 16]} align={"top"} style={{height: '100%'}}>
             <Modal
@@ -922,5 +930,7 @@ export const MapPage = () => {
         </Row>
     );
 }
+
+//MapPage.whyDidYouRender = true
 
 export default MapPage;

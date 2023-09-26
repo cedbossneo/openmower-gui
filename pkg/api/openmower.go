@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -131,25 +132,25 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		var def func()
 		switch topic {
 		case "diagnostics":
-			def, err = subscribe(provider, c, conn, "/diagnostics")
+			def, err = subscribe(provider, c, conn, "/diagnostics", -1)
 		case "status":
-			def, err = subscribe(provider, c, conn, "/mower/status")
+			def, err = subscribe(provider, c, conn, "/mower/status", -1)
 		case "highLevelStatus":
-			def, err = subscribe(provider, c, conn, "/mower_logic/current_state")
+			def, err = subscribe(provider, c, conn, "/mower_logic/current_state", -1)
 		case "gps":
-			def, err = subscribe(provider, c, conn, "/xbot_positioning/xb_pose")
+			def, err = subscribe(provider, c, conn, "/xbot_positioning/xb_pose", 100)
 		case "imu":
-			def, err = subscribe(provider, c, conn, "/imu/data_raw")
+			def, err = subscribe(provider, c, conn, "/imu/data_raw", 100)
 		case "ticks":
-			def, err = subscribe(provider, c, conn, "/mower/wheel_ticks")
+			def, err = subscribe(provider, c, conn, "/mower/wheel_ticks", 100)
 		case "map":
-			def, err = subscribe(provider, c, conn, "/xbot_monitoring/map")
+			def, err = subscribe(provider, c, conn, "/xbot_monitoring/map", -1)
 		case "path":
-			def, err = subscribe(provider, c, conn, "/slic3r_coverage_planner/path_marker_array")
+			def, err = subscribe(provider, c, conn, "/slic3r_coverage_planner/path_marker_array", -1)
 		case "plan":
-			def, err = subscribe(provider, c, conn, "/move_base_flex/FTCPlanner/global_plan")
+			def, err = subscribe(provider, c, conn, "/move_base_flex/FTCPlanner/global_plan", -1)
 		case "mowingPath":
-			def, err = subscribe(provider, c, conn, "/mowing_path")
+			def, err = subscribe(provider, c, conn, "/mowing_path", -1)
 		}
 		if err != nil {
 			log.Println(err.Error())
@@ -207,10 +208,13 @@ func PublisherRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 	})
 }
 
-func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn, topic string) (func(), error) {
+func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn, topic string, interval int) (func(), error) {
 	id := uuid.Generate()
 	uidString := id.String()
 	err := provider.Subscribe(topic, uidString, func(msg any) {
+		if interval > 0 {
+			time.Sleep(time.Duration(interval) * time.Millisecond)
+		}
 		// read lines from the reader
 		str, err := json.Marshal(msg)
 		if err != nil {
