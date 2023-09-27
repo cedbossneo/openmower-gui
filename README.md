@@ -102,11 +102,11 @@ Available topics :
 
 Available commands :
 
-- /mower_service/high_level_control
-- /mower_service/emergency
-- /mower_logic/set_parameters
-- /mower_service/mow_enabled
-- /mower_service/start_in_area
+- /call/mower_service/high_level_control
+- /call/mower_service/emergency
+- /call/mower_logic/set_parameters
+- /call/mower_service/mow_enabled
+- /call/mower_service/start_in_area
 
 Do not forget to set env var MQTT_ENABLED to true
 
