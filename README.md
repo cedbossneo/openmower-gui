@@ -82,6 +82,33 @@ to `http://<ip of the machine running the container>:4006`
 ### HomeKit
 
 The password to use OpenMower in iOS home app is 00102003
+Do not forget to set env var HOMEKIT_ENABLED to true
+
+### MQTT
+
+MQTT server is listening on port 1883
+
+Available topics :
+
+- /mower_logic/current_state
+- /mower/status
+- /xbot_positioning/xb_pose
+- /imu/data_raw
+- /mower/wheel_ticks
+- /xbot_monitoring/map
+- /slic3r_coverage_planner/path_marker_array
+- /move_base_flex/FTCPlanner
+- /mowing_path
+
+Available commands :
+
+- /mower_service/high_level_control
+- /mower_service/emergency
+- /mower_logic/set_parameters
+- /mower_service/mow_enabled
+- /mower_service/start_in_area
+
+Do not forget to set env var MQTT_ENABLED to true
 
 ### Env variables
 
@@ -90,6 +117,8 @@ The password to use OpenMower in iOS home app is 00102003
 - ROS_MASTER_URI=http://localhost:11311 : ros master uri
 - ROS_NODE_NAME=openmower-gui : node name
 - ROS_NODE_HOST=:4006 : listening port
+- MQTT_ENABLED=true : enable mqtt
+- HOMEKIT_ENABLED=true : enable homekit
 - MAP_TILE_SERVER=http://localhost:5000 : custom map tile server (see https://github.com/2m/openmower-map-tiles for
   usage)
 - MAP_TILE_URI=/tiles/vt/lyrs=s,h&x={x}&y={y}&z={z}

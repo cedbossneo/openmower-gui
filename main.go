@@ -41,8 +41,12 @@ func main() {
 	rosProvider := providers.NewRosProvider()
 	firmwareProvider := providers.NewFirmwareProvider(dbProvider)
 	ubloxProvider := providers.NewUbloxProvider()
-	providers.NewHomeKitProvider(rosProvider, dbProvider)
-	providers.NewMqttProvider(rosProvider)
+	if os.Getenv("HOMEKIT_ENABLED") == "true" {
+		providers.NewHomeKitProvider(rosProvider, dbProvider)
+	}
+	if os.Getenv("MQTT_ENABLED") == "true" {
+		providers.NewMqttProvider(rosProvider)
+	}
 	api.ConfigRoute(apiGroup, dbProvider)
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup, dockerProvider)
