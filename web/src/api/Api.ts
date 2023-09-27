@@ -107,8 +107,10 @@ export interface TypesFirmwareConfig {
     playButtonClearEmergencyMillis?: number;
     repository?: string;
     stopButtonEmergencyMillis?: number;
+    tickPerM?: number;
     tiltEmergencyMillis?: number;
     version?: string;
+    wheelBase?: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -369,7 +371,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @request POST:/config/keys/set
          */
         keysSetCreate: (settings: Record<string, string>, params: RequestParams = {}) =>
-            this.request<ApiOkResponse, ApiErrorResponse>({
+            this.request<Record<string, string>, ApiErrorResponse>({
                 path: `/config/keys/set`,
                 method: "POST",
                 body: settings,

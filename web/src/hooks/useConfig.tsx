@@ -12,7 +12,10 @@ export const useConfig = (keys: string[]) => {
             if (offsetConfig.error) {
                 throw new Error(offsetConfig.error.error ?? "")
             }
-            setConfig(offsetConfig.data)
+            setConfig(oldConfig => ({
+                ...oldConfig,
+                ...offsetConfig.data
+            }))
         } catch (e: any) {
             notification.error({
                 message: "Failed to save config",

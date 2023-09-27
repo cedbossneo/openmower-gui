@@ -165,10 +165,14 @@ definitions:
         type: string
       stopButtonEmergencyMillis:
         type: integer
+      tickPerM:
+        type: number
       tiltEmergencyMillis:
         type: integer
       version:
         type: string
+      wheelBase:
+        type: number
     type: object
 info:
   contact: {}
@@ -237,7 +241,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OkResponse'
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:

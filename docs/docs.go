@@ -114,7 +114,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.OkResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "500": {
@@ -803,11 +806,17 @@ const docTemplate = `{
                 "stopButtonEmergencyMillis": {
                     "type": "integer"
                 },
+                "tickPerM": {
+                    "type": "number"
+                },
                 "tiltEmergencyMillis": {
                     "type": "integer"
                 },
                 "version": {
                     "type": "string"
+                },
+                "wheelBase": {
+                    "type": "number"
                 }
             }
         }

@@ -51,7 +51,7 @@ func ConfigGetKeysRoute(r *gin.RouterGroup, db types.IDBProvider) gin.IRoutes {
 // @Tags config
 // @Produce  json
 // @Param settings body map[string]string true "settings"
-// @Success 200 {object} OkResponse
+// @Success 200 {object} map[string]string
 // @Failure 500 {object} ErrorResponse
 // @Router /config/keys/set [post]
 func ConfigSetKeysRoute(r *gin.RouterGroup, db types.IDBProvider) gin.IRoutes {
@@ -70,8 +70,7 @@ func ConfigSetKeysRoute(r *gin.RouterGroup, db types.IDBProvider) gin.IRoutes {
 				continue
 			}
 		}
-
-		context.JSON(200, OkResponse{})
+		context.JSON(200, body)
 	})
 }
 
