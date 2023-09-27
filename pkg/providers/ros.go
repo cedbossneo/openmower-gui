@@ -150,11 +150,12 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
 							for id, cb := range subscribers {
-								if p.subscribersBusy["/mowing_path"][id].TryLock() {
-									go func(topic, id string, subCb func(msg any)) {
+								mutex := p.subscribersBusy["/mowing_path"][id]
+								if mutex.TryLock() {
+									go func(mtx *sync.Mutex, subCb func(msg any)) {
 										subCb(msg)
-										p.subscribersBusy[topic][id].Unlock()
-									}("/mowing_path", id, cb)
+										mtx.Unlock()
+									}(mutex, cb)
 								}
 							}
 						}
@@ -344,11 +345,12 @@ func cbHandler[T any](p *RosProvider, topic string) func(msg T) {
 		subscribers, hasSubscriber := p.subscribers[topic]
 		if hasSubscriber {
 			for id, cb := range subscribers {
-				if p.subscribersBusy[topic][id].TryLock() {
-					go func(topic, id string, subCb func(msg any)) {
+				mutex := p.subscribersBusy[topic][id]
+				if mutex.TryLock() {
+					go func(mtx *sync.Mutex, subCb func(msg any)) {
 						subCb(msg)
-						p.subscribersBusy[topic][id].Unlock()
-					}(topic, id, cb)
+						mtx.Unlock()
+					}(mutex, cb)
 				}
 			}
 		}
