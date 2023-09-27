@@ -114,6 +114,8 @@ func (p *RosProvider) resetSubscribers() {
 
 func (p *RosProvider) initMowingPathSubscriber() error {
 	err := p.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg any) {
+		p.mtx.Lock()
+		defer p.mtx.Unlock()
 		pose := msg.(*xbot_msgs.AbsolutePose)
 		hlsLastMessage, ok := p.lastMessage["/mower_logic/current_state"]
 		if ok {
