@@ -2,6 +2,10 @@ package providers
 
 import (
 	"context"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/nav_msgs"
@@ -15,9 +19,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-	"os"
-	"sync"
-	"time"
 )
 
 type RosProvider struct {
@@ -26,6 +27,7 @@ type RosProvider struct {
 	statusSubscriber          *goroslib.Subscriber
 	highLevelStatusSubscriber *goroslib.Subscriber
 	gpsSubscriber             *goroslib.Subscriber
+	gpsDriverSubscriber       *goroslib.Subscriber
 	imuSubscriber             *goroslib.Subscriber
 	ticksSubscriber           *goroslib.Subscriber
 	mapSubscriber             *goroslib.Subscriber
@@ -101,6 +103,7 @@ func (p *RosProvider) resetSubscribers() {
 	p.node = nil
 	p.currentPathSubscriber = nil
 	p.gpsSubscriber = nil
+	p.gpsDriverSubscriber = nil
 	p.highLevelStatusSubscriber = nil
 	p.imuSubscriber = nil
 	p.mapSubscriber = nil
@@ -263,6 +266,15 @@ func (p *RosProvider) initSubscribers() error {
 			QueueSize: 1,
 		})
 		logrus.Info("Subscribed to /xbot_positioning/xb_pose")
+	}
+	if p.gpsDriverSubscriber == nil {
+		p.gpsDriverSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
+			Node:      node,
+			Topic:     "/xbot_driver_gps/xb_pose",
+			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_driver_gps/xb_pose"),
+			QueueSize: 1,
+		})
+		logrus.Info("Subscribed to /xbot_driver_gps/xb_pose")
 	}
 	if p.imuSubscriber == nil {
 		p.imuSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{

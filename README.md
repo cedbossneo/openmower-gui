@@ -93,6 +93,7 @@ Available topics :
 - /mower_logic/current_state
 - /mower/status
 - /xbot_positioning/xb_pose
+- /xbot_driver_gps/xb_pose
 - /imu/data_raw
 - /mower/wheel_ticks
 - /xbot_monitoring/map

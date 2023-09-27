@@ -3,6 +3,8 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+
 	"github.com/brutella/hap/accessory"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
@@ -13,7 +15,6 @@ import (
 	"github.com/mochi-mqtt/server/v2/packets"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-	"reflect"
 
 	"log"
 	"os"
@@ -78,6 +79,7 @@ func (hc *MqttProvider) subscribeToRos() {
 	hc.subscribeToRosTopic("/mower_logic/current_state", "mqtt-mower-logic")
 	hc.subscribeToRosTopic("/mower/status", "mqtt-mower-status")
 	hc.subscribeToRosTopic("/xbot_positioning/xb_pose", "mqtt-gps")
+	hc.subscribeToRosTopic("/xbot_driver_gps/xb_pose", "mqtt-gps-driver")
 	hc.subscribeToRosTopic("/imu/data_raw", "mqtt-imu")
 	hc.subscribeToRosTopic("/mower/wheel_ticks", "mqtt-ticks")
 	hc.subscribeToRosTopic("/xbot_monitoring/map", "mqtt-map")
