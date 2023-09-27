@@ -33,6 +33,7 @@ type RosProvider struct {
 	currentPathSubscriber     *goroslib.Subscriber
 	poseSubscriber            *goroslib.Subscriber
 	subscribers               map[string]map[string]func(msg any)
+	subscribersBusy           map[string]map[string]*sync.Mutex
 	lastMessage               map[string]any
 	mowingPaths               []*nav_msgs.Path
 	mowingPath                *nav_msgs.Path
@@ -148,8 +149,13 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						p.lastMessage["/mowing_path"] = p.mowingPaths
 						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
-							for _, cb := range subscribers {
-								cb(p.mowingPaths)
+							for id, cb := range subscribers {
+								if p.subscribersBusy["/mowing_path"][id].TryLock() {
+									go func(topic, id string, subCb func(msg any)) {
+										subCb(msg)
+										p.subscribersBusy[topic][id].Unlock()
+									}("/mowing_path", id, cb)
+								}
 							}
 						}
 					} else {
@@ -195,15 +201,19 @@ func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error
 	subscriber, hasSubscriber := p.subscribers[topic]
 	if !hasSubscriber {
 		p.subscribers[topic] = make(map[string]func(msg any))
+		p.subscribersBusy[topic] = make(map[string]*sync.Mutex)
 		subscriber, _ = p.subscribers[topic]
 	}
 	_, hasCallback := subscriber[id]
 	if !hasCallback {
 		subscriber[id] = cb
+		p.subscribersBusy[topic][id] = &sync.Mutex{}
 	}
 	lastMessage, hasLastMessage := p.lastMessage[topic]
 	if hasLastMessage {
+		p.subscribersBusy[topic][id].Lock()
 		cb(lastMessage)
+		p.subscribersBusy[topic][id].Unlock()
 	}
 	return nil
 }
@@ -225,6 +235,7 @@ func (p *RosProvider) UnSubscribe(topic string, id string) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	delete(p.subscribers[topic], id)
+	delete(p.subscribersBusy[topic], id)
 }
 
 func (p *RosProvider) initSubscribers() error {
@@ -234,6 +245,9 @@ func (p *RosProvider) initSubscribers() error {
 	}
 	if p.subscribers == nil {
 		p.subscribers = make(map[string]map[string]func(msg any))
+	}
+	if p.subscribersBusy == nil {
+		p.subscribersBusy = make(map[string]map[string]*sync.Mutex)
 	}
 	if p.lastMessage == nil {
 		p.lastMessage = make(map[string]any)
@@ -329,8 +343,13 @@ func cbHandler[T any](p *RosProvider, topic string) func(msg T) {
 		p.lastMessage[topic] = msg
 		subscribers, hasSubscriber := p.subscribers[topic]
 		if hasSubscriber {
-			for _, cb := range subscribers {
-				cb(msg)
+			for id, cb := range subscribers {
+				if p.subscribersBusy[topic][id].TryLock() {
+					go func(topic, id string, subCb func(msg any)) {
+						subCb(msg)
+						p.subscribersBusy[topic][id].Unlock()
+					}(topic, id, cb)
+				}
 			}
 		}
 	}

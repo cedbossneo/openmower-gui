@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"reflect"
+	"time"
 
 	"log"
 	"os"
@@ -89,6 +90,7 @@ func (hc *MqttProvider) subscribeToRos() {
 
 func (hc *MqttProvider) subscribeToRosTopic(topic string, id string) {
 	err := hc.rosProvider.Subscribe(topic, id, func(msg any) {
+		time.Sleep(500 * time.Millisecond)
 		msgJson, _ := json.Marshal(msg)
 		err := hc.server.Publish("/gui"+topic, msgJson, true, 0)
 		if err != nil {
