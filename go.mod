@@ -1,6 +1,8 @@
 module github.com/cedbossneo/openmower-gui
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	git.mills.io/prologic/bitcask v1.0.2
@@ -15,6 +17,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/mochi-mqtt/server/v2 v2.4.0
 	github.com/paulmach/orb v0.10.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.0
@@ -79,6 +82,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/plar/go-adaptive-radix-tree v1.0.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rs/xid v1.4.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9 // indirect

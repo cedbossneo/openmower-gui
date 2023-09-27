@@ -42,6 +42,7 @@ func main() {
 	firmwareProvider := providers.NewFirmwareProvider(dbProvider)
 	ubloxProvider := providers.NewUbloxProvider()
 	providers.NewHomeKitProvider(rosProvider, dbProvider)
+	providers.NewMqttProvider(rosProvider)
 	api.ConfigRoute(apiGroup, dbProvider)
 	api.SettingsRoutes(apiGroup)
 	api.ContainersRoutes(apiGroup, dockerProvider)
