@@ -31,6 +31,7 @@ type RosProvider struct {
 	mapSubscriber             *goroslib.Subscriber
 	pathSubscriber            *goroslib.Subscriber
 	currentPathSubscriber     *goroslib.Subscriber
+	poseSubscriber            *goroslib.Subscriber
 	subscribers               map[string]map[string]func(msg any)
 	lastMessage               map[string]any
 	mowingPaths               []*nav_msgs.Path
@@ -107,6 +108,7 @@ func (p *RosProvider) resetSubscribers() {
 	p.pathSubscriber = nil
 	p.statusSubscriber = nil
 	p.ticksSubscriber = nil
+	p.poseSubscriber = nil
 }
 
 func (p *RosProvider) initMowingPathSubscriber() error {
@@ -131,7 +133,7 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						})
 						if len(p.mowingPathOrigin)%5 == 0 {
 							// low threshold just removes the colinear point
-							reduced := simplify.DouglasPeucker(0.7).LineString(p.mowingPathOrigin)
+							reduced := simplify.DouglasPeucker(0.03).LineString(p.mowingPathOrigin.Clone())
 							p.mowingPath.Poses = lo.Map(reduced, func(p orb.Point, idx int) geometry_msgs.PoseStamped {
 								return geometry_msgs.PoseStamped{
 									Pose: geometry_msgs.Pose{
@@ -158,9 +160,8 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 				break
 			default:
 				p.mowingPaths = []*nav_msgs.Path{}
-				p.mowingPath = &nav_msgs.Path{}
-				p.mowingPathOrigin = orb.LineString{}
-				p.mowingPaths = append(p.mowingPaths, p.mowingPath)
+				p.mowingPath = nil
+				p.mowingPathOrigin = nil
 			}
 		}
 	})
@@ -257,6 +258,15 @@ func (p *RosProvider) initSubscribers() error {
 	}
 	if p.gpsSubscriber == nil {
 		p.gpsSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
+			Node:      node,
+			Topic:     "/xbot_driver_gps/xb_pose",
+			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_driver_gps/xb_pose"),
+			QueueSize: 1,
+		})
+		logrus.Info("Subscribed to /xbot_driver_gps/xb_pose")
+	}
+	if p.poseSubscriber == nil {
+		p.poseSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:      node,
 			Topic:     "/xbot_positioning/xb_pose",
 			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),

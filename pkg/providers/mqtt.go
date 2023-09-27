@@ -77,7 +77,8 @@ func (hc *MqttProvider) launchServer() {
 func (hc *MqttProvider) subscribeToRos() {
 	hc.subscribeToRosTopic("/mower_logic/current_state", "mqtt-mower-logic")
 	hc.subscribeToRosTopic("/mower/status", "mqtt-mower-status")
-	hc.subscribeToRosTopic("/xbot_positioning/xb_pose", "mqtt-gps")
+	hc.subscribeToRosTopic("/xbot_positioning/xb_pose", "mqtt-pose")
+	hc.subscribeToRosTopic("/xbot_driver_gps/xb_pose", "mqtt-gps")
 	hc.subscribeToRosTopic("/imu/data_raw", "mqtt-imu")
 	hc.subscribeToRosTopic("/mower/wheel_ticks", "mqtt-ticks")
 	hc.subscribeToRosTopic("/xbot_monitoring/map", "mqtt-map")
@@ -89,7 +90,7 @@ func (hc *MqttProvider) subscribeToRos() {
 func (hc *MqttProvider) subscribeToRosTopic(topic string, id string) {
 	err := hc.rosProvider.Subscribe(topic, id, func(msg any) {
 		msgJson, _ := json.Marshal(msg)
-		err := hc.server.Publish(topic, msgJson, true, 0)
+		err := hc.server.Publish("/gui"+topic, msgJson, true, 0)
 		if err != nil {
 			logrus.Error(xerrors.Errorf("Failed to publish to %s: %w", topic, err))
 		}
@@ -108,7 +109,7 @@ func (hc *MqttProvider) subscribeToMqtt() {
 }
 
 func subscribeToMqttCall[SRV any, REQ any, RES any](server *mqtt.Server, rosProvider types2.IRosProvider, topic string, srv SRV, req REQ, res RES) {
-	err := server.Subscribe("call"+topic, 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+	err := server.Subscribe("/gui/call"+topic, 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		logrus.Info("Received " + topic)
 		var newReq = reflect.New(reflect.TypeOf(req).Elem()).Interface()
 		err := json.Unmarshal(pk.Payload, newReq)

@@ -5,7 +5,7 @@ import {useWS} from "../hooks/useWS.ts";
 // @ts-ignore
 import centroid from "@turf/centroid";
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
-import {Gps, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
+import {AbsolutePose, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
@@ -53,20 +53,20 @@ export const MapPage = () => {
     const [plan, setPlan] = useState<Path | undefined>(undefined)
     const mowingToolWidth = parseFloat(settings["OM_TOOL_WIDTH"] ?? "0.13") * 100;
     const [mowingAreas, setMowingAreas] = useState<{ key: string, label: string, feat: Feature }[]>([])
-    const gpsStream = useWS<string>(() => {
+    const poseStream = useWS<string>(() => {
             console.log({
-                message: "GPS Stream closed",
+                message: "Pose Stream closed",
             })
         }, () => {
             console.log({
-                message: "GPS Stream connected",
+                message: "Pose Stream connected",
             })
         },
         (e) => {
-            const gps = JSON.parse(e) as Gps
-            const mower_lonlat = transpose(offsetX, offsetY, datum, gps.Pose?.Pose?.Position?.Y!!, gps.Pose?.Pose?.Position?.X!!)
+            const pose = JSON.parse(e) as AbsolutePose
+            const mower_lonlat = transpose(offsetX, offsetY, datum, pose.Pose?.Pose?.Position?.Y!!, pose.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
-                let orientation = gps.MotionHeading!!;
+                let orientation = pose.MotionHeading!!;
                 const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation, meterInDegree / 2)
                 return {
                     ...oldFeatures, mower: {
@@ -201,7 +201,7 @@ export const MapPage = () => {
     useEffect(() => {
         if (editMap) {
             mapStream.stop()
-            gpsStream.stop()
+            poseStream.stop()
             pathStream.stop()
             planStream.stop()
             mowingPathStream.stop()
@@ -213,7 +213,7 @@ export const MapPage = () => {
                 return
             }
             highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
-            gpsStream.start("/api/openmower/subscribe/gps",)
+            poseStream.start("/api/openmower/subscribe/pose",)
             mapStream.start("/api/openmower/subscribe/map",)
             pathStream.start("/api/openmower/subscribe/path")
             planStream.start("/api/openmower/subscribe/plan")
@@ -234,7 +234,7 @@ export const MapPage = () => {
             return
         }
         highLevelStatus.start("/api/openmower/subscribe/highLevelStatus")
-        gpsStream.start("/api/openmower/subscribe/gps",)
+        poseStream.start("/api/openmower/subscribe/pose",)
         mapStream.start("/api/openmower/subscribe/map",)
         pathStream.start("/api/openmower/subscribe/path")
         planStream.start("/api/openmower/subscribe/plan")
@@ -243,7 +243,7 @@ export const MapPage = () => {
 
     useEffect(() => {
         return () => {
-            gpsStream.stop()
+            poseStream.stop()
             mapStream.stop()
             pathStream.stop()
             joyStream.stop()

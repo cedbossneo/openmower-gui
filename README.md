@@ -90,23 +90,23 @@ MQTT server is listening on port 1883
 
 Available topics :
 
-- /mower_logic/current_state
-- /mower/status
-- /xbot_positioning/xb_pose
-- /imu/data_raw
-- /mower/wheel_ticks
-- /xbot_monitoring/map
-- /slic3r_coverage_planner/path_marker_array
-- /move_base_flex/FTCPlanner
-- /mowing_path
+- /gui/mower_logic/current_state
+- /gui/mower/status
+- /gui/xbot_positioning/xb_pose
+- /gui/imu/data_raw
+- /gui/mower/wheel_ticks
+- /gui/xbot_monitoring/map
+- /gui/slic3r_coverage_planner/path_marker_array
+- /gui/move_base_flex/FTCPlanner
+- /gui/mowing_path
 
 Available commands :
 
-- /call/mower_service/high_level_control
-- /call/mower_service/emergency
-- /call/mower_logic/set_parameters
-- /call/mower_service/mow_enabled
-- /call/mower_service/start_in_area
+- /gui/call/mower_service/high_level_control
+- /gui/call/mower_service/emergency
+- /gui/call/mower_logic/set_parameters
+- /gui/call/mower_service/mow_enabled
+- /gui/call/mower_service/start_in_area
 
 Do not forget to set env var MQTT_ENABLED to true
 

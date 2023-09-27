@@ -248,7 +248,7 @@ export type HighLevelStatus = {
     Emergency?: boolean
 }
 
-export type Gps = {
+export type AbsolutePose = {
     /*
         SensorStamp uint32
         ReceivedStamp uint32
