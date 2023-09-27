@@ -88,6 +88,8 @@ Do not forget to set env var HOMEKIT_ENABLED to true
 
 MQTT server is listening on port 1883
 
+See [ros.ts](web%2Fsrc%2Ftypes%2Fros.ts) for topic types
+
 Available topics :
 
 - /gui/mower_logic/current_state
@@ -102,11 +104,11 @@ Available topics :
 
 Available commands :
 
-- /gui/call/mower_service/high_level_control
-- /gui/call/mower_service/emergency
-- /gui/call/mower_logic/set_parameters
-- /gui/call/mower_service/mow_enabled
-- /gui/call/mower_service/start_in_area
+- /gui/call/mower_service/high_level_control [HighLevelControlSrv.go](pkg%2Fmsgs%2Fmower_msgs%2FHighLevelControlSrv.go)
+- /gui/call/mower_service/emergency [EmergencyStopSrv.go](pkg%2Fmsgs%2Fmower_msgs%2FEmergencyStopSrv.go)
+- /gui/call/mower_logic/set_parameters [Reconfigure.go](pkg%2Fmsgs%2Fdynamic_reconfigure%2FReconfigure.go)
+- /gui/call/mower_service/mow_enabled [MowerControlSrv.go](pkg%2Fmsgs%2Fmower_msgs%2FMowerControlSrv.go)
+- /gui/call/mower_service/start_in_area [StartInAreaSrv.go](pkg%2Fmsgs%2Fmower_msgs%2FStartInAreaSrv.go)
 
 Do not forget to set env var MQTT_ENABLED to true
 
