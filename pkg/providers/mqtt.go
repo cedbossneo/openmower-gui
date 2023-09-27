@@ -89,7 +89,7 @@ func (hc *MqttProvider) subscribeToRos() {
 func (hc *MqttProvider) subscribeToRosTopic(topic string, id string) {
 	err := hc.rosProvider.Subscribe(topic, id, func(msg any) {
 		msgJson, _ := json.Marshal(msg)
-		err := hc.server.Publish(topic, msgJson, false, 0)
+		err := hc.server.Publish(topic, msgJson, true, 0)
 		if err != nil {
 			logrus.Error(xerrors.Errorf("Failed to publish to %s: %w", topic, err))
 		}
