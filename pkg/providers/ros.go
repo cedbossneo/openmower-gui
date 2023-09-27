@@ -14,8 +14,10 @@ import (
 	"github.com/paulmach/orb/simplify"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 	"os"
 	"sync"
+	"time"
 )
 
 type RosProvider struct {
@@ -65,29 +67,72 @@ func NewRosProvider() types2.IRosProvider {
 		logrus.Error(err)
 		return r
 	}
-	err = r.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg any) {
+	err = r.initMowingPathSubscriber()
+	if err != nil {
+		logrus.Error(err)
+		return r
+	}
+	go func() {
+		for range time.Tick(20 * time.Second) {
+			node, err := r.getNode()
+			if err != nil {
+				logrus.Error(xerrors.Errorf("failed to get node: %w", err))
+				continue
+			}
+			_, err = node.NodePing("rosout")
+			if err != nil {
+				logrus.Error(xerrors.Errorf("failed to ping node: %w, restarting node", err))
+				r.resetSubscribers()
+			} else {
+				err = r.initSubscribers()
+				if err != nil {
+					logrus.Error(xerrors.Errorf("failed to init subscribers: %w", err))
+				}
+			}
+		}
+	}()
+	return r
+}
+
+func (p *RosProvider) resetSubscribers() {
+	if p.node != nil {
+		p.node.Close()
+	}
+	p.node = nil
+	p.currentPathSubscriber = nil
+	p.gpsSubscriber = nil
+	p.highLevelStatusSubscriber = nil
+	p.imuSubscriber = nil
+	p.mapSubscriber = nil
+	p.pathSubscriber = nil
+	p.statusSubscriber = nil
+	p.ticksSubscriber = nil
+}
+
+func (p *RosProvider) initMowingPathSubscriber() error {
+	err := p.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg any) {
 		pose := msg.(*xbot_msgs.AbsolutePose)
-		hlsLastMessage, ok := r.lastMessage["/mower_logic/current_state"]
+		hlsLastMessage, ok := p.lastMessage["/mower_logic/current_state"]
 		if ok {
 			highLevelStatus := hlsLastMessage.(*mower_msgs.HighLevelStatus)
 			switch highLevelStatus.StateName {
 			case "MOWING":
-				sLastMessage, ok := r.lastMessage["/mower/status"]
+				sLastMessage, ok := p.lastMessage["/mower/status"]
 				if ok {
 					status := sLastMessage.(*mower_msgs.Status)
 					if status.MowEscStatus.Tacho > 0 {
-						if r.mowingPath == nil {
-							r.mowingPath = &nav_msgs.Path{}
-							r.mowingPathOrigin = orb.LineString{}
-							r.mowingPaths = append(r.mowingPaths, r.mowingPath)
+						if p.mowingPath == nil {
+							p.mowingPath = &nav_msgs.Path{}
+							p.mowingPathOrigin = orb.LineString{}
+							p.mowingPaths = append(p.mowingPaths, p.mowingPath)
 						}
-						r.mowingPathOrigin = append(r.mowingPathOrigin, orb.Point{
+						p.mowingPathOrigin = append(p.mowingPathOrigin, orb.Point{
 							pose.Pose.Pose.Position.X, pose.Pose.Pose.Position.Y,
 						})
-						if len(r.mowingPathOrigin)%5 == 0 {
+						if len(p.mowingPathOrigin)%5 == 0 {
 							// low threshold just removes the colinear point
-							reduced := simplify.DouglasPeucker(0.7).LineString(r.mowingPathOrigin)
-							r.mowingPath.Poses = lo.Map(reduced, func(p orb.Point, idx int) geometry_msgs.PoseStamped {
+							reduced := simplify.DouglasPeucker(0.7).LineString(p.mowingPathOrigin)
+							p.mowingPath.Poses = lo.Map(reduced, func(p orb.Point, idx int) geometry_msgs.PoseStamped {
 								return geometry_msgs.PoseStamped{
 									Pose: geometry_msgs.Pose{
 										Position: geometry_msgs.Point{
@@ -98,31 +143,28 @@ func NewRosProvider() types2.IRosProvider {
 								}
 							})
 						}
-						r.lastMessage["/mowing_path"] = r.mowingPaths
-						subscribers, hasSubscriber := r.subscribers["/mowing_path"]
+						p.lastMessage["/mowing_path"] = p.mowingPaths
+						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
 							for _, cb := range subscribers {
-								cb(r.mowingPaths)
+								cb(p.mowingPaths)
 							}
 						}
 					} else {
-						r.mowingPath = nil
-						r.mowingPathOrigin = nil
+						p.mowingPath = nil
+						p.mowingPathOrigin = nil
 					}
 				}
 				break
 			default:
-				r.mowingPaths = []*nav_msgs.Path{}
-				r.mowingPath = &nav_msgs.Path{}
-				r.mowingPathOrigin = orb.LineString{}
-				r.mowingPaths = append(r.mowingPaths, r.mowingPath)
+				p.mowingPaths = []*nav_msgs.Path{}
+				p.mowingPath = &nav_msgs.Path{}
+				p.mowingPathOrigin = orb.LineString{}
+				p.mowingPaths = append(p.mowingPaths, p.mowingPath)
 			}
 		}
 	})
-	if err != nil {
-		logrus.Error(err)
-	}
-	return r
+	return err
 }
 
 func (p *RosProvider) CallService(ctx context.Context, srvName string, srv any, req any, res any) error {
@@ -202,6 +244,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*mower_msgs.Status](p, "/mower/status"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /mower/status")
 	}
 	if p.highLevelStatusSubscriber == nil {
 		p.highLevelStatusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -210,6 +253,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*mower_msgs.HighLevelStatus](p, "/mower_logic/current_state"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /mower_logic/current_state")
 	}
 	if p.gpsSubscriber == nil {
 		p.gpsSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -218,6 +262,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_positioning/xb_pose"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /xbot_positioning/xb_pose")
 	}
 	if p.imuSubscriber == nil {
 		p.imuSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -226,6 +271,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*sensor_msgs.Imu](p, "/imu/data_raw"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /imu/data_raw")
 	}
 	if p.ticksSubscriber == nil {
 		p.ticksSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -234,6 +280,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*xbot_msgs.WheelTick](p, "/mower/wheel_ticks"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /mower/wheel_ticks")
 	}
 	if p.mapSubscriber == nil {
 		p.mapSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -242,6 +289,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*xbot_msgs.Map](p, "/xbot_monitoring/map"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /xbot_monitoring/map")
 	}
 	if p.pathSubscriber == nil {
 		p.pathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -250,6 +298,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*visualization_msgs.MarkerArray](p, "/slic3r_coverage_planner/path_marker_array"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /slic3r_coverage_planner/path_marker_array")
 	}
 	if p.currentPathSubscriber == nil {
 		p.currentPathSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -258,6 +307,7 @@ func (p *RosProvider) initSubscribers() error {
 			Callback:  cbHandler[*nav_msgs.Path](p, "/move_base_flex/FTCPlanner/global_plan"),
 			QueueSize: 1,
 		})
+		logrus.Info("Subscribed to /move_base_flex/FTCPlanner/global_plan")
 	}
 	return nil
 }
