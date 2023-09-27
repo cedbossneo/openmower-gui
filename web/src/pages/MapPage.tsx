@@ -154,7 +154,7 @@ export const MapPage = () => {
                             id: "mowingPath-" + index,
                             type: 'Feature',
                             properties: {
-                                color: `yellow`,
+                                color: `rgba(107, 255, 188, 0.68)`,
                                 width: mowingToolWidth,
                             },
                             geometry: {
