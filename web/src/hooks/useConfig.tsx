@@ -26,7 +26,7 @@ export const useConfig = (keys: string[]) => {
     useEffect(() => {
         (async () => {
             try {
-                var keysMap: Record<string, any> = {}
+                const keysMap: Record<string, any> = {}
                 keys.forEach((key) => {
                     keysMap[key] = ""
                 })

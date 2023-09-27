@@ -24,6 +24,9 @@ import {useEnv} from "../hooks/useEnv.tsx";
 import {Spinner} from "../components/Spinner.tsx";
 import AsyncDropDownButton from "../components/AsyncDropDownButton.tsx";
 
+var offsetXTimeout: any = null;
+var offsetYTimeout: any = null;
+
 export const MapPage = () => {
     const {notification} = App.useApp();
     const mowerAction = useMowerAction()
@@ -32,8 +35,6 @@ export const MapPage = () => {
     const [offsetY, setOffsetY] = useState(0);
     const [modalOpen, setModalOpen] = useState<boolean>(false)
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
-    const [offsetYTimeout, setOffsetYTimeout] = useState<number | null>(null)
-    const [offsetXTimeout, setOffsetXTimeout] = useState<number | null>(null)
 
     const {settings} = useSettings()
     const [labelsCollection, setLabelsCollection] = useState<FeatureCollection>({
@@ -191,11 +192,12 @@ export const MapPage = () => {
     useEffect(() => {
         let offX = parseFloat(config["gui.map.offset.x"] ?? 0);
         let offY = parseFloat(config["gui.map.offset.y"] ?? 0);
-        if (isNaN(offX) || isNaN(offY)) {
-            return
+        if (!isNaN(offX)) {
+            setOffsetX(offX)
         }
-        setOffsetX(offX)
-        setOffsetY(offY)
+        if (!isNaN(offY)) {
+            setOffsetY(offY)
+        }
     }, [config]);
 
     useEffect(() => {
@@ -774,7 +776,7 @@ export const MapPage = () => {
         if (offsetXTimeout != null) {
             clearTimeout(offsetXTimeout)
         }
-        setOffsetXTimeout(setTimeout(() => {
+        offsetXTimeout = setTimeout(() => {
             (async () => {
                 try {
                     await setConfig({
@@ -787,14 +789,14 @@ export const MapPage = () => {
                     })
                 }
             })()
-        }, 1000))
+        }, 1000)
         setOffsetX(value)
     }
     const handleOffsetY = (value: number) => {
         if (offsetYTimeout != null) {
             clearTimeout(offsetYTimeout)
         }
-        setOffsetYTimeout(setTimeout(() => {
+        offsetYTimeout = setTimeout(() => {
             (async () => {
                 try {
                     await setConfig({
@@ -807,7 +809,7 @@ export const MapPage = () => {
                     })
                 }
             })()
-        }, 1000))
+        }, 1000)
         setOffsetY(value)
     }
 
