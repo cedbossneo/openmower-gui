@@ -20,6 +20,60 @@ import (
 	"time"
 )
 
+type RosSubscriber struct {
+	Topic       string
+	Id          string
+	mtx         *sync.Mutex
+	cb          func(msg any)
+	nextMessage any
+	close       chan bool
+}
+
+func NewRosSubscriber(topic, id string, cb func(msg any)) *RosSubscriber {
+	r := &RosSubscriber{
+		cb:    cb,
+		Topic: topic,
+		Id:    id,
+		mtx:   &sync.Mutex{},
+		close: make(chan bool),
+	}
+	go r.Run()
+	return r
+}
+
+func (r *RosSubscriber) Publish(msg any) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	r.nextMessage = msg
+}
+
+func (r *RosSubscriber) Close() {
+	r.close <- true
+}
+
+func (r *RosSubscriber) Run() {
+	for {
+		select {
+		case <-r.close:
+			return
+		default:
+			r.mtx.Lock()
+			messageToProcess := r.nextMessage
+			r.nextMessage = nil
+			r.mtx.Unlock()
+			r.processMessage(messageToProcess)
+		}
+	}
+}
+
+func (r *RosSubscriber) processMessage(messageToProcess any) {
+	if messageToProcess != nil {
+		r.cb(messageToProcess)
+	} else {
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 type RosProvider struct {
 	node                      *goroslib.Node
 	mtx                       sync.Mutex
@@ -32,8 +86,7 @@ type RosProvider struct {
 	pathSubscriber            *goroslib.Subscriber
 	currentPathSubscriber     *goroslib.Subscriber
 	poseSubscriber            *goroslib.Subscriber
-	subscribers               map[string]map[string]func(msg any)
-	subscribersBusy           map[string]map[string]*sync.Mutex
+	subscribers               map[string]map[string]*RosSubscriber
 	lastMessage               map[string]any
 	mowingPaths               []*nav_msgs.Path
 	mowingPath                *nav_msgs.Path
@@ -100,6 +153,15 @@ func (p *RosProvider) resetSubscribers() {
 	if p.node != nil {
 		p.node.Close()
 	}
+	p.currentPathSubscriber.Close()
+	p.gpsSubscriber.Close()
+	p.highLevelStatusSubscriber.Close()
+	p.imuSubscriber.Close()
+	p.mapSubscriber.Close()
+	p.pathSubscriber.Close()
+	p.statusSubscriber.Close()
+	p.ticksSubscriber.Close()
+	p.poseSubscriber.Close()
 	p.node = nil
 	p.currentPathSubscriber = nil
 	p.gpsSubscriber = nil
@@ -151,14 +213,8 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						p.lastMessage["/mowing_path"] = p.mowingPaths
 						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
-							for id, cb := range subscribers {
-								mutex := p.subscribersBusy["/mowing_path"][id]
-								if mutex.TryLock() {
-									go func(mtx *sync.Mutex, subCb func(msg any)) {
-										subCb(msg)
-										mtx.Unlock()
-									}(mutex, cb)
-								}
+							for _, cb := range subscribers {
+								cb.Publish(msg)
 							}
 						}
 					} else {
@@ -203,20 +259,16 @@ func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error
 	defer p.mtx.Unlock()
 	subscriber, hasSubscriber := p.subscribers[topic]
 	if !hasSubscriber {
-		p.subscribers[topic] = make(map[string]func(msg any))
-		p.subscribersBusy[topic] = make(map[string]*sync.Mutex)
+		p.subscribers[topic] = make(map[string]*RosSubscriber)
 		subscriber, _ = p.subscribers[topic]
 	}
 	_, hasCallback := subscriber[id]
 	if !hasCallback {
-		subscriber[id] = cb
-		p.subscribersBusy[topic][id] = &sync.Mutex{}
+		subscriber[id] = NewRosSubscriber(topic, id, cb)
 	}
 	lastMessage, hasLastMessage := p.lastMessage[topic]
 	if hasLastMessage {
-		p.subscribersBusy[topic][id].Lock()
-		cb(lastMessage)
-		p.subscribersBusy[topic][id].Unlock()
+		subscriber[id].Publish(lastMessage)
 	}
 	return nil
 }
@@ -237,8 +289,11 @@ func (p *RosProvider) Publisher(topic string, obj interface{}) (*goroslib.Publis
 func (p *RosProvider) UnSubscribe(topic string, id string) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	delete(p.subscribers[topic], id)
-	delete(p.subscribersBusy[topic], id)
+	_, hasSubscriber := p.subscribers[topic][id]
+	if hasSubscriber {
+		p.subscribers[topic][id].Close()
+		delete(p.subscribers[topic], id)
+	}
 }
 
 func (p *RosProvider) initSubscribers() error {
@@ -247,10 +302,7 @@ func (p *RosProvider) initSubscribers() error {
 		return err
 	}
 	if p.subscribers == nil {
-		p.subscribers = make(map[string]map[string]func(msg any))
-	}
-	if p.subscribersBusy == nil {
-		p.subscribersBusy = make(map[string]map[string]*sync.Mutex)
+		p.subscribers = make(map[string]map[string]*RosSubscriber)
 	}
 	if p.lastMessage == nil {
 		p.lastMessage = make(map[string]any)
@@ -346,14 +398,8 @@ func cbHandler[T any](p *RosProvider, topic string) func(msg T) {
 		p.lastMessage[topic] = msg
 		subscribers, hasSubscriber := p.subscribers[topic]
 		if hasSubscriber {
-			for id, cb := range subscribers {
-				mutex := p.subscribersBusy[topic][id]
-				if mutex.TryLock() {
-					go func(mtx *sync.Mutex, subCb func(msg any)) {
-						subCb(msg)
-						mtx.Unlock()
-					}(mutex, cb)
-				}
+			for _, cb := range subscribers {
+				cb.Publish(msg)
 			}
 		}
 	}
