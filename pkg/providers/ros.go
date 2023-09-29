@@ -214,7 +214,7 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
 							for _, cb := range subscribers {
-								cb.Publish(msg)
+								cb.Publish(p.mowingPaths)
 							}
 						}
 					} else {
