@@ -120,6 +120,7 @@ Do not forget to set env var MQTT_ENABLED to true
 - ROS_NODE_NAME=openmower-gui : node name
 - ROS_NODE_HOST=:4006 : listening port
 - MQTT_ENABLED=true : enable mqtt
+- MQTT_HOST=:1883 : listening port
 - HOMEKIT_ENABLED=true : enable homekit
 - MAP_TILE_SERVER=http://localhost:5000 : custom map tile server (see https://github.com/2m/openmower-map-tiles for
   usage)

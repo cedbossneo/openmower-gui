@@ -61,7 +61,11 @@ func (hc *MqttProvider) launchServer() {
 	_ = hc.server.AddHook(new(auth.AllowHook), nil)
 
 	// Create a TCP listener on a standard port.
-	tcp := listeners.NewTCP("t1", ":1883", nil)
+	port := ":1883"
+	if os.Getenv("MQTT_HOST") != "" {
+		port = os.Getenv("MQTT_HOST")
+	}
+	tcp := listeners.NewTCP("t1", port, nil)
 	err := hc.server.AddListener(tcp)
 	if err != nil {
 		log.Fatal(err)
