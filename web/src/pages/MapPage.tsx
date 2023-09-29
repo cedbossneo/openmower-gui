@@ -14,7 +14,7 @@ import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {MapStyle} from "./MapStyle.tsx";
-import {converter, drawLine, getQuaternionFromHeading, itranspose, meterInDegree, transpose} from "../utils/map.tsx";
+import {converter, drawLine, getQuaternionFromHeading, itranspose, transpose} from "../utils/map.tsx";
 import {Joystick} from "react-joystick-component";
 import {useHighLevelStatus} from "../hooks/useHighLevelStatus.ts";
 import {IJoystickUpdateEvent} from "react-joystick-component/build/lib/Joystick";
@@ -68,7 +68,7 @@ export const MapPage = () => {
             const mower_lonlat = transpose(offsetX, offsetY, datum, pose.Pose?.Pose?.Position?.Y!!, pose.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
                 let orientation = pose.MotionHeading!!;
-                const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation, meterInDegree / 2)
+                const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation)
                 return {
                     ...oldFeatures, mower: {
                         id: "mower",

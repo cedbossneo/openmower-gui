@@ -19,9 +19,10 @@ export function getQuaternionFromHeading(heading: number): Quaternion {
     return q
 }
 
-export function drawLine(longitude: number, latitude: number, orientation: number, length: number): [number, number] {
-    const endLongitude = longitude + Math.cos(orientation) * length;
-    const endLatitude = latitude + Math.sin(orientation) * length;
+export function drawLine(longitude: number, latitude: number, orientation: number): [number, number] {
+    let degrees = orientation;
+    const endLongitude = longitude + Math.cos(degrees + 0.180) * meterInDegree;
+    const endLatitude = latitude + Math.sin(degrees + 0.180) * meterInDegree;
 
     return [endLongitude, endLatitude];
 }
