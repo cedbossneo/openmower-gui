@@ -213,23 +213,16 @@ func PublisherRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 func subscribe(provider types.IRosProvider, c *gin.Context, conn *websocket.Conn, topic string, interval int) (func(), error) {
 	id := uuid.Generate()
 	uidString := id.String()
-	err := provider.Subscribe(topic, uidString, func(msg any) {
+	err := provider.Subscribe(topic, uidString, func(msg []byte) {
 		if interval > 0 {
 			time.Sleep(time.Duration(interval) * time.Millisecond)
-		}
-		// read lines from the reader
-		str, err := json.Marshal(msg)
-		if err != nil {
-			log.Println("Read Error:", err.Error())
-			c.Error(err)
-			return
 		}
 		writer, err := conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			c.Error(err)
 			return
 		}
-		_, err = writer.Write([]byte(base64.StdEncoding.EncodeToString(str)))
+		_, err = writer.Write([]byte(base64.StdEncoding.EncodeToString(msg)))
 		if err != nil {
 			c.Error(err)
 			return

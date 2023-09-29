@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/brutella/hap"
 	"github.com/brutella/hap/accessory"
 	log2 "github.com/brutella/hap/log"
@@ -88,8 +89,13 @@ func (hc *HomeKitProvider) launchServer(as *accessory.A) {
 }
 
 func (hc *HomeKitProvider) subscribeToRos() {
-	hc.rosProvider.Subscribe("/mower_logic/current_state", "ha-status", func(msg any) {
-		status := msg.(*mower_msgs.HighLevelStatus)
+	hc.rosProvider.Subscribe("/mower_logic/current_state", "ha-status", func(msg []byte) {
+		var status mower_msgs.HighLevelStatus
+		err := json.Unmarshal(msg, &status)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		if status.StateName == "MOWING" || status.StateName == "DOCKING" || status.StateName == "UNDOCKING" {
 			hc.mower.Switch.On.SetValue(true)
 		} else {

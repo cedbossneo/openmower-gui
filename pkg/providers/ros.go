@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/nav_msgs"
@@ -24,12 +25,12 @@ type RosSubscriber struct {
 	Topic       string
 	Id          string
 	mtx         *sync.Mutex
-	cb          func(msg any)
-	nextMessage any
+	cb          func(msg []byte)
+	nextMessage []byte
 	close       chan bool
 }
 
-func NewRosSubscriber(topic, id string, cb func(msg any)) *RosSubscriber {
+func NewRosSubscriber(topic, id string, cb func(msg []byte)) *RosSubscriber {
 	r := &RosSubscriber{
 		cb:    cb,
 		Topic: topic,
@@ -41,7 +42,7 @@ func NewRosSubscriber(topic, id string, cb func(msg any)) *RosSubscriber {
 	return r
 }
 
-func (r *RosSubscriber) Publish(msg any) {
+func (r *RosSubscriber) Publish(msg []byte) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.nextMessage = msg
@@ -66,7 +67,7 @@ func (r *RosSubscriber) Run() {
 	}
 }
 
-func (r *RosSubscriber) processMessage(messageToProcess any) {
+func (r *RosSubscriber) processMessage(messageToProcess []byte) {
 	if messageToProcess != nil {
 		r.cb(messageToProcess)
 	} else {
@@ -87,7 +88,7 @@ type RosProvider struct {
 	currentPathSubscriber     *goroslib.Subscriber
 	poseSubscriber            *goroslib.Subscriber
 	subscribers               map[string]map[string]*RosSubscriber
-	lastMessage               map[string]any
+	lastMessage               map[string][]byte
 	mowingPaths               []*nav_msgs.Path
 	mowingPath                *nav_msgs.Path
 	mowingPathOrigin          orb.LineString
@@ -175,18 +176,33 @@ func (p *RosProvider) resetSubscribers() {
 }
 
 func (p *RosProvider) initMowingPathSubscriber() error {
-	err := p.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg any) {
+	err := p.Subscribe("/xbot_positioning/xb_pose", "gui", func(msg []byte) {
 		p.mtx.Lock()
 		defer p.mtx.Unlock()
-		pose := msg.(*xbot_msgs.AbsolutePose)
+		var pose xbot_msgs.AbsolutePose
+		err := json.Unmarshal(msg, &pose)
+		if err != nil {
+			logrus.Error(xerrors.Errorf("failed to unmarshal pose: %w", err))
+			return
+		}
 		hlsLastMessage, ok := p.lastMessage["/mower_logic/current_state"]
 		if ok {
-			highLevelStatus := hlsLastMessage.(*mower_msgs.HighLevelStatus)
+			var highLevelStatus mower_msgs.HighLevelStatus
+			err := json.Unmarshal(hlsLastMessage, &highLevelStatus)
+			if err != nil {
+				logrus.Error(xerrors.Errorf("failed to unmarshal high level status: %w", err))
+				return
+			}
 			switch highLevelStatus.StateName {
 			case "MOWING":
 				sLastMessage, ok := p.lastMessage["/mower/status"]
 				if ok {
-					status := sLastMessage.(*mower_msgs.Status)
+					var status mower_msgs.Status
+					err := json.Unmarshal(sLastMessage, &status)
+					if err != nil {
+						logrus.Error(xerrors.Errorf("failed to unmarshal status: %w", err))
+						return
+					}
 					if status.MowEscStatus.Tacho > 0 {
 						if p.mowingPath == nil {
 							p.mowingPath = &nav_msgs.Path{}
@@ -210,11 +226,12 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 								}
 							})
 						}
-						p.lastMessage["/mowing_path"] = p.mowingPaths
+						msgJson, _ := json.Marshal(p.mowingPaths)
+						p.lastMessage["/mowing_path"] = msgJson
 						subscribers, hasSubscriber := p.subscribers["/mowing_path"]
 						if hasSubscriber {
 							for _, cb := range subscribers {
-								cb.Publish(p.mowingPaths)
+								cb.Publish(msgJson)
 							}
 						}
 					} else {
@@ -250,7 +267,7 @@ func (p *RosProvider) CallService(ctx context.Context, srvName string, srv any, 
 	return nil
 }
 
-func (p *RosProvider) Subscribe(topic string, id string, cb func(msg any)) error {
+func (p *RosProvider) Subscribe(topic string, id string, cb func(msg []byte)) error {
 	err := p.initSubscribers()
 	if err != nil {
 		return err
@@ -305,7 +322,7 @@ func (p *RosProvider) initSubscribers() error {
 		p.subscribers = make(map[string]map[string]*RosSubscriber)
 	}
 	if p.lastMessage == nil {
-		p.lastMessage = make(map[string]any)
+		p.lastMessage = make(map[string][]byte)
 	}
 	if p.statusSubscriber == nil {
 		p.statusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -395,11 +412,16 @@ func cbHandler[T any](p *RosProvider, topic string) func(msg T) {
 	return func(msg T) {
 		p.mtx.Lock()
 		defer p.mtx.Unlock()
-		p.lastMessage[topic] = msg
+		msgJson, err := json.Marshal(msg)
+		if err != nil {
+			logrus.Error(xerrors.Errorf("failed to marshal message: %w", err))
+			return
+		}
+		p.lastMessage[topic] = msgJson
 		subscribers, hasSubscriber := p.subscribers[topic]
 		if hasSubscriber {
 			for _, cb := range subscribers {
-				cb.Publish(msg)
+				cb.Publish(msgJson)
 			}
 		}
 	}
