@@ -16,7 +16,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-	"os"
 	"sync"
 	"time"
 )
@@ -92,6 +91,7 @@ type RosProvider struct {
 	mowingPaths               []*nav_msgs.Path
 	mowingPath                *nav_msgs.Path
 	mowingPathOrigin          orb.LineString
+	dbProvider                types2.IDBProvider
 }
 
 func (p *RosProvider) getNode() (*goroslib.Node, error) {
@@ -102,22 +102,31 @@ func (p *RosProvider) getNode() (*goroslib.Node, error) {
 		return p.node, err
 	}
 
-	nodeName := os.Getenv("ROS_NODE_NAME")
-	if nodeName == "" {
-		nodeName = "openmower-gui"
+	nodeName, err := p.dbProvider.Get("system.ros.nodeName")
+	if err != nil {
+		return nil, err
 	}
-
+	masterUri, err := p.dbProvider.Get("system.ros.masterUri")
+	if err != nil {
+		return nil, err
+	}
+	nodeHost, err := p.dbProvider.Get("system.ros.nodeHost")
+	if err != nil {
+		return nil, err
+	}
 	p.node, err = goroslib.NewNode(goroslib.NodeConf{
-		Name:          nodeName,
-		MasterAddress: os.Getenv("ROS_MASTER_URI"),
-		Host:          os.Getenv("ROS_NODE_HOST"),
+		Name:          string(nodeName),
+		MasterAddress: string(masterUri),
+		Host:          string(nodeHost),
 	})
 	return p.node, err
 
 }
 
-func NewRosProvider() types2.IRosProvider {
-	r := &RosProvider{}
+func NewRosProvider(dbProvider types2.IDBProvider) types2.IRosProvider {
+	r := &RosProvider{
+		dbProvider: dbProvider,
+	}
 	err := r.initSubscribers()
 	if err != nil {
 		logrus.Error(err)

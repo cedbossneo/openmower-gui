@@ -2,15 +2,16 @@ package api
 
 import (
 	"fmt"
+	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"os"
 	"strings"
 )
 
-func SettingsRoutes(r *gin.RouterGroup) {
-	GetSettings(r)
-	PostSettings(r)
+func SettingsRoutes(r *gin.RouterGroup, dbProvider types.IDBProvider) {
+	GetSettings(r, dbProvider)
+	PostSettings(r, dbProvider)
 }
 
 // PostSettings saves the settings to the mower_config.sh file
@@ -24,7 +25,7 @@ func SettingsRoutes(r *gin.RouterGroup) {
 // @Success 200 {object} OkResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /settings [post]
-func PostSettings(r *gin.RouterGroup) gin.IRoutes {
+func PostSettings(r *gin.RouterGroup, dbProvider types.IDBProvider) gin.IRoutes {
 	return r.POST("/settings", func(c *gin.Context) {
 		var settings map[string]any
 		err := c.BindJSON(&settings)
@@ -45,7 +46,14 @@ func PostSettings(r *gin.RouterGroup) gin.IRoutes {
 			}
 			fileContent += "export " + key + "=" + fmt.Sprintf("%#v", value) + "\n"
 		}
-		err = os.WriteFile(os.Getenv("MOWER_CONFIG_FILE"), []byte(fileContent), 0644)
+		mowerConfigFile, err := dbProvider.Get("system.mower.configFile")
+		if err != nil {
+			c.JSON(500, ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		err = os.WriteFile(string(mowerConfigFile), []byte(fileContent), 0644)
 		if err != nil {
 			c.JSON(500, ErrorResponse{
 				Error: err.Error(),
@@ -65,9 +73,16 @@ func PostSettings(r *gin.RouterGroup) gin.IRoutes {
 // @Success 200 {object} GetSettingsResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /settings [get]
-func GetSettings(r *gin.RouterGroup) gin.IRoutes {
+func GetSettings(r *gin.RouterGroup, dbProvider types.IDBProvider) gin.IRoutes {
 	return r.GET("/settings", func(c *gin.Context) {
-		file, err := os.ReadFile(os.Getenv("MOWER_CONFIG_FILE"))
+		mowerConfigFilePath, err := dbProvider.Get("system.mower.configFile")
+		if err != nil {
+			c.JSON(500, ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		file, err := os.ReadFile(string(mowerConfigFilePath))
 		if err != nil {
 			c.JSON(500, ErrorResponse{
 				Error: err.Error(),

@@ -3,11 +3,10 @@ package api
 import (
 	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/gin-gonic/gin"
-	"os"
 )
 
 func ConfigRoute(r *gin.RouterGroup, db types.IDBProvider) {
-	ConfigEnvRoute(r)
+	ConfigEnvRoute(r, db)
 	ConfigGetKeysRoute(r, db)
 	ConfigSetKeysRoute(r, db)
 }
@@ -84,11 +83,17 @@ func ConfigSetKeysRoute(r *gin.RouterGroup, db types.IDBProvider) gin.IRoutes {
 // @Success 200 {object} GetConfigResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /config/envs [get]
-func ConfigEnvRoute(r *gin.RouterGroup) gin.IRoutes {
+func ConfigEnvRoute(r *gin.RouterGroup, db types.IDBProvider) gin.IRoutes {
 	return r.GET("/config/envs", func(context *gin.Context) {
-		tileUri := os.Getenv("MAP_TILE_URI")
+		tileUri, err := db.Get("system.map.tileUri")
+		if err != nil {
+			context.JSON(500, ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
 		context.JSON(200, GetConfigResponse{
-			TileUri: tileUri,
+			TileUri: string(tileUri),
 		})
 	})
 }

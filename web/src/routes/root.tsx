@@ -1,6 +1,13 @@
 import {Outlet, useMatches, useNavigate} from "react-router-dom";
 import {Layout, Menu, MenuProps} from "antd";
-import {HeatMapOutlined, MessageOutlined, RobotOutlined, RocketOutlined, SettingOutlined} from '@ant-design/icons';
+import {
+    HeatMapOutlined,
+    MessageOutlined,
+    RobotOutlined,
+    RocketFilled,
+    RocketOutlined,
+    SettingOutlined
+} from '@ant-design/icons';
 import {useEffect} from "react";
 
 let menu: MenuProps['items'] = [
@@ -28,6 +35,11 @@ let menu: MenuProps['items'] = [
         key: '/logs',
         label: 'Logs',
         icon: <MessageOutlined/>
+    },
+    {
+        key: 'new',
+        label: <span className={"beamerTrigger"} style={{paddingRight: 30}}>What's new</span>,
+        icon: <RocketFilled/>,
     }
 ];
 
@@ -49,10 +61,13 @@ export default () => {
             >
                 <Menu theme="dark"
                       mode="inline"
-                      onClick={(info) =>
-                    navigate({
-                        pathname: info.key,
-                    })} selectedKeys={route.map(r => r.pathname)} items={menu}/>
+                      onClick={(info) => {
+                          if (info.key !== 'new') {
+                              navigate({
+                                  pathname: info.key,
+                              })
+                          }
+                      }} selectedKeys={route.map(r => r.pathname)} items={menu}/>
             </Layout.Sider>
             <Layout style={{height: "100%"}}>
                 <Layout.Content style={{padding: "10px 24px 0px 24px", height: "100%", backgroundColor: 'white'}}>
