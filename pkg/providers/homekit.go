@@ -61,6 +61,11 @@ func (hc *HomeKitProvider) launchServer(as *accessory.A) {
 	// Create the hap server.
 	server, err := hap.NewServer(hc.db, as)
 	server.Addr = ":8000"
+	pinCode, err := hc.db.Get("system.homekit.pincode")
+	if err != nil {
+		log.Panic(err)
+	}
+	server.Pin = string(pinCode)
 	if err != nil {
 		// stop if an error happens
 		log.Panic(err)

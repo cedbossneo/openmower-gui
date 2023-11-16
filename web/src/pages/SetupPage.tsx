@@ -42,12 +42,13 @@ const SetupWizard: React.FC = () => {
             title: 'Configure OpenMower',
             content: (
                 <Card title={"Configure OpenMower"} key={"configureOpenMower"}>
-                    <SettingsComponent contentStyle={{height: '55vh'}} actions={(form, save, restart) => {
+                    <SettingsComponent contentStyle={{height: '55vh'}} actions={(form, save, restartOM, restartGUI) => {
                         return [
                             <Button onClick={handlePrevious}>Previous</Button>,
                             <Submit loading={form.loading} onSubmit={async (values: SettingsConfig) => {
                                 await save(values);
-                                await restart();
+                                await restartOM();
+                                await restartGUI();
                                 handleNext();
                             }}>Save and restart</Submit>,
                         ]

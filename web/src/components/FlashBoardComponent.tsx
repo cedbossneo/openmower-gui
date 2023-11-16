@@ -69,7 +69,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                 })
                 const jsonConfig = config.data["gui.firmware.config"]
                 if (jsonConfig) {
-                    form.setValues(JSON.parse(jsonConfig))
+                    form.setInitialValues(JSON.parse(jsonConfig))
                 }
                 if (config.error) {
                     throw new Error(config.error.error)

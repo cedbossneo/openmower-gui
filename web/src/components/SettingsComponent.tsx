@@ -120,18 +120,36 @@ export OM_WHEEL_TICKS_PER_M=300.0
 export OM_HEATMAP_SENSOR_IDS=om_gps_accuracy
  */
 import {createSchemaField, FormProvider} from "@formily/react";
-import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select} from "@formily/antd-v5";
+import {FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Switch} from "@formily/antd-v5";
 import {useApi} from "../hooks/useApi.ts";
 import {App, Card, Col, Row} from "antd";
 import React, {CSSProperties, useEffect} from "react";
 import {createForm, Form, onFieldValueChange} from "@formily/core";
 
-import {SettingsConfig, SettingsDesc, SettingType, useSettings} from "../hooks/useSettings.ts";
+import {SettingsConfig, SettingsDesc, SettingValueType, useSettings} from "../hooks/useSettings.ts";
 
 const form = createForm<SettingsConfig>({
     effects() {
         onFieldValueChange('OM_MQTT_ENABLE', (field) => {
             form.setFieldState('*(OM_MQTT_HOSTNAME,OM_MQTT_PORT,OM_MQTT_USER,OM_MQTT_PASSWORD)', (state) => {
+                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                state.display = field.value ? "visible" : "hidden";
+            })
+        })
+        onFieldValueChange('system.mqtt.enabled', (field) => {
+            form.setFieldState('*(system.mqtt.host)', (state) => {
+                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                state.display = field.value ? "visible" : "hidden";
+            })
+        })
+        onFieldValueChange('system.homekit.enabled', (field) => {
+            form.setFieldState('*(system.homekit.pincode)', (state) => {
+                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                state.display = field.value ? "visible" : "hidden";
+            })
+        })
+        onFieldValueChange('system.map.enabled', (field) => {
+            form.setFieldState('*(system.map.tileServer,system.map.tileUri)', (state) => {
                 //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
                 state.display = field.value ? "visible" : "hidden";
             })
@@ -149,17 +167,17 @@ const SchemaField = createSchemaField({
         Input,
         FormItem,
         Select,
-        Checkbox,
+        Switch,
         NumberPicker,
     },
 })
-export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>, save: (values: SettingsConfig) => Promise<void>, restart: () => Promise<void>) => React.ReactElement[], contentStyle?: CSSProperties }> = (props) => {
+export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>, save: (values: SettingsConfig) => Promise<void>, restartOM: () => Promise<void>, restartGUI: () => Promise<void>) => React.ReactElement[], contentStyle?: CSSProperties }> = (props) => {
     const guiApi = useApi()
     const {notification} = App.useApp();
     const {settings, setSettings, loading} = useSettings()
     useEffect(() => {
-        if (settings) {
-            form.setValues(settings)
+        if (settings && Object.keys(settings).length > 0) {
+            form.setInitialValues(settings)
         }
     }, [settings]);
     useEffect(() => {
@@ -172,7 +190,33 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
             if (resContainersList.error) {
                 throw new Error(resContainersList.error.error)
             }
-            const openMowerContainer = resContainersList.data.containers?.find((container) => container.labels?.app == "openmower")
+            const openMowerContainer = resContainersList.data.containers?.find((container) => container.labels?.app == "openmower" || container.names?.includes("/openmower"))
+            if (openMowerContainer?.id) {
+                const res = await guiApi.containers.containersCreate(openMowerContainer.id, "restart")
+                if (res.error) {
+                    throw new Error(res.error.error)
+                }
+                notification.success({
+                    message: "OpenMower restarted",
+                })
+            } else {
+                throw new Error("OpenMower container not found")
+            }
+        } catch (e: any) {
+            notification.error({
+                message: "Failed to restart OpenMower",
+                description: e.message,
+            })
+        }
+    }
+
+    const restartGui = async () => {
+        try {
+            const resContainersList = await guiApi.containers.containersList()
+            if (resContainersList.error) {
+                throw new Error(resContainersList.error.error)
+            }
+            const openMowerContainer = resContainersList.data.containers?.find((container) => container.labels?.app == "gui" || container.names?.includes("/openmower-gui"))
             if (openMowerContainer?.id) {
                 const res = await guiApi.containers.containersCreate(openMowerContainer.id, "restart")
                 if (res.error) {
@@ -213,7 +257,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                         sections[section].map(settingKey => {
                                             const setting = SettingsDesc[settingKey];
                                             switch (setting.type) {
-                                                case SettingType.Lat:
+                                                case SettingValueType.Lat:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.Number
                                                             name={settingKey}
@@ -223,7 +267,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                                             x-component="NumberPicker"
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.Lon:
+                                                case SettingValueType.Lon:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.Number
                                                             name={settingKey}
@@ -233,14 +277,14 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                                             x-component="NumberPicker"
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.Boolean:
+                                                case SettingValueType.Boolean:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.Boolean
                                                             name={settingKey} title={setting.description}
-                                                            default={setting.defaultValue} x-component="Checkbox"
+                                                            default={setting.defaultValue} x-component="Switch"
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.Float:
+                                                case SettingValueType.Float:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.Number
                                                             name={settingKey} title={setting.description}
@@ -249,7 +293,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-component="NumberPicker"
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.Int:
+                                                case SettingValueType.Int:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.Number
                                                             name={settingKey} title={setting.description}
@@ -258,7 +302,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-component="NumberPicker"
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.Select:
+                                                case SettingValueType.Select:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.String
                                                             name={settingKey}
@@ -270,7 +314,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                                                             }))} x-component="Select"
                                                             x-decorator-props={{tooltip: setting.help}}
                                                             x-decorator="FormItem"/></SchemaField>)
-                                                case SettingType.String:
+                                                case SettingValueType.String:
                                                     return (
                                                         <SchemaField key={settingKey}><SchemaField.String
                                                             name={settingKey}
@@ -290,7 +334,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
             </Col>
             <Col span={24} style={{position: "fixed", bottom: 20}}>
                 <FormButtonGroup>
-                    {props.actions && props.actions(form, setSettings, restartOpenMower)}
+                    {props.actions && props.actions(form, setSettings, restartOpenMower, restartGui)}
                 </FormButtonGroup>
             </Col>
         </FormProvider>

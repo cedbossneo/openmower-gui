@@ -26,11 +26,13 @@ type MqttProvider struct {
 	rosProvider types2.IRosProvider
 	mower       *accessory.Switch
 	server      *mqtt.Server
+	dbProvider  *DBProvider
 }
 
-func NewMqttProvider(rosProvider types2.IRosProvider) *MqttProvider {
+func NewMqttProvider(rosProvider types2.IRosProvider, dbProvider *DBProvider) *MqttProvider {
 	h := &MqttProvider{}
 	h.rosProvider = rosProvider
+	h.dbProvider = dbProvider
 	h.Init()
 	return h
 }
@@ -61,12 +63,12 @@ func (hc *MqttProvider) launchServer() {
 	_ = hc.server.AddHook(new(auth.AllowHook), nil)
 
 	// Create a TCP listener on a standard port.
-	port := ":1883"
-	if os.Getenv("MQTT_HOST") != "" {
-		port = os.Getenv("MQTT_HOST")
+	port, err := hc.dbProvider.Get("system.mqtt.host")
+	if err != nil {
+		log.Fatal(err)
 	}
-	tcp := listeners.NewTCP("t1", port, nil)
-	err := hc.server.AddListener(tcp)
+	tcp := listeners.NewTCP("t1", string(port), nil)
+	err = hc.server.AddListener(tcp)
 	if err != nil {
 		log.Fatal(err)
 	}
