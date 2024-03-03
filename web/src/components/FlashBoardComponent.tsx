@@ -41,12 +41,13 @@ type Config = {
     masterJ18: boolean,
     tickPerM: number,
     wheelBase: number
+    perimeterWire: boolean
 }
 
 const form = createForm<Config>({
     effects() {
         onFieldValueChange('boardType', (field) => {
-            form.setFieldState('*(panelType,tickPerM,wheelBase,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18)', (state) => {
+            form.setFieldState('*(panelType,tickPerM,wheelBase,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18,perimeterWire)', (state) => {
                 //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
                 state.display = field.value !== "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
             })
@@ -421,6 +422,15 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                             title={"Master J18"}
                             default={true}
                             x-decorator-props={{tooltip: "Use J18 as master"}}
+                            x-component="Checkbox"
+                            x-decorator="FormItem"/>
+                    </SchemaField>
+                    <SchemaField>
+                        <SchemaField.Boolean
+                            name={"perimeterWire"}
+                            title={"Use Perimeter wire"}
+                            default={true}
+                            x-decorator-props={{tooltip: "Use perimeter wire"}}
                             x-component="Checkbox"
                             x-decorator="FormItem"/>
                     </SchemaField>
