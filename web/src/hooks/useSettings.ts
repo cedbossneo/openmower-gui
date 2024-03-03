@@ -126,6 +126,13 @@ export const SettingsDesc: Record<string, Setting> = {
         defaultValue: false,
         description: "Enable recording of all topics"
     },
+    "OM_PERIMETER_SIGNAL": {
+        settingType: SettingType.ConfigFile,
+        section: "Mower",
+        type: SettingValueType.Boolean,
+        defaultValue: false,
+        description: "Enable perimeter signal"
+    },
     "OM_USE_RELATIVE_POSITION": {
         settingType: SettingType.ConfigFile,
         section: "Positioning",
