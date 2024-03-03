@@ -9,7 +9,7 @@ export function StatusComponent() {
         return <Row gutter={[16, 16]}>
             <Col lg={8} xs={12}><Statistic title="Status" value={escStatus?.Status}/></Col>
             <Col lg={8} xs={12}><Statistic precision={2} title="Current" value={escStatus?.Current}/></Col>
-            <Col lg={8} xs={12}><Statistic precision={2} title="Tacho" value={escStatus?.Tacho}/></Col>
+            <Col lg={8} xs={12}><Statistic precision={0} title="Tacho" value={escStatus?.Tacho}/></Col>
             <Col lg={8} xs={12}><Statistic precision={2} title="Motor Temperature" value={escStatus?.TemperatureMotor}
                                            suffix={"°C"}/></Col>
             <Col lg={8} xs={12}><Statistic precision={2} title="PCB Temperature" value={escStatus?.TemperaturePcb}
