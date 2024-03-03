@@ -68,7 +68,7 @@ export const MapPage = () => {
             const mower_lonlat = transpose(offsetX, offsetY, datum, pose.Pose?.Pose?.Position?.Y!!, pose.Pose?.Pose?.Position?.X!!)
             setFeatures(oldFeatures => {
                 let orientation = pose.MotionHeading!!;
-                const line = drawLine(mower_lonlat[0], mower_lonlat[1], orientation)
+                const line = drawLine(offsetX, offsetY, datum, pose.Pose?.Pose?.Position?.Y!!, pose.Pose?.Pose?.Position?.X!!, orientation);
                 return {
                     ...oldFeatures, mower: {
                         id: "mower",
