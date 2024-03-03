@@ -5,7 +5,6 @@ import {Converter} from 'usng.js'
 export var converter = new Converter();
 export const earth = 6371008.8;  //radius of the earth in kilometer
 export const pi = Math.PI;
-export const meterInDegree = (1 / ((2 * pi / 360) * earth));  //1 meter in degree
 
 export function getQuaternionFromHeading(heading: number): Quaternion {
     const q = {
@@ -19,12 +18,10 @@ export function getQuaternionFromHeading(heading: number): Quaternion {
     return q
 }
 
-export function drawLine(longitude: number, latitude: number, orientation: number): [number, number] {
-    let degrees = orientation;
-    const endLongitude = longitude + Math.cos(degrees + 0.180) * meterInDegree;
-    const endLatitude = latitude + Math.sin(degrees + 0.180) * meterInDegree;
-
-    return [endLongitude, endLatitude];
+export function drawLine(offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number, orientation: number): [number, number] {
+    const endX = x + Math.cos(orientation);
+    const endY = y + Math.sin(orientation);
+    return transpose(offsetX, offsetY, datum, endY, endX);
 }
 
 export const transpose = (offsetX: number, offsetY: number, datum: [number, number, number], y: number, x: number): [number, number] => {
