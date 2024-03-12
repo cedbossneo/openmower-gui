@@ -5,7 +5,9 @@ import (
 	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"io"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -53,7 +55,19 @@ func PostSettings(r *gin.RouterGroup, dbProvider types.IDBProvider) gin.IRoutes 
 			})
 			return
 		}
-		err = os.WriteFile(string(mowerConfigFile), []byte(fileContent), 0644)
+		cmd := exec.Command("/usr/local/bin/crudini", "--ini-options=nospace", "--inplace", "--merge", string(mowerConfigFile))
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			c.JSON(500, ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		go func() {
+			defer stdin.Close()
+			io.WriteString(stdin, fileContent)
+		}()
+		err = cmd.Run()
 		if err != nil {
 			c.JSON(500, ErrorResponse{
 				Error: err.Error(),
