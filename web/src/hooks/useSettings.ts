@@ -155,6 +155,13 @@ export const SettingsDesc: Record<string, Setting> = {
             },
         ]
     },
+    "OM_GPS_BAUDRATE": {
+        settingType: SettingType.ConfigFile,
+        section: "Positioning",
+        type: SettingValueType.Int,
+        defaultValue: 921600,
+        description: "GPS baudrate"
+    },
     "OM_USE_F9R_SENSOR_FUSION": {
         settingType: SettingType.ConfigFile,
         section: "Positioning",
@@ -271,6 +278,12 @@ export const SettingsDesc: Record<string, Setting> = {
         section: "Navigation",
         help: "Offset of the outline from the boundary in meters.",
         type: SettingValueType.Float, defaultValue: 0.05, description: "Outline offset"
+    },
+    "OM_OUTLINE_OVERLAP_COUNT": {
+        settingType: SettingType.ConfigFile,
+        section: "Navigation",
+        help: "Number of points in the overlap",
+        type: SettingValueType.Int, defaultValue: 0, description: "How many outlines should the fill (lanes) overlap"
     },
     "OM_MQTT_ENABLE": {
         settingType: SettingType.ConfigFile,
