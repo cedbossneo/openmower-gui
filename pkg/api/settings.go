@@ -27,13 +27,33 @@ func SettingsRoutes(r *gin.RouterGroup, dbProvider types.IDBProvider) {
 // @Router /settings [post]
 func PostSettings(r *gin.RouterGroup, dbProvider types.IDBProvider) gin.IRoutes {
 	return r.POST("/settings", func(c *gin.Context) {
-		var settings map[string]any
-		err := c.BindJSON(&settings)
+		var settingsPayload map[string]any
+		err := c.BindJSON(&settingsPayload)
 		if err != nil {
 			c.JSON(500, ErrorResponse{
 				Error: err.Error(),
 			})
 			return
+		}
+		mowerConfigFile, err := dbProvider.Get("system.mower.configFile")
+		if err != nil {
+			c.JSON(500, ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		var settings = map[string]any{}
+		configFileContent, err := os.ReadFile(string(mowerConfigFile))
+		if err == nil {
+			parse, err := godotenv.Parse(strings.NewReader(string(configFileContent)))
+			if err == nil {
+				for s, s2 := range parse {
+					settings[s] = s2
+				}
+			}
+		}
+		for key, value := range settingsPayload {
+			settings[key] = value
 		}
 		// Write settings to file mower_config.sh
 		var fileContent string
@@ -45,13 +65,6 @@ func PostSettings(r *gin.RouterGroup, dbProvider types.IDBProvider) gin.IRoutes 
 				value = "False"
 			}
 			fileContent += "export " + key + "=" + fmt.Sprintf("%#v", value) + "\n"
-		}
-		mowerConfigFile, err := dbProvider.Get("system.mower.configFile")
-		if err != nil {
-			c.JSON(500, ErrorResponse{
-				Error: err.Error(),
-			})
-			return
 		}
 		err = os.WriteFile(string(mowerConfigFile), []byte(fileContent), 0644)
 		if err != nil {
