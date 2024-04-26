@@ -5,7 +5,7 @@ import {useWS} from "../hooks/useWS.ts";
 // @ts-ignore
 import centroid from "@turf/centroid";
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
-import {AbsolutePose, Map as MapType, MapArea, MarkerArray, Path, Twist} from "../types/ros.ts";
+import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
@@ -307,7 +307,9 @@ export const MapPage = () => {
             }
         }
         if (path) {
-            path.Markers.forEach((marker, index) => {
+            Object.values<Marker>(path.Markers).filter((f) => {
+                return f.Type == 4 && f.Action == 0
+            }).forEach((marker, index) => {
                 const line: Position[] = marker.Points.map(point => {
                     return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                 })
