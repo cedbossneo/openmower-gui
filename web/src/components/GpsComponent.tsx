@@ -30,7 +30,7 @@ export function GpsComponent() {
                                         formatter={booleanFormatter}/></Col>
             <Col lg={8} xs={24}><Statistic title="Fix type" value={fixType}
                                         valueStyle={{color: fixType == "FIX" ? "#01d30d" : "red"}}/></Col>
-            <Col lg={8} xs={24}><Statistic title="Dead reckoning" value={(Flags.DEAD_RECKONING & 8) != 0 ? "Yes" : "No"}
+            <Col lg={8} xs={24}><Statistic title="Dead reckoning" value={(flags & Flags.DEAD_RECKONING) != 0 ? "Yes" : "No"}
                                         formatter={booleanFormatterInverted}/></Col>
         </Row>
     </>;
