@@ -248,6 +248,13 @@ export type HighLevelStatus = {
     Emergency?: boolean
 }
 
+export const enum AbsolutePoseFlags {
+    RTK = 1,
+    FIXED = 2,
+    FLOAT = 4,
+    DEAD_RECKONING = 8,
+}
+
 export type AbsolutePose = {
     /*
         SensorStamp uint32
@@ -266,7 +273,7 @@ export type AbsolutePose = {
     SensorStamp?: number
     ReceivedStamp?: number
     Source?: number
-    Flags?: number
+    Flags?: AbsolutePoseFlags
     OrientationValid?: number
     MotionVectorValid?: number
     PositionAccuracy?: number
