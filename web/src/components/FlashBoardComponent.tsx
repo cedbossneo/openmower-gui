@@ -173,6 +173,9 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                         }, {
                             label: "Mowgli - YardForce 500 Classic",
                             value: "BOARD_YARDFORCE500"
+                        }, {
+                            label: "Mowgli - YardForce 500 B Variant",
+                            value: "BOARD_YARDFORCE500B"
                         },
                             {
                                 label: "Mowgli - LUV1000RI",
