@@ -80,8 +80,8 @@ github.com/bluenviron/goroslib/v2 v2.1.4 h1:sY22Lu817IDe7QrhYhm63vQeE6vITycBQhYp
 github.com/bluenviron/goroslib/v2 v2.1.4/go.mod h1:2ktaeJd8Jlim7R5Uv4n0kWoozdaCu0WGVUoxPbNMTfY=
 github.com/brutella/dnssd v1.2.10 h1:Gg0k7+NtJp7TbOMS0eUVg0VEjSdftzKOTQ8QQTzQ0x4=
 github.com/brutella/dnssd v1.2.10/go.mod h1:yZ+GHHbGhtp5yJeKTnppdFGiy6OhiPoxs0WHW1KUcFA=
-github.com/brutella/hap v0.0.29-0.20231206080337-1a3e48cc7631 h1:4s+ybbnuvHULwqUF5JAecseL4Or8DO0k8ynnWcDgzrQ=
-github.com/brutella/hap v0.0.29-0.20231206080337-1a3e48cc7631/go.mod h1:oRWGnnzPu2I2BIKfbySz+SM7QNnfVqV+0wpssLb8aqc=
+github.com/brutella/hap v0.0.31 h1:2UDKVecPbpXYUwCWqIKB3fjF9z7mykX4g0jwU+ID/eo=
+github.com/brutella/hap v0.0.31/go.mod h1:SZfaxv/VE3Ash7T55criv5KuLP4qpbCq7RWueEBifPs=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.9.1 h1:6iJ6NqdoxCDr6mbY8h18oSO+cShGSMRGCEo7F2h0x8s=
@@ -950,6 +950,8 @@ google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQ
 google.golang.org/protobuf v1.28.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
 google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
+gopkg.in/Regis24GmbH/go-diacritics.v2 v2.0.3 h1:rz88vn1OH2B9kKorR+QCrcuw6WbizVwahU2Y9Q09xqU=
+gopkg.in/Regis24GmbH/go-diacritics.v2 v2.0.3/go.mod h1:vJmfdx2L0+30M90zUd0GCjLV14Ip3ZgWR5+MV1qljOo=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

@@ -7,7 +7,7 @@ toolchain go1.21.1
 require (
 	git.mills.io/prologic/bitcask v1.0.2
 	github.com/bluenviron/goroslib/v2 v2.1.4
-	github.com/brutella/hap v0.0.29-0.20231206080337-1a3e48cc7631
+	github.com/brutella/hap v0.0.31
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/gin-contrib/cors v1.4.0
@@ -101,6 +101,7 @@ require (
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	gopkg.in/Regis24GmbH/go-diacritics.v2 v2.0.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
