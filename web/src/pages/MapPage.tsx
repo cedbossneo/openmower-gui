@@ -310,7 +310,7 @@ export const MapPage = () => {
             Object.values<Marker>(path.Markers).filter((f) => {
                 return f.Type == 4 && f.Action == 0
             }).forEach((marker, index) => {
-                const line: Position[] = marker.Points.map(point => {
+                const line: Position[] = marker.Points?.map(point => {
                     return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                 })
                 const feature: Feature<LineString> = {
@@ -891,7 +891,7 @@ export const MapPage = () => {
                                                          projection={{
                                                              name: "globe"
                                                          }}
-                                                         mapboxAccessToken="pk.eyJ1IjoiZmFrZXVzZXJnaXRodWIiLCJhIjoiY2pwOGlneGI4MDNnaDN1c2J0eW5zb2ZiNyJ9.mALv0tCpbYUPtzT7YysA2g"
+                                                         mapboxAccessToken="pk.eyJ1IjoiY2VkYm9zc25lbyIsImEiOiJjbGxldjB4aDEwOW5vM3BxamkxeWRwb2VoIn0.WOccbQZZyO1qfAgNxnHAnA"
                                                          initialViewState={{
                                                              bounds: [{lng: map_sw[0], lat: map_sw[1]}, {lng: map_ne[0], lat: map_ne[1]}],
                                                          }}
