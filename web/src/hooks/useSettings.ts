@@ -406,6 +406,21 @@ export type SettingsConfig = {
 const SettingKeysFromDB = Object.keys(SettingsDesc).filter((key) => {
     return SettingsDesc[key].settingType === SettingType.Db
 })
+const flattenConfig = (newConfig: Record<string, any>): Record<string, any> => {
+    const flatConfig: Record<string, any> = {}
+    Object.keys(newConfig).forEach((key) => {
+        // If the value is an object, flatten it recursively
+        if (typeof newConfig[key] === "object") {
+            const flat = flattenConfig(newConfig[key])
+            Object.keys(flat).forEach((subKey) => {
+                flatConfig[`${key}.${subKey}`] = flat[subKey]
+            })
+        } else {
+            flatConfig[key] = newConfig[key]
+        }
+    })
+    return flatConfig;
+};
 export const useSettings = () => {
     const guiApi = useApi()
     const {notification} = App.useApp();
@@ -467,6 +482,7 @@ export const useSettings = () => {
     }, [])
     const handleSetConfig = async (newConfig: SettingsConfig) => {
         try {
+            newConfig = flattenConfig(newConfig)
             setLoading(true)
             const configFiltered = Object.keys(newConfig).reduce((acc, key) => {
                 if (SettingsDesc[key]?.settingType === SettingType.ConfigFile) {
