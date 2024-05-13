@@ -122,6 +122,7 @@ Do not forget to set env var MQTT_ENABLED to true
 - MQTT_ENABLED=true : enable mqtt
 - MQTT_HOST=:1883 : listening port
 - HOMEKIT_ENABLED=true : enable homekit
+- MAP_TILE_ENABLED=true : enable map tiles
 - MAP_TILE_SERVER=http://localhost:5000 : custom map tile server (see https://github.com/2m/openmower-map-tiles for
   usage)
 - MAP_TILE_URI=/tiles/vt/lyrs=s,h&x={x}&y={y}&z={z}
