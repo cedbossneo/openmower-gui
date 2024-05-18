@@ -364,6 +364,13 @@ export const SettingsDesc: Record<string, Setting> = {
         defaultValue: ":1883",
         description: "GUI MQTT host",
     },
+    "system.mqtt.prefix": {
+        settingType: SettingType.Db,
+        section: "GUI MQTT",
+        type: SettingValueType.String,
+        defaultValue: "/gui",
+        description: "GUI MQTT prefix",
+    },
     "system.homekit.enabled": {
         settingType: SettingType.Db,
         section: "HomeKit",

@@ -137,7 +137,7 @@ const form = createForm<SettingsConfig>({
             })
         })
         onFieldValueChange('system.mqtt.enabled', (field) => {
-            form.setFieldState('*(system.mqtt.host)', (state) => {
+            form.setFieldState('*(system.mqtt.host,system.mqtt.prefix)', (state) => {
                 //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
                 state.display = field.value ? "visible" : "hidden";
             })

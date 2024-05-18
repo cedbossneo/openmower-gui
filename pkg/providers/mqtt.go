@@ -27,6 +27,7 @@ type MqttProvider struct {
 	mower       *accessory.Switch
 	server      *mqtt.Server
 	dbProvider  *DBProvider
+	prefix      string
 }
 
 func NewMqttProvider(rosProvider types2.IRosProvider, dbProvider *DBProvider) *MqttProvider {
@@ -38,7 +39,13 @@ func NewMqttProvider(rosProvider types2.IRosProvider, dbProvider *DBProvider) *M
 }
 
 func (hc *MqttProvider) Init() {
-	// Create the switch accessory.
+	hc.prefix = "/gui"
+	dbPrefix, err := hc.dbProvider.Get("system.mqtt.prefix")
+	if err == nil {
+		hc.prefix = string(dbPrefix)
+	} else {
+		logrus.Error(xerrors.Errorf("Failed to get system.mqtt.prefix: %w", err))
+	}
 	hc.launchServer()
 	hc.subscribeToRos()
 	hc.subscribeToMqtt()
@@ -97,7 +104,7 @@ func (hc *MqttProvider) subscribeToRos() {
 func (hc *MqttProvider) subscribeToRosTopic(topic string, id string) {
 	err := hc.rosProvider.Subscribe(topic, id, func(msg []byte) {
 		time.Sleep(500 * time.Millisecond)
-		err := hc.server.Publish("/gui"+topic, msg, true, 0)
+		err := hc.server.Publish(hc.prefix+topic, msg, true, 0)
 		if err != nil {
 			logrus.Error(xerrors.Errorf("Failed to publish to %s: %w", topic, err))
 		}
@@ -108,15 +115,15 @@ func (hc *MqttProvider) subscribeToRosTopic(topic string, id string) {
 }
 
 func (hc *MqttProvider) subscribeToMqtt() {
-	subscribeToMqttCall(hc.server, hc.rosProvider, "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{}, &mower_msgs.HighLevelControlSrvRes{})
-	subscribeToMqttCall(hc.server, hc.rosProvider, "/mower_service/emergency", &mower_msgs.EmergencyStopSrv{}, &mower_msgs.EmergencyStopSrvReq{}, &mower_msgs.EmergencyStopSrvRes{})
-	subscribeToMqttCall(hc.server, hc.rosProvider, "/mower_logic/set_parameters", &dynamic_reconfigure.Reconfigure{}, &dynamic_reconfigure.ReconfigureReq{}, &dynamic_reconfigure.ReconfigureRes{})
-	subscribeToMqttCall(hc.server, hc.rosProvider, "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &mower_msgs.MowerControlSrvReq{}, &mower_msgs.MowerControlSrvRes{})
-	subscribeToMqttCall(hc.server, hc.rosProvider, "/mower_service/start_in_area", &mower_msgs.StartInAreaSrv{}, &mower_msgs.StartInAreaSrvReq{}, &mower_msgs.StartInAreaSrvRes{})
+	subscribeToMqttCall(hc.server, hc.rosProvider, hc.prefix, "/mower_service/high_level_control", &mower_msgs.HighLevelControlSrv{}, &mower_msgs.HighLevelControlSrvReq{}, &mower_msgs.HighLevelControlSrvRes{})
+	subscribeToMqttCall(hc.server, hc.rosProvider, hc.prefix, "/mower_service/emergency", &mower_msgs.EmergencyStopSrv{}, &mower_msgs.EmergencyStopSrvReq{}, &mower_msgs.EmergencyStopSrvRes{})
+	subscribeToMqttCall(hc.server, hc.rosProvider, hc.prefix, "/mower_logic/set_parameters", &dynamic_reconfigure.Reconfigure{}, &dynamic_reconfigure.ReconfigureReq{}, &dynamic_reconfigure.ReconfigureRes{})
+	subscribeToMqttCall(hc.server, hc.rosProvider, hc.prefix, "/mower_service/mow_enabled", &mower_msgs.MowerControlSrv{}, &mower_msgs.MowerControlSrvReq{}, &mower_msgs.MowerControlSrvRes{})
+	subscribeToMqttCall(hc.server, hc.rosProvider, hc.prefix, "/mower_service/start_in_area", &mower_msgs.StartInAreaSrv{}, &mower_msgs.StartInAreaSrvReq{}, &mower_msgs.StartInAreaSrvRes{})
 }
 
-func subscribeToMqttCall[SRV any, REQ any, RES any](server *mqtt.Server, rosProvider types2.IRosProvider, topic string, srv SRV, req REQ, res RES) {
-	err := server.Subscribe("/gui/call"+topic, 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+func subscribeToMqttCall[SRV any, REQ any, RES any](server *mqtt.Server, rosProvider types2.IRosProvider, prefix, topic string, srv SRV, req REQ, res RES) {
+	err := server.Subscribe(prefix+"/call"+topic, 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		logrus.Info("Received " + topic)
 		var newReq = reflect.New(reflect.TypeOf(req).Elem()).Interface()
 		err := json.Unmarshal(pk.Payload, newReq)
