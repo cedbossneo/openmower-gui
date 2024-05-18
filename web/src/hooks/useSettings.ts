@@ -162,6 +162,13 @@ export const SettingsDesc: Record<string, Setting> = {
         defaultValue: 921600,
         description: "GPS baudrate"
     },
+    "OM_GPS_PORT": {
+        settingType: SettingType.ConfigFile,
+        section: "Positioning",
+        type: SettingValueType.String,
+        defaultValue: "/dev/gps",
+        description: "GPS port"
+    },
     "OM_USE_F9R_SENSOR_FUSION": {
         settingType: SettingType.ConfigFile,
         section: "Positioning",
