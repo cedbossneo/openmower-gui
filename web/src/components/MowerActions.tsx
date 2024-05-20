@@ -89,9 +89,9 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             "label": "Emergency Off",
             "danger": true,
             actions: [{
-                command: "emergency",
+                command: "high_level_control",
                 args: {
-                    Emergency: 0,
+                    Command: 254,
                 }
             }]
         },
@@ -146,7 +146,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
                     <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 1})}
                     >Emergency On</AsyncButton> : null}
                 {highLevelStatus.Emergency ?
-                    <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 0})}
+                    <AsyncButton danger size={"small"} onAsyncClick={mowerAction("high_level_control", {Command: 254})}
                     >Emergency Off</AsyncButton> : null}
             </Col>
             <Col>
