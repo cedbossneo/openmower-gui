@@ -185,6 +185,11 @@ export const SettingsDesc: Record<string, Setting> = {
         section: "Docking",
         type: SettingValueType.Float, defaultValue: 2.0, description: "Distance to undock"
     },
+    "OM_DOCKING_EXTRA_TIME": {
+        settingType: SettingType.ConfigFile,
+        section: "Docking",
+        type: SettingValueType.Float, defaultValue: 0.0, description: "Extra time (s) to continue docking after detecting voltage"
+    },
     "OM_OUTLINE_COUNT": {
         settingType: SettingType.ConfigFile,
         section: "Navigation",
