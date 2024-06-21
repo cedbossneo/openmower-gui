@@ -1,0 +1,18 @@
+// See https://containers.dev/implementors/json_reference/ for configuration reference
+{
+  "name": "Untitled Node.js project",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [
+    5173,
+    1883,
+    4006
+  ],
+  "remoteUser": "node",
+  "customizations": {
+    "jetbrains": {
+      "backend": "WebStorm"
+    }
+  }
+}

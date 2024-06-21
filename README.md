@@ -126,3 +126,12 @@ Do not forget to set env var MQTT_ENABLED to true
 - MAP_TILE_SERVER=http://localhost:5000 : custom map tile server (see https://github.com/2m/openmower-map-tiles for
   usage)
 - MAP_TILE_URI=/tiles/vt/lyrs=s,h&x={x}&y={y}&z={z}
+
+# Contributing
+
+PR are welcomed :-)
+
+You can run the gui into VSCode or WebStorm with devcontainer
+
+Then use make deps to install dependencies, open a terminal run make run-gui for the frontend and make run-backend for
+the backend
