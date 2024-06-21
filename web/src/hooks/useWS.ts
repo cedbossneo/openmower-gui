@@ -27,7 +27,8 @@ export const useWS = <T>(onError: (e: Error) => void, onInfo: (msg: string) => v
     });
     const start = (uri: string) => {
         setFirst(true)
-        setUri(`ws://${window.location.host}${uri}`)
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        setUri(`${protocol}://${window.location.host}${uri}`)
     };
     const stop = () => {
         console.log(`Closing stream ${ws.getWebSocket()?.url}`)
