@@ -153,6 +153,10 @@ func NewRosProvider(dbProvider types2.IDBProvider) types2.IRosProvider {
 				if err != nil {
 					logrus.Error(xerrors.Errorf("failed to init subscribers: %w", err))
 				}
+				err = r.initMowingPathSubscriber()
+				if err != nil {
+					logrus.Error(xerrors.Errorf("failed to init mowing path subscriber: %w", err))
+				}
 			}
 		}
 	}()
@@ -182,6 +186,15 @@ func (p *RosProvider) resetSubscribers() {
 	p.statusSubscriber = nil
 	p.ticksSubscriber = nil
 	p.poseSubscriber = nil
+	p.mowingPaths = []*nav_msgs.Path{}
+	p.mowingPath = nil
+	p.mowingPathOrigin = nil
+	xbPose := p.subscribers["/xbot_positioning/xb_pose"]
+	if xbPose != nil {
+		for _, sub := range xbPose {
+			sub.Close()
+		}
+	}
 }
 
 func (p *RosProvider) initMowingPathSubscriber() error {
