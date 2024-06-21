@@ -1,8 +1,18 @@
 import {App, Button, Col, Modal, Row} from "antd";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
-import {createSchemaField, FormProvider} from "@formily/react";
-import {Checkbox, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Submit} from "@formily/antd-v5";
+import {createSchemaField} from "@formily/react";
+import {
+    Checkbox,
+    Form,
+    FormButtonGroup,
+    FormItem,
+    FormLayout,
+    Input,
+    NumberPicker,
+    Select,
+    Submit
+} from "@formily/antd-v5";
 import {StyledTerminal} from "./StyledTerminal.tsx";
 import Terminal, {ColorMode, TerminalOutput} from "react-terminal-ui";
 import {createForm, onFieldValueChange} from "@formily/core";
@@ -44,21 +54,22 @@ type Config = {
     perimeterWire: boolean
 }
 
-const form = createForm<Config>({
-    effects() {
-        onFieldValueChange('boardType', (field) => {
-            form.setFieldState('*(panelType,tickPerM,wheelBase,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18,perimeterWire)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value !== "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
-            })
-            form.setFieldState('*(version,file)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value === "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
-            })
-        })
-    },
-})
 export const FlashBoardComponent = (props: { onNext: () => void }) => {
+    const form = useMemo(() => createForm({
+        validateFirst: true,
+        effects: (form) => {
+            onFieldValueChange('boardType', (field) => {
+                form.setFieldState('*(panelType,tickPerM,wheelBase,branch,repository,debugType,disableEmergency,maxMps,maxChargeCurrent,limitVoltage150MA,maxChargeVoltage,batChargeCutoffVoltage,oneWheelLiftEmergencyMillis,bothWheelsLiftEmergencyMillis,tiltEmergencyMillis,stopButtonEmergencyMillis,playButtonClearEmergencyMillis,externalImuAcceleration,externalImuAngular,masterJ18,perimeterWire)', (state) => {
+                    //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                    state.display = field.value !== "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
+                })
+                form.setFieldState('*(version,file)', (state) => {
+                    //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                    state.display = field.value === "BOARD_VERMUT_YARDFORCE500" ? "visible" : "hidden";
+                })
+            })
+        },
+    }), [])
     const guiApi = useApi();
     const {notification} = App.useApp();
     const [data, setData] = useState<string[]>()
@@ -159,7 +170,7 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
             form.setLoading(false)
         }
     };
-    return <FormProvider form={form}>
+    return <Form form={form}>
         <Row>
             <Col span={24} style={{height: "55vh", overflowY: "auto"}}>
                 <FormLayout layout="vertical">
@@ -462,5 +473,5 @@ export const FlashBoardComponent = (props: { onNext: () => void }) => {
                     <Button onClick={props.onNext}>Skip</Button>
                 </FormButtonGroup>
             </Col> </Row>
-    </FormProvider>;
+    </Form>;
 };

@@ -9,11 +9,13 @@ export const MowerStatus = () => {
         <Col><Statistic valueStyle={{color: "#3f8600", fontSize: "14px"}}
                         value={stateRenderer(highLevelStatus.StateName)}/></Col>
         <Col><Statistic
-            prefix={<WifiOutlined style={{color: (highLevelStatus.GpsQualityPercent ?? 0) > 0 ? "green" : "red"}}/>}
+            prefix={<WifiOutlined style={{color: (highLevelStatus.GpsQualityPercent ?? 0) > 0 ? "green" : "red"}}
+            />}
             valueStyle={{fontSize: "14px"}} precision={0}
             value={(highLevelStatus.GpsQualityPercent ?? 0) * 100}
             suffix={"%"}/></Col>
-        <Col><Statistic prefix={<PoweroffOutlined style={{color: highLevelStatus.IsCharging ? "green" : undefined}}/>}
+        <Col><Statistic prefix={<PoweroffOutlined style={{color: highLevelStatus.IsCharging ? "green" : undefined}}
+        />}
                         valueStyle={{fontSize: "14px"}} precision={2}
                         value={(highLevelStatus.BatteryPercent ?? 0) * 100}
                         formatter={progressFormatterSmall}/></Col>

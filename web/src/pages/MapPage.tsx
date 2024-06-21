@@ -2,8 +2,9 @@ import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
 import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
-// @ts-ignore
 import centroid from "@turf/centroid";
+import union from "@turf/union";
+import {featureCollection} from "@turf/helpers"
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
@@ -267,7 +268,9 @@ export const MapPage = () => {
                 return []
             }
             const centroidPt = centroid(feature);
-            centroidPt.properties.title = feature.properties?.title;
+            if (centroidPt.properties != null) {
+                centroidPt.properties.title = feature.properties?.title;
+            }
             centroidPt.id = feature.id
             return [centroidPt];
         })
@@ -539,6 +542,30 @@ export const MapPage = () => {
             const newFeatures = {...currFeatures};
             for (const f of e.features) {
                 newFeatures[f.id] = f;
+            }
+            return newFeatures;
+        });
+    }, []);
+
+    const onCombine = useCallback((e: any) => {
+        setFeatures(currFeatures => {
+            debugger
+            const newFeatures = {...currFeatures};
+            for (const f of e.deletedFeatures) {
+                delete newFeatures[f.id];
+            }
+            const firstDeleted = e.deletedFeatures[0];
+            const areaType = (firstDeleted.id as string).split("-")[0]
+            const areaIndex = (firstDeleted.id as string).split("-")[1]
+            let id = getNewId(newFeatures, areaType, areaIndex, areaType);
+            let coordinates = union(featureCollection(e.deletedFeatures));
+            if (coordinates != null) {
+                newFeatures[id] = {
+                    id,
+                    properties: firstDeleted.properties,
+                    geometry: coordinates.geometry,
+                    type: "Feature"
+                };
             }
             return newFeatures;
         });
@@ -918,11 +945,13 @@ export const MapPage = () => {
                         editMode={editMap}
                         controls={{
                             polygon: true,
-                            trash: true
+                            trash: true,
+                            combine_features: true,
                         }}
                         defaultMode="simple_select"
                         onCreate={onCreate}
                         onUpdate={onUpdate}
+                        onCombine={onCombine}
                         onDelete={onDelete}
                     />
                 </Map> : <Spinner/>}

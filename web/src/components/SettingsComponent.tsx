@@ -122,49 +122,16 @@ export OM_WHEEL_TICKS_PER_M=300.0
 # Heatmap UNSET or om_gps_accuracy
 export OM_HEATMAP_SENSOR_IDS=om_gps_accuracy
  */
-import {createSchemaField, FormProvider} from "@formily/react";
-import {FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Switch} from "@formily/antd-v5";
+import {createSchemaField} from "@formily/react";
+import {Form, FormButtonGroup, FormItem, FormLayout, Input, NumberPicker, Select, Switch} from "@formily/antd-v5";
 import {useApi} from "../hooks/useApi.ts";
 import {App, Card, Col, Row} from "antd";
-import React, {CSSProperties, useEffect} from "react";
-import {createForm, Form, onFieldValueChange} from "@formily/core";
+import React, {CSSProperties, useEffect, useMemo} from "react";
+import type {Form as FormType} from "@formily/core";
+import {createForm, onFieldValueChange} from "@formily/core";
 
 import {SettingsConfig, SettingsDesc, SettingValueType, useSettings} from "../hooks/useSettings.ts";
 
-const form = createForm<SettingsConfig>({
-    effects() {
-        onFieldValueChange('OM_MQTT_ENABLE', (field) => {
-            form.setFieldState('*(OM_MQTT_HOSTNAME,OM_MQTT_PORT,OM_MQTT_USER,OM_MQTT_PASSWORD)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value ? "visible" : "hidden";
-            })
-        })
-        onFieldValueChange('system.mqtt.enabled', (field) => {
-            form.setFieldState('*(system.mqtt.host,system.mqtt.prefix)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value ? "visible" : "hidden";
-            })
-        })
-        onFieldValueChange('system.homekit.enabled', (field) => {
-            form.setFieldState('*(system.homekit.pincode)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value ? "visible" : "hidden";
-            })
-        })
-        onFieldValueChange('system.map.enabled', (field) => {
-            form.setFieldState('*(system.map.tileServer,system.map.tileUri)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value ? "visible" : "hidden";
-            })
-        })
-        onFieldValueChange('OM_USE_NTRIP', (field) => {
-            form.setFieldState('*(OM_NTRIP_PORT,OM_NTRIP_USER,OM_NTRIP_PASSWORD,OM_NTRIP_ENDPOINT)', (state) => {
-                //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                state.display = field.value ? "visible" : "hidden";
-            })
-        })
-    },
-})
 const SchemaField = createSchemaField({
     components: {
         Input,
@@ -174,7 +141,50 @@ const SchemaField = createSchemaField({
         NumberPicker,
     },
 })
-export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>, save: (values: SettingsConfig) => Promise<void>, restartOM: () => Promise<void>, restartGUI: () => Promise<void>) => React.ReactElement[], contentStyle?: CSSProperties }> = (props) => {
+export const SettingsComponent: React.FC<{
+    actions?: (form: FormType<SettingsConfig>, save: (values: SettingsConfig) => Promise<void>, restartOM: () => Promise<void>, restartGUI: () => Promise<void>) => React.ReactElement[],
+    contentStyle?: CSSProperties
+}> = (props) => {
+    const form = useMemo(
+        () =>
+            createForm<SettingsConfig>({
+                validateFirst: true,
+                effects: (form) => {
+                    onFieldValueChange('OM_MQTT_ENABLE', (field) => {
+                        form.setFieldState('*(OM_MQTT_HOSTNAME,OM_MQTT_PORT,OM_MQTT_USER,OM_MQTT_PASSWORD)', (state) => {
+                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                            state.display = field.value ? "visible" : "hidden";
+                        })
+                    })
+                    onFieldValueChange('system.mqtt.enabled', (field) => {
+                        form.setFieldState('*(system.mqtt.host,system.mqtt.prefix)', (state) => {
+                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                            state.display = field.value ? "visible" : "hidden";
+                        })
+                    })
+                    onFieldValueChange('system.homekit.enabled', (field) => {
+                        form.setFieldState('*(system.homekit.pincode)', (state) => {
+                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                            state.display = field.value ? "visible" : "hidden";
+                        })
+                    })
+                    onFieldValueChange('system.map.enabled', (field) => {
+                        form.setFieldState('*(system.map.tileServer,system.map.tileUri)', (state) => {
+                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                            state.display = field.value ? "visible" : "hidden";
+                        })
+                    })
+                    onFieldValueChange('OM_USE_NTRIP', (field) => {
+                        form.setFieldState('*(OM_NTRIP_PORT,OM_NTRIP_USER,OM_NTRIP_PASSWORD,OM_NTRIP_ENDPOINT)', (state) => {
+                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
+                            state.display = field.value ? "visible" : "hidden";
+                        })
+                    })
+                },
+            }),
+        [],
+    )
+
     const guiApi = useApi()
     const {notification} = App.useApp();
     const {settings, setSettings, loading} = useSettings()
@@ -249,7 +259,7 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
     }, {} as Record<string, string[]>)
 
     return <Row>
-        <FormProvider form={form}>
+        <Form form={form} style={{width: '100%'}}>
             <Col span={24} style={{height: '80vh', overflowY: 'auto', ...props.contentStyle}}>
                 <FormLayout layout="vertical">
                     {
@@ -336,10 +346,10 @@ export const SettingsComponent: React.FC<{ actions?: (form: Form<SettingsConfig>
                 </FormLayout>
             </Col>
             <Col span={24} style={{position: "fixed", bottom: 20}}>
-                <FormButtonGroup>
+                <FormButtonGroup.FormItem>
                     {props.actions && props.actions(form, setSettings, restartOpenMower, restartGui)}
-                </FormButtonGroup>
+                </FormButtonGroup.FormItem>
             </Col>
-        </FormProvider>
+        </Form>
     </Row>
 }

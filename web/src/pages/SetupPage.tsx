@@ -62,7 +62,8 @@ const SetupWizard: React.FC = () => {
                 <Card title={"Setup complete"} key={"complete"}>
                     <Row gutter={[16, 16]}>
                         <Col span={24} style={{textAlign: "center"}}>
-                            <CheckCircleOutlined style={{fontSize: 48, color: 'green'}}/>
+                            <CheckCircleOutlined style={{fontSize: 48, color: 'green'}}
+                            />
                             <Typography.Title level={2}>Congratulations, your Mower is now fully
                                 configured</Typography.Title>
                         </Col>

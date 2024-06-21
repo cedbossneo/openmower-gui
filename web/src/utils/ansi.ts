@@ -55,7 +55,7 @@ function ansiHTML(text: string) {
     // Cache opened sequence.
     const ansiCodes: any[] = [];
     // Replace with markup.
-    let ret = text.replace(/\033\[(\d+)m/g, function (_, seq) {
+    let ret = text.replace(/\x1b\[(\d+)m/g, function (_, seq) {
         const ot = _openTags[seq];
         if (ot) {
             // If current sequence has been opened, close it.
