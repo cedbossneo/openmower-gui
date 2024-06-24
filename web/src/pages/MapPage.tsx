@@ -270,6 +270,7 @@ export const MapPage = () => {
             const centroidPt = centroid(feature);
             if (centroidPt.properties != null) {
                 centroidPt.properties.title = feature.properties?.title;
+                centroidPt.properties.index = feature.properties?.index;
             }
             centroidPt.id = feature.id
             return [centroidPt];
@@ -363,7 +364,7 @@ export const MapPage = () => {
                     "color": type == "navigation" ? "white" : "#01d30d",
                     title: type == "area" ? type + " " + index : undefined,
                     index,
-                },
+                },                
                 geometry: {
                     coordinates: [area.Area?.Points?.map((point) => {
                         return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
@@ -377,7 +378,7 @@ export const MapPage = () => {
                     type: 'Feature',
                     properties: {
                         "color": "#bf0000",
-                    },
+                    },                    
                     geometry: {
                         coordinates: [obstacle.Points?.map((point) => {
                             return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
@@ -883,7 +884,7 @@ export const MapPage = () => {
                     <AsyncDropDownButton size={"small"} menu={{
                         items: mowingAreas,
                         onAsyncClick: (e) => {
-                            const item = mowingAreas.find(item => item.key == e.key)
+                            const item = mowingAreas.find(item => item.key == e.key)                            
                             return mowerAction("start_in_area", {
                                 area: item!!.feat.properties?.index,
                             })()
