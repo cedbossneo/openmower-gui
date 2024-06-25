@@ -1,4 +1,5 @@
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
+import type {ControlPosition} from 'react-map-gl';
 import {useControl} from 'react-map-gl';
 import {useEffect} from "react";
 import DirectSelectWithBoxMode from '../modes/DirectSelectWithBoxMode';

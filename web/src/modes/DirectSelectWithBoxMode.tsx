@@ -86,7 +86,7 @@ DirectSelectWithBoxMode.dragFeature = function (state: any, e: any, delta: any) 
   state.dragMoveLocation = e.lngLat;
 };
 
-DirectSelectWithBoxMode.dragVertex = function (state: any, e: any, delta: any) {
+DirectSelectWithBoxMode.dragVertex = function (state: any, delta: any) {
   const selectedCoords = state.selectedCoordPaths.map((coord_path: any) => state.feature.getCoordinate(coord_path));
   const selectedCoordPoints = selectedCoords.map((coords: any) => ({
     type: Constants.geojsonTypes.FEATURE,
@@ -105,11 +105,11 @@ DirectSelectWithBoxMode.dragVertex = function (state: any, e: any, delta: any) {
 };
 
 DirectSelectWithBoxMode.clickNoTarget = function () {
-  //this.changeMode(Constants.modes.SIMPLE_SELECT, {});
+  this.changeMode(Constants.modes.SIMPLE_SELECT, {});
 };
 
 DirectSelectWithBoxMode.clickInactive = function () {
-  //this.changeMode(Constants.modes.SIMPLE_SELECT, {});
+  this.changeMode(Constants.modes.SIMPLE_SELECT, {});
 };
 
 DirectSelectWithBoxMode.clickActiveFeature = function (state: any) {
@@ -165,7 +165,6 @@ DirectSelectWithBoxMode.toDisplayFeatures = function (state: any, geojson: any, 
     geojson.properties.active = Constants.activeStates.ACTIVE;
     push(geojson);
     createSupplementaryPoints(geojson, {
-      map: this.map,
       midpoints: true,
       selectedPaths: state.selectedCoordPaths
     }).forEach(push);
@@ -243,7 +242,7 @@ DirectSelectWithBoxMode.onDrag = function (state: any, e: any) {
     lng: e.lngLat.lng - state.dragMoveLocation.lng,
     lat: e.lngLat.lat - state.dragMoveLocation.lat
   };
-  if (state.selectedCoordPaths.length > 0) this.dragVertex(state, e, delta);
+  if (state.selectedCoordPaths.length > 0) this.dragVertex(state, delta);
   else this.dragFeature(state, e, delta);
 
   state.dragMoveLocation = e.lngLat;
@@ -329,19 +328,19 @@ DirectSelectWithBoxMode.onMouseUp = DirectSelectWithBoxMode.onTouchEnd = functio
 };
 
 
-DirectSelectWithBoxMode.getSelectedVerticesInBox = function (feature, minX, minY, maxX, maxY) {
-  const selectedVertices = [];
+DirectSelectWithBoxMode.getSelectedVerticesInBox = function (feature: any, minX: number, minY: number, maxX: number, maxY: number) {
+  const selectedVertices: any[] = [];
   const coordinates = feature.getCoordinates();
 
-  const checkCoordinate = (coord, path) => {
+  const checkCoordinate = (coord: any, path: any) => {
     const point = this.map.project(coord);
     if (point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY) {
       selectedVertices.push(path);
     }
   };
 
-  const traverseCoordinates = (coords, basePath = '') => {
-    coords.forEach((coord, index) => {
+  const traverseCoordinates = (coords: any, basePath = '') => {
+    coords.forEach((coord: any, index: any) => {
       const currentPath = basePath ? `${basePath}.${index}` : `${index}`;
       if (Array.isArray(coord[0])) {
         traverseCoordinates(coord, currentPath);
@@ -353,33 +352,6 @@ DirectSelectWithBoxMode.getSelectedVerticesInBox = function (feature, minX, minY
 
   traverseCoordinates(coordinates);
   return selectedVertices;
-};
-
-
-DirectSelectWithBoxMode.selectVerticesInBox = function (state: any, e: any) {
-  const startPoint = state.boxStartPoint;
-  const endPoint = state.boxEndPoint;
-
-  if (!startPoint || !endPoint) return;
-
-  const minX = Math.min(startPoint[0], endPoint[0]);
-  const minY = Math.min(startPoint[1], endPoint[1]);
-  const maxX = Math.max(startPoint[0], endPoint[0]);
-  const maxY = Math.max(startPoint[1], endPoint[1]);
-
-  const box = [[minX, minY], [maxX, maxY]];
-
-  const selectedVertices = this.map.queryRenderedFeatures(box, {
-    layers: ['draw.vertex'] 
-  });
-
-  const selectedCoordPaths = selectedVertices.map((feature: any) => feature.properties.coord_path);
-
-  state.selectedCoordPaths = [...new Set([...state.selectedCoordPaths, ...selectedCoordPaths])];
-
-  const selectedCoordinates = this.pathsToCoordinates(state.featureId, state.selectedCoordPaths);
-  this.setSelectedCoordinates(selectedCoordinates);
-  this.fireActionable(state);
 };
 
 export default DirectSelectWithBoxMode;
