@@ -45,6 +45,7 @@ export const MapPage = () => {
     const {config, setConfig} = useConfig(["gui.map.offset.x", "gui.map.offset.y"])
     const envs = useEnv()
     const guiApi = useApi()
+    const [currentMode, setCurrentMode] = useState<string>('simple_select');
     const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
@@ -549,7 +550,6 @@ export const MapPage = () => {
 
     const onCombine = useCallback((e: any) => {
         setFeatures(currFeatures => {
-            debugger
             const newFeatures = {...currFeatures};
             for (const f of e.deletedFeatures) {
                 delete newFeatures[f.id];
@@ -841,6 +841,9 @@ export const MapPage = () => {
         }, 1000)
         setOffsetY(value)
     }
+    const handleModeChange = (mode: string) => {
+        setCurrentMode(mode);
+    };
 
     if (_datumLon == 0 || _datumLat == 0) {
         return <Spinner/>
@@ -867,11 +870,14 @@ export const MapPage = () => {
                 onOk={saveMowingArea}
                 onCancel={deleteFeature}
             />
+
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
-                <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
-                    use</Typography.Title>
+                <Typography.Title level={5} style={{color: "#ff0000"}}>
+                    WARNING: Beta, please backup your map before use
+                </Typography.Title>
             </Col>
+
             <Col span={24}>
                 <MowerActions>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
@@ -953,12 +959,16 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onCombine={onCombine}
                         onDelete={onDelete}
+                        onModeChange={handleModeChange}
                     />
                 </Map> : <Spinner/>}
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
                         <Joystick move={handleJoyMove} stop={handleJoyStop}/>
                     </div>}
+                <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, padding: '5px 10px', background: 'rgba(255, 255, 255, 0.8)', borderRadius: '5px' }}>
+    <Typography.Text>Mode: {currentMode}</Typography.Text>
+</div>
             </Col>
         </Row>
     );
