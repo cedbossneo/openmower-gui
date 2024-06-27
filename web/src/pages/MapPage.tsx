@@ -45,7 +45,6 @@ export const MapPage = () => {
     const {config, setConfig} = useConfig(["gui.map.offset.x", "gui.map.offset.y"])
     const envs = useEnv()
     const guiApi = useApi()
-    const [currentMode, setCurrentMode] = useState<string>('simple_select');
     const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
@@ -884,9 +883,6 @@ export const MapPage = () => {
         }, 1000)
         setOffsetY(value)
     }
-    const handleModeChange = (mode: string) => {
-        setCurrentMode(mode);
-    };
 
     if (_datumLon == 0 || _datumLat == 0) {
         return <Spinner/>
@@ -1005,16 +1001,12 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onCombine={onCombine}
                         onDelete={onDelete}
-                        onModeChange={handleModeChange}
                     />
                 </Map> : <Spinner/>}
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
                         <Joystick move={handleJoyMove} stop={handleJoyStop}/>
                     </div>}
-                <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, padding: '5px 10px', background: 'rgba(255, 255, 255, 0.8)', borderRadius: '5px' }}>
-    <Typography.Text>Mode: {currentMode}</Typography.Text>
-</div>
             </Col>
         </Row>
     );
