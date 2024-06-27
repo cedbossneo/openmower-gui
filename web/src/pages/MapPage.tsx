@@ -45,6 +45,7 @@ export const MapPage = () => {
     const {config, setConfig} = useConfig(["gui.map.offset.x", "gui.map.offset.y"])
     const envs = useEnv()
     const guiApi = useApi()
+    const [currentMode, setCurrentMode] = useState<string>('simple_select');
     const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
@@ -549,7 +550,6 @@ export const MapPage = () => {
 
     const onCombine = useCallback((e: any) => {
         setFeatures(currFeatures => {
-            debugger
             const newFeatures = {...currFeatures};
             for (const f of e.deletedFeatures) {
                 delete newFeatures[f.id];
@@ -721,6 +721,7 @@ export const MapPage = () => {
         a.click();
         window.URL.revokeObjectURL(url);
     };
+    
     const handleRestoreMap = () => {
         /*<input id="file-input" type="file" name="name" style="display: none;" />*/
         const input = document.createElement("input");
@@ -744,6 +745,48 @@ export const MapPage = () => {
         })
         input.click();
     };
+
+    const handleDownloadGeoJSON = () => {
+        const geojson = {
+            type: "FeatureCollection",
+            features: Object.values(features)
+        };
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style.display = "none";
+        const json = JSON.stringify(geojson),
+            blob = new Blob([json], { type: "application/geo+json" }),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "map.geojson";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    const handleUploadGeoJSON = () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.style.display = "none";
+        document.body.appendChild(input);
+        input.addEventListener('change', (event) => {
+            const file = (event as unknown as ChangeEvent<HTMLInputElement>).target?.files?.[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const geojson = JSON.parse(event.target?.result as string) as FeatureCollection;
+                const newFeatures = geojson.features.reduce((acc, feature) => {
+                    acc[feature.id as string] = feature;
+                    return acc;
+                }, {} as Record<string, Feature>);
+                setFeatures(newFeatures);
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+    };
+
     const handleManualMode = async () => {
         await mowerAction(
             "high_level_control",
@@ -841,6 +884,9 @@ export const MapPage = () => {
         }, 1000)
         setOffsetY(value)
     }
+    const handleModeChange = (mode: string) => {
+        setCurrentMode(mode);
+    };
 
     if (_datumLon == 0 || _datumLat == 0) {
         return <Spinner/>
@@ -867,11 +913,14 @@ export const MapPage = () => {
                 onOk={saveMowingArea}
                 onCancel={deleteFeature}
             />
+
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
-                <Typography.Title level={5} style={{color: "#ff0000"}}>WARNING: Beta, please backup your map before
-                    use</Typography.Title>
+                <Typography.Title level={5} style={{color: "#ff0000"}}>
+                    WARNING: Beta, please backup your map before use
+                </Typography.Title>
             </Col>
+
             <Col span={24}>
                 <MowerActions>
                     {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
@@ -899,6 +948,9 @@ export const MapPage = () => {
                     >Backup Map</Button>
                     <Button size={"small"} onClick={handleRestoreMap}
                     >Restore Map</Button>
+                    <Button size={"small"} onClick={handleDownloadGeoJSON}
+                    >Download GeoJSON</Button>
+                    {editMap && <Button size={"small"} onClick={handleUploadGeoJSON}>Upload GeoJSON</Button>}
                 </MowerActions>
             </Col>
             <Col span={24}>
@@ -953,12 +1005,16 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onCombine={onCombine}
                         onDelete={onDelete}
+                        onModeChange={handleModeChange}
                     />
                 </Map> : <Spinner/>}
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
                     <div style={{position: "absolute", bottom: 30, right: 30, zIndex: 100}}>
                         <Joystick move={handleJoyMove} stop={handleJoyStop}/>
                     </div>}
+                <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, padding: '5px 10px', background: 'rgba(255, 255, 255, 0.8)', borderRadius: '5px' }}>
+    <Typography.Text>Mode: {currentMode}</Typography.Text>
+</div>
             </Col>
         </Row>
     );
