@@ -169,6 +169,20 @@ export const SettingsDesc: Record<string, Setting> = {
         defaultValue: "/dev/gps",
         description: "GPS port"
     },
+    "OM_ANTENNA_OFFSET_X": {
+        settingType: SettingType.ConfigFile,
+        section: "Positioning",
+        type: SettingValueType.Float,
+        defaultValue: 0.3,
+        description: "Antenna offset X"
+    },
+    "OM_ANTENNA_OFFSET_Y": {
+        settingType: SettingType.ConfigFile,
+        section: "Positioning",
+        type: SettingValueType.Float,
+        defaultValue: 0.0,
+        description: "Antenna offset Y"
+    },
     "OM_USE_F9R_SENSOR_FUSION": {
         settingType: SettingType.ConfigFile,
         section: "Positioning",
@@ -204,6 +218,16 @@ export const SettingsDesc: Record<string, Setting> = {
         settingType: SettingType.ConfigFile,
         section: "Mower",
         type: SettingValueType.Float, defaultValue: 0.1, description: "Mowing angle increment"
+    },
+    "OM_WHEEL_DISTANCE_M": {
+        settingType: SettingType.ConfigFile,
+        section: "Mower",
+        type: SettingValueType.Float, defaultValue: 0.325, description: "Distance between wheels in m"
+    },
+    "OM_WHEEL_TICKS_PER_M": {
+        settingType: SettingType.ConfigFile,
+        section: "Mower",
+        type: SettingValueType.Float, defaultValue: 1600, description: "Wheel ticks per meter"
     },
     "OM_MOWING_ANGLE_OFFSET_IS_ABSOLUTE": {
         settingType: SettingType.ConfigFile,
