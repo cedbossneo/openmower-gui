@@ -24,6 +24,9 @@ type HighLevelStatus struct {
 	State             uint8
 	StateName         string
 	SubStateName      string
+	CurrentArea       int16
+	CurrentPath       int16
+	CurrentPathIndex  int16
 	GpsQualityPercent float32
 	BatteryPercent    float32
 	IsCharging        bool

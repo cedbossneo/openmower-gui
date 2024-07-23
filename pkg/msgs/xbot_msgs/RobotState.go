@@ -15,5 +15,8 @@ type RobotState struct {
 	CurrentActionProgress float32
 	CurrentState          string
 	CurrentSubState       string
+	CurrentArea           int16
+	CurrentPath           int16
+	CurrentPathIndex      int16
 	RobotPose             AbsolutePose
 }

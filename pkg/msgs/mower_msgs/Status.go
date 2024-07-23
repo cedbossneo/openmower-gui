@@ -29,6 +29,7 @@ type Status struct {
 	VCharge              float32
 	VBattery             float32
 	ChargeCurrent        float32
+	MowEnabled           bool
 	LeftEscStatus        ESCStatus
 	RightEscStatus       ESCStatus
 	MowEscStatus         ESCStatus

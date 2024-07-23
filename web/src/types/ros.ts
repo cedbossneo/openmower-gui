@@ -166,6 +166,7 @@ export type Status = {
     LeftEscStatus?: ESCStatus
     RightEscStatus?: ESCStatus
     MowEscStatus?: ESCStatus
+    MowEnabled?: boolean
 }
 
 export type ESCStatus = {
@@ -246,6 +247,9 @@ export type HighLevelStatus = {
     BatteryPercent?: number
     IsCharging?: boolean
     Emergency?: boolean
+    CurrentArea?: number
+    CurrentPath?: number
+    CurrentPathIndex?: number
 }
 
 export const enum AbsolutePoseFlags {
