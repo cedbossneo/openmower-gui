@@ -166,8 +166,8 @@ export const SettingsDesc: Record<string, Setting> = {
         settingType: SettingType.ConfigFile,
         section: "Positioning",
         type: SettingValueType.String,
-        defaultValue: "/dev/gps",
-        description: "GPS port"
+        defaultValue: "/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00",
+        description: "GPS port (/dev/gps on mowgli)"
     },
     "OM_ANTENNA_OFFSET_X": {
         settingType: SettingType.ConfigFile,
