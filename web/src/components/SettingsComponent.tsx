@@ -107,7 +107,7 @@ export OM_AUTOMATIC_MODE=0
 
 export OM_OUTLINE_OFFSET=0.05
 
-export OM_NO_COMMS=true
+export OM_NO_COMMS=false
 
 # Set default GPS antenna offset
 export OM_ANTENNA_OFFSET_X=0.3
