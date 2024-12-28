@@ -135,3 +135,7 @@ You can run the gui into VSCode or WebStorm with devcontainer
 
 Then use make deps to install dependencies, open a terminal run make run-gui for the frontend and make run-backend for
 the backend
+
+To generate go msgs, just run inside the repository this docker command:
+
+docker run -v $PWD:/app ghcr.io/cedbossneo/openmower-gui:generate-msg
