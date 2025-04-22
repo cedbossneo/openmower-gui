@@ -765,49 +765,53 @@ export const MapPage = () => {
     // JOSM discards ids, so save them inside properties
     function geoJsonJosmEncode(f: Feature): Feature {
         f.properties ??= {};
-        f.properties.id = f.id;
+        let id = f.id?.toString()
+        // f.properties.id = id;
+        for (var t of ["obstacle", "navigation", "area", "dock", "mower", "mower-heading"])
+            if(id?.includes(t))
+                f.properties.type ??= t
         return f;
     }
 
     function geoJsonJosmDecode(f: Feature): Feature {
+        if(!f.properties)
+            return f;
+
+        if(!f.id) {
+            // infer id from type or color, for old geojson downloads
+            f.properties.type ??= ({
+                "white":    "navigation",
+                "#01d30d":  "area",
+                "#bf0000":  "obstacle",
+                "#ff00f2":  "dock",
+                "#00a6ff":  "mower",
+                "#ff0000":  "mower-heading",
+            } as any)[f.properties?.color];
+
+            let index = f.properties?.index;
+            let type = f.properties?.type;
+            switch(type){
+                case "dock":
+                case "mower":
+                case "mower-heading":
+                    f.id = type
+                    break;
+                case "area":
+                case "navigation":
+                    f.id = type + index+"-area-0";
+                    break;
+                case "obstacle":
+                default:
+                    f.id = "area-"+index+"-obstacle-"+Math.random();
+                    break;
+            }
+        }
         // try backup id
         if(!f.id) {
             f.id = f.properties?.id;
         }
         delete f.properties?.id;
 
-        // use color if no id was recovered
-        if(!f.id) {
-            let index = f.properties?.index
-            switch(f.properties?.color) {
-                // nav area
-                case "white":
-                    f.id = "navigation-"+index+"-area-0";
-                    break;
-                
-                // mow area
-                case "#01d30d":
-                    f.id = "area-"+index+"-area-0";
-                    break;
-                
-                // obstacle
-                case "#bf0000":
-                    f.id = "area-"+index+"-obstacle-"+Math.random();
-                    break;
-                
-                case "#ff00f2":
-                    f.id = "dock";
-                    break;
-                
-                case "#00a6ff":
-                    f.id = "mower";
-                    break;
-                
-                case "#ff0000":
-                    f.id = "mower-heading";
-                    break;
-            }
-        }
 
         // Fix possibly mangled geometry type
         if(f.id?.toString().includes("area") && f.geometry.type == "LineString")
