@@ -4,12 +4,12 @@ import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import centroid from "@turf/centroid";
 import union from "@turf/union";
-import {featureCollection, geometry, polygon} from "@turf/helpers"
+import {featureCollection, polygon} from "@turf/helpers"
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
-import type {Feature, GeoJsonProperties, Geometry} from 'geojson';
+import type {Feature, GeoJsonProperties} from 'geojson';
 import {FeatureCollection, LineString, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
@@ -775,7 +775,7 @@ export const MapPage = () => {
             f.id = f.properties?.id;
         }
         delete f.properties?.id;
-        
+
         // use color if no id was recovered
         if(!f.id) {
             let index = f.properties?.index
