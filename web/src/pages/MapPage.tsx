@@ -794,11 +794,11 @@ export const MapPage = () => {
                 case "dock":
                 case "mower":
                 case "mower-heading":
-                    f.id = type
+                    f.id = type;
                     break;
                 case "area":
                 case "navigation":
-                    f.id = type + index+"-area-0";
+                    f.id = type +"-"+ index+"-area-0";
                     break;
                 case "obstacle":
                 default:
