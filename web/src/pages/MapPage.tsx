@@ -4,12 +4,12 @@ import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import centroid from "@turf/centroid";
 import union from "@turf/union";
-import {featureCollection} from "@turf/helpers"
+import {featureCollection, geometry, polygon} from "@turf/helpers"
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
-import type {Feature} from 'geojson';
+import type {Feature, GeoJsonProperties, Geometry} from 'geojson';
 import {FeatureCollection, LineString, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
@@ -746,10 +746,79 @@ export const MapPage = () => {
         input.click();
     };
 
+    function polygonFromLineString(f: Feature): Feature<Polygon, GeoJsonProperties> {
+        let line = f as Feature<LineString, GeoJsonProperties>
+        const coords = [...line.geometry.coordinates];
+      
+        // Ensure the LineString is closed
+        const first = coords[0];
+        const last = coords[coords.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          coords.push(first); // Close the ring
+        }
+        let p = polygon([coords], line.properties);
+        p.id = line.id;
+        console.log(p);
+        return p;
+    }
+
+    // JOSM discards ids, so save them inside properties
+    function geoJsonJosmEncode(f: Feature): Feature {
+        f.properties ??= {};
+        f.properties.id = f.id;
+        return f;
+    }
+
+    function geoJsonJosmDecode(f: Feature): Feature {
+        // try backup id
+        if(!f.id) {
+            f.id = f.properties?.id;
+        }
+        delete f.properties?.id;
+        
+        // use color if no id was recovered
+        if(!f.id) {
+            let index = f.properties?.index
+            switch(f.properties?.color) {
+                // nav area
+                case "white":
+                    f.id = "navigation-"+index+"-area-0";
+                    break;
+                
+                // mow area
+                case "#01d30d":
+                    f.id = "area-"+index+"-area-0";
+                    break;
+                
+                // obstacle
+                case "#bf0000":
+                    f.id = "area-"+index+"-obstacle-"+Math.random();
+                    break;
+                
+                case "#ff00f2":
+                    f.id = "dock";
+                    break;
+                
+                case "#00a6ff":
+                    f.id = "mower";
+                    break;
+                
+                case "#ff0000":
+                    f.id = "mower-heading";
+                    break;
+            }
+        }
+
+        // Fix possibly mangled geometry type
+        if(f.id?.toString().includes("area") && f.geometry.type == "LineString")
+            f = polygonFromLineString(f);
+        return f
+    }
+
     const handleDownloadGeoJSON = () => {
         const geojson = {
             type: "FeatureCollection",
-            features: Object.values(features)
+            features: Object.values(features).map(geoJsonJosmEncode)
         };
         const a = document.createElement("a");
         document.body.appendChild(a);
@@ -776,7 +845,7 @@ export const MapPage = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const geojson = JSON.parse(event.target?.result as string) as FeatureCollection;
-                const newFeatures = geojson.features.reduce((acc, feature) => {
+                const newFeatures = geojson.features.map(geoJsonJosmDecode).reduce((acc, feature) => {
                     acc[feature.id as string] = feature;
                     return acc;
                 }, {} as Record<string, Feature>);
