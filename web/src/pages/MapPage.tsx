@@ -185,7 +185,7 @@ export const MapPage = () => {
         },
         () => {
         });
-
+    
     useEffect(() => {
         if (envs) {
             setTileUri(envs.tileUri)
@@ -579,12 +579,12 @@ export const MapPage = () => {
         });
     }, []);
 
-    const onSelectionChange = useCallback((e: any) => {
-       
-    }, []);
+
 
 
     const onOpenDetails = useCallback((e: any) => {
+        if (!features[e.feature.id])
+            return;
         setCurrentFeature(features[e.feature.id]);
         setAreaModelOpen(true);
     }, [features]);
@@ -619,20 +619,31 @@ export const MapPage = () => {
         setEditMap(!editMap)
     }
 
-    function saveArea(e: any) {
-        if (!currentFeature)
+    function saveArea() {
+        if ((!currentFeature) || (currentFeature.id === undefined) || (currentFeature.properties === null))
             return;
+
+        const idx = currentFeature.id;
+        const name = currentFeature.properties.name;
+        const index = currentFeature.properties.index;
+
         setFeatures(currFeatures => {
             const newFeatures = {...currFeatures};
-            newFeatures[currentFeature.id].properties.title = currentFeature.properties.name;
+            if (!newFeatures[idx].properties)
+                newFeatures[idx].properties = {};
 
-            newFeatures[currentFeature.id].properties.Name = currentFeature.properties.name;
+
+            newFeatures[idx].properties.title = name;
+
+            newFeatures[idx].properties.Name = name;
             
             return {...currFeatures};
         })
+        
         setMap(map => { 
             let nmap = {...map}; 
-            map.WorkingArea[currentFeature.properties.index].Name = currentFeature.properties.name;
+            if (nmap.WorkingArea)
+                nmap.WorkingArea[index].Name = name;
        
             return nmap;
         })
@@ -663,7 +674,7 @@ export const MapPage = () => {
                 return itranspose(offsetX, offsetY, datum, point[1], point[0])
             });
 
-            areas[type][index].name = f.properties.name;
+            areas[type][index].name = f.properties?.name ?? '';
 
             if (component == "area") {
                 areas[type][index].area = {
@@ -960,7 +971,7 @@ export const MapPage = () => {
 
             <Modal
                 open={areaModelOpen}
-                title={"Edit area propperties of " + (currentFeature?.properties?.name?currentFeature?.properties?.name:currentFeature?.id)}
+                title={"Edit area properties of " + (currentFeature?.properties?.name?currentFeature?.properties?.name:currentFeature?.id)}
                 footer={[
                     <Button style={{paddingRight: 10}} key="area" onClick={saveArea}  type="primary">
                         Save
@@ -969,7 +980,7 @@ export const MapPage = () => {
                 onCancel={cancelAreaModal}>
                 <label>
                     Area Name
-                    <Input style={{paddingRight: 10}} key="areaname" name="areaname" onChange={(e) => setCurrentFeature( currentFeature => { let ncurfeature = {...currentFeature}; ncurfeature.properties.name = e.target.value; return ncurfeature;})} value={(currentFeature?.properties && currentFeature?.properties.name) ? currentFeature?.properties.name : ''} placeholder="Name of the area"/>
+                    <Input style={{paddingRight: 10}} key="areaname" name="areaname" onChange={(e) => { if (currentFeature!==undefined) { setCurrentFeature(currentFeature => { let ncurfeat = {...currentFeature} as Feature; if (!ncurfeat.properties) ncurfeat.properties ={}; ncurfeat.properties.name =  e.target.value; return ncurfeat}) } }} value={(currentFeature?.properties && currentFeature?.properties.name) ? currentFeature?.properties.name : ''} placeholder="Name of the area"/>
                 </label>
             </Modal>
 
@@ -1064,7 +1075,6 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onCombine={onCombine}
                         onDelete={onDelete}
-                        onSelectionChange={onSelectionChange}
                         onOpenDetails={onOpenDetails}
                     />
                 </Map> : <Spinner/>}
