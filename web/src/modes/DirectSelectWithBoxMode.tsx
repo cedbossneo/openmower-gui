@@ -155,6 +155,13 @@ DirectSelectWithBoxMode.onSetup = function (opts: any) {
   return state;
 };
 
+DirectSelectWithBoxMode.onKeyDown = function (state: any, e: any) {
+  if (e.key == "Enter")
+    this.map.fire('feature.open', {
+      feature: state.feature
+    });
+};
+
 DirectSelectWithBoxMode.onStop = function () {
   doubleClickZoom.enable(this);
   this.clearSelectedCoordinates();

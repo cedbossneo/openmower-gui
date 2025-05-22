@@ -1,6 +1,6 @@
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {useApi} from "../hooks/useApi.ts";
-import {App, Button, Col, Modal, Row, Slider, Typography} from "antd";
+import {App, Button, Col, Input, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import centroid from "@turf/centroid";
 import union from "@turf/union";
@@ -35,6 +35,8 @@ export const MapPage = () => {
     const [offsetX, setOffsetX] = useState(0);
     const [offsetY, setOffsetY] = useState(0);
     const [modalOpen, setModalOpen] = useState<boolean>(false)
+    const [areaModelOpen, setAreaModelOpen] = useState<boolean>(false)
+    
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
 
     const {settings} = useSettings()
@@ -183,7 +185,7 @@ export const MapPage = () => {
         },
         () => {
         });
-
+    
     useEffect(() => {
         if (envs) {
             setTileUri(envs.tileUri)
@@ -362,7 +364,8 @@ export const MapPage = () => {
                 type: 'Feature',
                 properties: {
                     "color": type == "navigation" ? "white" : "#01d30d",
-                    title: type == "area" ? type + " " + index : undefined,
+                    title: type == "area" ? type + " " + index + (area.Name ? ": " + area.Name : "") : undefined,
+                    name: area.Name,
                     index,
                 },                
                 geometry: {
@@ -396,6 +399,8 @@ export const MapPage = () => {
             return acc;
         }, {} as Record<string, Feature>);
     }
+
+  
 
 
     function getNewId(currFeatures: Record<string, Feature>, type: string, index: string | null, component: string) {
@@ -448,6 +453,7 @@ export const MapPage = () => {
             currentFeature.id = id
             currentFeature.properties = {
                 color: "white",
+                name: "",
             }
             return {...currFeatures, [id]: currentFeature};
         })
@@ -464,6 +470,7 @@ export const MapPage = () => {
             currentFeature.id = id
             currentFeature.properties = {
                 color: "#01d30d",
+                name: "",
             }
             return {...currFeatures, [id]: currentFeature};
         })
@@ -524,6 +531,7 @@ export const MapPage = () => {
             currentFeature.id = id
             currentFeature.properties = {
                 color: "#bf0000",
+                name: "",
             }
             return {...currFeatures, [id]: currentFeature} as Record<string, Feature>;
         })
@@ -571,6 +579,16 @@ export const MapPage = () => {
         });
     }, []);
 
+
+
+
+    const onOpenDetails = useCallback((e: any) => {
+        if (!features[e.feature.id])
+            return;
+        setCurrentFeature(features[e.feature.id]);
+        setAreaModelOpen(true);
+    }, [features]);
+
     const onDelete = useCallback((e: any) => {
         setFeatures(currFeatures => {
             const newFeatures = {...currFeatures};
@@ -601,6 +619,42 @@ export const MapPage = () => {
         setEditMap(!editMap)
     }
 
+    function saveArea() {
+        if ((!currentFeature) || (currentFeature.id === undefined) || (currentFeature.properties === null))
+            return;
+
+        const idx = currentFeature.id;
+        const name = currentFeature.properties.name;
+        const index = currentFeature.properties.index;
+
+        setFeatures(currFeatures => {
+            const newFeatures = {...currFeatures};
+            if (!newFeatures[idx].properties)
+                newFeatures[idx].properties = {};
+
+
+            newFeatures[idx].properties.title = name;
+
+            newFeatures[idx].properties.Name = name;
+            
+            return {...currFeatures};
+        })
+        
+        setMap(map => { 
+            let nmap = {...map}; 
+            if (nmap.WorkingArea)
+                nmap.WorkingArea[index].Name = name;
+       
+            return nmap;
+        })
+        setCurrentFeature(undefined)
+        setAreaModelOpen(false);
+    }
+
+    function cancelAreaModal() {
+        setAreaModelOpen(false);
+    }
+
     async function handleSaveMap() {
         const areas: Record<string, Record<string, MowerMapMapArea>> = {}
         for (const f of Object.values<Feature>(features)) {
@@ -618,9 +672,13 @@ export const MapPage = () => {
             const feature = f as Feature<Polygon>
             const points = feature.geometry.coordinates[0].map((point) => {
                 return itranspose(offsetX, offsetY, datum, point[1], point[0])
-            })
+            });
+
+            areas[type][index].name = f.properties?.name ?? '';
+
             if (component == "area") {
                 areas[type][index].area = {
+                   
                     points: points.map((point) => {
                         return {
                             x: point[0],
@@ -911,6 +969,21 @@ export const MapPage = () => {
                 onCancel={deleteFeature}
             />
 
+            <Modal
+                open={areaModelOpen}
+                title={"Edit area properties of " + (currentFeature?.properties?.name?currentFeature?.properties?.name:currentFeature?.id)}
+                footer={[
+                    <Button style={{paddingRight: 10}} key="area" onClick={saveArea}  type="primary">
+                        Save
+                    </Button>,
+                ]}
+                onCancel={cancelAreaModal}>
+                <label>
+                    Area Name
+                    <Input style={{paddingRight: 10}} key="areaname" name="areaname" onChange={(e) => { if (currentFeature!==undefined) { setCurrentFeature(currentFeature => { let ncurfeat = {...currentFeature} as Feature; if (!ncurfeat.properties) ncurfeat.properties ={}; ncurfeat.properties.name =  e.target.value; return ncurfeat}) } }} value={(currentFeature?.properties && currentFeature?.properties.name) ? currentFeature?.properties.name : ''} placeholder="Name of the area"/>
+                </label>
+            </Modal>
+
             <Col span={24}>
                 <Typography.Title level={2}>Map</Typography.Title>
                 <Typography.Title level={5} style={{color: "#ff0000"}}>
@@ -1002,6 +1075,7 @@ export const MapPage = () => {
                         onUpdate={onUpdate}
                         onCombine={onCombine}
                         onDelete={onDelete}
+                        onOpenDetails={onOpenDetails}
                     />
                 </Map> : <Spinner/>}
                 {highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING" &&
