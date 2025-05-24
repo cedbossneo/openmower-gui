@@ -12,7 +12,7 @@ import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
 import {FeatureCollection, LineString, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
-import {MowerMapMapArea} from "../api/Api.ts";
+import {MowerMapMapArea,MowerReplaceMapSrvReq} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
 import {MapStyle} from "./MapStyle.tsx";
 import {converter, drawLine, getQuaternionFromHeading, itranspose, transpose} from "../utils/map.tsx";
@@ -699,7 +699,7 @@ export const MapPage = () => {
                 }]
             }
         }
-        try {
+        /*try {
             await guiApi.openmower.deleteOpenmower()
             notification.success({
                 message: "Map deleted",
@@ -729,7 +729,34 @@ export const MapPage = () => {
                     })
                 }
             }
+        }*/
+
+        const updateMsg : MowerReplaceMapSrvReq = {
+            areas : []
+        };
+        for (const [type, areasOfType] of Object.entries(areas)) {
+            for (const [_, area] of Object.entries(areasOfType)) {
+                const narea = {
+                    area: area,
+                    isNavigationArea: type == "navigation",
+                };
+                updateMsg.areas.push(narea);
+
+            }
         }
+        try {
+            await guiApi.openmower.mapReplace(updateMsg)
+            notification.success({
+                message: "Area saved",
+            })
+            setEditMap(false)
+        } catch (e: any) {
+            notification.error({
+                message: "Failed to save area",
+                description: e.message,
+            })
+        }
+
         if (!map) {
             await guiApi.openmower.mapDockingCreate({
                 dockingPose: {

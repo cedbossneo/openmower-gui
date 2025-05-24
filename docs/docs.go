@@ -294,6 +294,33 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "description": "clear the map and insert multiple areas",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "openmower"
+                ],
+                "summary": "clear the map and insert areas",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OkResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/openmower/map/area/add": {
