@@ -10,7 +10,7 @@ import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist}
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
 import type {Feature} from 'geojson';
-import {FeatureCollection, LineString, Polygon, Position} from "geojson";
+import {FeatureCollection, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea,MowerReplaceMapSrvReq} from "../api/Api.ts";
 import AsyncButton from "../components/AsyncButton.tsx";
@@ -24,9 +24,28 @@ import {useConfig} from "../hooks/useConfig.tsx";
 import {useEnv} from "../hooks/useEnv.tsx";
 import {Spinner} from "../components/Spinner.tsx";
 import AsyncDropDownButton from "../components/AsyncDropDownButton.tsx";
+import {MowingFeature, MowingAreaFeature, MowerFeatureBase, DockFeatureBase, MowingFeatureBase, LineFeatureBase, NavigationFeature, ObstacleFeature, ActivePathFeature, PathFeature } from "../types/map.ts";
+
 
 var offsetXTimeout: any = null;
 var offsetYTimeout: any = null;
+
+class mowingAreaEdit  {
+    id?: string;
+    name: string;
+    mowing_order: number;
+    orig_mowing_order: number;
+    index: number;
+    //feature?: MowingAreaFeature
+
+    constructor() {
+        this.name ='';
+        this.mowing_order = 9999;
+        this.orig_mowing_order = 9999;
+        this.index =-1;
+    }
+}
+
 
 export const MapPage = () => {
     const {notification} = App.useApp();
@@ -38,6 +57,7 @@ export const MapPage = () => {
     const [areaModelOpen, setAreaModelOpen] = useState<boolean>(false)
     
     const [currentFeature, setCurrentFeature] = useState<Feature | undefined>(undefined)
+    const [curMowingAreaFeature, setCurMowingAreaFeature] = useState<mowingAreaEdit>(new mowingAreaEdit())
 
     const {settings} = useSettings()
     const [labelsCollection, setLabelsCollection] = useState<FeatureCollection>({
@@ -50,7 +70,7 @@ export const MapPage = () => {
     const [manualMode, setManualMode] = useState<number | undefined>()
     const [tileUri, setTileUri] = useState<string | undefined>()
     const [editMap, setEditMap] = useState<boolean>(false)
-    const [features, setFeatures] = useState<Record<string, Feature>>({});
+    const [features, setFeatures] = useState<Record<string, MowingFeature>>({});
     const [mapKey, setMapKey] = useState<string>("origin")
     const [map, setMap] = useState<MapType | undefined>(undefined)
     const [path, setPath] = useState<MarkerArray | undefined>(undefined)
@@ -73,27 +93,8 @@ export const MapPage = () => {
                 let orientation = pose.MotionHeading!!;
                 const line = drawLine(offsetX, offsetY, datum, pose.Pose?.Pose?.Position?.Y!!, pose.Pose?.Pose?.Position?.X!!, orientation);
                 return {
-                    ...oldFeatures, mower: {
-                        id: "mower",
-                        type: "Feature",
-                        properties: {
-                            "color": "#00a6ff",
-                        },
-                        geometry: {
-                            coordinates: mower_lonlat,
-                            type: "Point",
-                        }
-                    }, ['mower-heading']: {
-                        id: "mower-heading",
-                        type: "Feature",
-                        properties: {
-                            "color": "#ff0000",
-                        },
-                        geometry: {
-                            coordinates: [mower_lonlat, line],
-                            type: "LineString",
-                        }
-                    }
+                    ...oldFeatures, mower: new MowerFeatureBase(mower_lonlat) 
+                    , ['mower-heading']: new LineFeatureBase("mower-heading", [mower_lonlat, line],'#ff0000','heading')
                 }
             })
         });
@@ -109,6 +110,8 @@ export const MapPage = () => {
         },
         (e) => {
             let parse = JSON.parse(e) as MapType;
+            if(console.debug)
+                console.debug(parse);
             setMap(parse)
             setMapKey("live")
         });
@@ -154,20 +157,10 @@ export const MapPage = () => {
                 const newFeatures = {...oldFeatures};
                 mowingPaths.forEach((mowingPath, index) => {
                     if (mowingPath?.Poses) {
-                        newFeatures["mowingPath-" + index] = {
-                            id: "mowingPath-" + index,
-                            type: 'Feature',
-                            properties: {
-                                color: `rgba(107, 255, 188, 0.68)`,
-                                width: mowingToolWidth,
-                            },
-                            geometry: {
-                                coordinates: mowingPath.Poses.map((pose) => {
-                                    return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
-                                }),
-                                type: "LineString"
-                            }
-                        };
+                        const line = mowingPath.Poses.map((pose) => {
+                            return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
+                        });
+                        newFeatures["mowingPath-" + index.toString()] = new PathFeature("mowingPath-" + index.toString(), line, `rgba(107, 255, 188, 0.68)`, mowingToolWidth);
                     }
                 })
                 return newFeatures
@@ -258,59 +251,33 @@ export const MapPage = () => {
         }
     }, [])
 
-    const buildLabels = (param: Feature[]) => {
+    const buildLabels = (param: MowingFeature[]) => {
         return param.flatMap((feature) => {
-            if (feature.properties?.title == undefined) {
-                return []
-            }
-            if (feature.geometry.type !== "Polygon") {
-                return []
-            }
-            if (feature.geometry.coordinates.length == 0) {
+
+            if (!(feature instanceof MowingAreaFeature)) {
                 return []
             }
             const centroidPt = centroid(feature);
             if (centroidPt.properties != null) {
-                centroidPt.properties.title = feature.properties?.title;
-                centroidPt.properties.index = feature.properties?.index;
+                centroidPt.properties.title = feature.getLabel();
+                centroidPt.properties.index = feature.getIndex()
             }
             centroidPt.id = feature.id
             return [centroidPt];
         })
     };
     useEffect(() => {
-        let newFeatures: Record<string, Feature> = {}
+        let newFeatures: Record<string, MowingFeature> = {}
         if (map) {
-            const workingAreas = buildFeatures(map.WorkingArea, "area")
-            const navigationAreas = buildFeatures(map.NavigationAreas, "navigation")
+            const workingAreas = buildFeatures(map.WorkingArea??[], "area")
+            const navigationAreas = buildFeatures(map.NavigationAreas??[], "navigation")
             newFeatures = {...workingAreas, ...navigationAreas}
-            const labels = buildLabels(Object.values(newFeatures))
-            setLabelsCollection({
-                type: "FeatureCollection",
-                features: labels
-            });
-            setMowingAreas(labels.flatMap(feat => {
-                if (feat.properties?.title == undefined) {
-                    return []
-                }
-                return [{
-                    key: feat.id as string,
-                    label: feat.properties?.title,
-                    feat
-                }]
-            }))
+            
+
             const dock_lonlat = transpose(offsetX, offsetY, datum, map?.DockY!!, map?.DockX!!)
-            newFeatures["dock"] = {
-                id: "dock",
-                type: "Feature",
-                properties: {
-                    "color": "#ff00f2",
-                },
-                geometry: {
-                    coordinates: dock_lonlat,
-                    type: "Point",
-                }
-            }
+            newFeatures["dock"] = new DockFeatureBase(dock_lonlat);
+
+
         }
         if (path) {
             Object.values<Marker>(path.Markers).filter((f) => {
@@ -319,164 +286,204 @@ export const MapPage = () => {
                 const line: Position[] = marker.Points?.map(point => {
                     return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
                 })
-                const feature: Feature<LineString> = {
-                    id: "path-" + index,
-                    type: 'Feature',
-                    properties: {
-                        color: `rgba(${marker.Color.R * 255}, ${marker.Color.G * 255}, ${marker.Color.B * 255}, ${marker.Color.A * 255})`
-                    },
-                    geometry: {
-                        coordinates: line,
-                        type: 'LineString'
-                    }
-                }
-                newFeatures[feature.id as string] = feature
-                return feature
+
+                const feature = new PathFeature("path-" + index.toString(), line, `rgba(${marker.Color.R * 255}, ${marker.Color.G * 255}, ${marker.Color.B * 255}, ${marker.Color.A * 255})`);
+                newFeatures[feature.id] = feature
+
             })
         }
         if (plan?.Poses) {
-            const feature: Feature<LineString> = {
-                id: "plan",
-                type: 'Feature',
-                properties: {
-                    color: `orange`,
-                    width: 3,
-                },
-                geometry: {
-                    coordinates: plan.Poses.map((pose) => {
-                        return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
-                    }),
-                    type: "LineString"
-                }
-            }
-            newFeatures[feature.id as string] = feature
+            const coordinates = plan.Poses.map((pose) => {
+                return transpose(offsetX, offsetY, datum, pose.Pose?.Position?.Y!, pose.Pose?.Position?.X!)
+            });
+            const feature = new ActivePathFeature("plan", coordinates);
+            newFeatures[feature.id] = feature
+        }
+        if (console.debug) {
+            console.debug("Set new features");
+            console.debug(newFeatures);
         }
         setFeatures(newFeatures)
     }, [map, path, plan, offsetX, offsetY]);
 
-    function buildFeatures(areas: MapArea[] | undefined, type: string) {
-        return areas?.flatMap((area, index) => {
+    useEffect(() => {
+        const labels = buildLabels(Object.values(features))
+        setLabelsCollection({
+            type: "FeatureCollection",
+            features: labels
+        });
+        setMowingAreas(labels.flatMap(feat => {
+            if (feat.properties?.title == undefined) {
+                return []
+            }
+            return [{
+                key: feat.id as string,
+                label: feat.properties?.title,
+                feat: feat,
+                index: feat.properties?.index
+            }]
+        }))
+    }, [features]);
+
+    function buildFeatures(areas: MapArea[], type: string) : Record<string, MowingFeatureBase> {
+
+
+        return areas?.flatMap((area, index) : MowingFeatureBase[] => {
             if (!area.Area?.Points?.length) {
                 return []
             }
-            const map = {
-                id: type + "-" + index + "-area-0",
-                type: 'Feature',
-                properties: {
-                    "color": type == "navigation" ? "white" : "#01d30d",
-                    title: type == "area" ? type + " " + index + (area.Name ? ": " + area.Name : "") : undefined,
-                    name: area.Name,
-                    index,
-                },                
-                geometry: {
-                    coordinates: [area.Area?.Points?.map((point) => {
-                        return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
-                    })],
-                    type: "Polygon"
-                }
-            } as Feature;
-            const obstacles = area.Obstacles?.map((obstacle, oindex) => {
-                return {
-                    id: type + "-" + index + "-obstacle-" + oindex,
-                    type: 'Feature',
-                    properties: {
-                        "color": "#bf0000",
-                    },                    
-                    geometry: {
-                        coordinates: [obstacle.Points?.map((point) => {
-                            return transpose(offsetX, offsetY, datum, point.Y!!, point.X!!)
-                        })],
-                        type: "Polygon"
-                    }
-                } as Feature;
+
+            const nfeat = type=="area" ? new MowingAreaFeature(type + "-" + index.toString() + "-area-0", index+1)
+                : new NavigationFeature(type + "-" + index.toString() + "-area-0");//, offsetX, offsetY, datum.
+            nfeat.setArea(area, offsetX, offsetY, datum);
+
+            let obstacles:  ObstacleFeature[] = [];
+
+            if ((nfeat instanceof MowingAreaFeature) && (area.Obstacles))
+                obstacles = area.Obstacles.map((obstacle, oindex) => {
+                const nobst =  new ObstacleFeature(
+                    type + "-" + index.toString() + "-obstacle-" + oindex.toString(),
+                    nfeat
+                );
+                
+                if (obstacle.Points)
+                    nobst.transpose(obstacle.Points, offsetX, offsetY, datum);
+
+                return nobst;
+
             })
-            return [map, ...obstacles ?? []]
-        }).reduce((acc, val) => {
+            return [nfeat, ...obstacles ]
+        }).reduce((acc, val) :Record<string, MowingFeatureBase> => {
             if (val.id == undefined) {
                 return acc
             }
             acc[val.id] = val;
             return acc;
-        }, {} as Record<string, Feature>);
+        }, {} as Record<string, MowingFeatureBase>);
     }
 
   
 
 
-    function getNewId(currFeatures: Record<string, Feature>, type: string, index: string | null, component: string) {
+    function getNewId(currFeatures: Record<string, MowingFeature>, type: string, index: string | null, component: string) {
         let maxArea = 0
         if (index != null) {
             maxArea = parseInt(index) - 1
         } else {
-            maxArea = Object.values<Feature>(currFeatures).filter((f) => {
-                let idDetails = (f.id as string).split("-")
+            maxArea = Object.values<MowingFeature>(currFeatures).filter((f) => {
+                const idDetails = (f.id).split("-")
                 if (idDetails.length != 4) {
                     return false
                 }
-                let areaType = idDetails[0]
-                let areaComponent = idDetails[2]
+                const areaType = idDetails[0]
+                const areaComponent = idDetails[2]
                 return areaType == type && component == areaComponent
             }).reduce((acc, val) => {
-                let idDetails = (val.id as string).split("-")
+                const idDetails = (val.id).split("-")
                 if (idDetails.length != 4) {
                     return acc
                 }
-                let index = parseInt(idDetails[1])
+                const index = parseInt(idDetails[1])
                 if (index > acc) {
                     return index
                 }
                 return acc
             }, 0)
         }
-        const maxComponent = Object.values<Feature>(currFeatures).filter((f) => {
-            return (f.id as string).startsWith(type + "-" + (maxArea + 1) + "-" + component + "-")
+        const maxComponent = Object.values<MowingFeature>(currFeatures).filter((f) => {
+            return (f.id).startsWith(type + "-" + (maxArea + 1).toString() + "-" + component + "-")
         }).reduce((acc, val) => {
-            let idDetails = (val.id as string).split("-")
+            const idDetails = (val.id).split("-")
             if (idDetails.length != 4) {
                 return acc
             }
-            let index = parseInt(idDetails[3])
+            const index = parseInt(idDetails[3])
             if (index > acc) {
                 return index
             }
             return acc
         }, 0)
-        return type + "-" + (maxArea + 1) + "-" + component + "-" + maxComponent + 1;
+        return type + "-" + (maxArea + 1).toString() + "-" + component + "-" + (maxComponent + 1).toString();
     }
 
-    function saveNavigationArea() {
-        if (currentFeature == undefined) {
+
+    function addArea<T extends MowingFeatureBase>(type: string, constructcb: (id: string) => T|null, new_feature: Feature<Polygon>|undefined=undefined) {
+         let f;
+
+        if (new_feature== undefined)
+            f = currentFeature;
+        else 
+            f = new_feature;
+
+        if (f == undefined) {
             return
         }
+
+        if (f.geometry.type != 'Polygon')
+            return;
+
         setFeatures(currFeatures => {
-            let id = getNewId(currFeatures, "navigation", null, "area");
-            currentFeature.id = id
-            currentFeature.properties = {
-                color: "white",
-                name: "",
+            const id = getNewId(currFeatures, type, null, "area");
+            const nfeat =  constructcb(id);
+            if (!nfeat) {
+                return features;
             }
-            return {...currFeatures, [id]: currentFeature};
+            nfeat.setGeometry((f as Feature<Polygon>).geometry)
+            
+            return {...currFeatures, [id]: nfeat};
         })
         setCurrentFeature(undefined)
         setModalOpen(false)
     }
 
-    function saveMowingArea() {
-        if (currentFeature == undefined) {
-            return
-        }
-        setFeatures(currFeatures => {
-            let id = getNewId(currFeatures, "area", null, "area");
-            currentFeature.id = id
-            currentFeature.properties = {
-                color: "#01d30d",
-                name: "",
+    function addObstacle(new_feature: Feature<Polygon>|undefined=undefined) {
+
+
+        addArea<ObstacleFeature>("area", (id) => {
+            const currentLayerCoordinates = (currentFeature as Feature<Polygon>).geometry.coordinates[0]
+            // find the area that contains the obstacle
+            const area = Object.values<MowingFeature>(features).find((f) => {
+                if (!(f instanceof MowingAreaFeature)) {
+                    return false
+                }
+                const areaCoordinates = f.geometry.coordinates[0]
+                return inside(currentLayerCoordinates, areaCoordinates)
+            })
+            if (!area) {
+                notification.info({
+                    message: "Unable to match an area for this obstacle"});
+                return null;
             }
-            return {...currFeatures, [id]: currentFeature};
-        })
-        setCurrentFeature(undefined)
-        setModalOpen(false)
+
+            return  new ObstacleFeature(id, area as MowingAreaFeature);
+        }, new_feature);
     }
+
+    function addNavigationArea(new_feature: Feature<Polygon>|undefined=undefined) {
+        addArea<NavigationFeature>("navigation", (id) => {
+            return  new NavigationFeature(id);
+        }, new_feature);
+    }
+
+    function addMowingArea(new_feature: Feature<Polygon>|undefined=undefined) {
+        addArea<NavigationFeature>("area", (id) => {
+            return  new MowingAreaFeature(id, mowingAreas.length+1);
+        }, new_feature);
+    }
+
+
+
+    function handleSaveMowingAreaClick() {
+        addMowingArea();
+    } 
+
+    function handleSaveNavigationAreaClick() {
+        addNavigationArea();
+    } 
+
+    function handleSaveObstacleClick() {
+        addObstacle();
+    } 
 
     const inside = (currentLayerCoordinates: Position[], areaCoordinates: Position[]) => {
         let inside = false;
@@ -508,36 +515,6 @@ export const MapPage = () => {
         setModalOpen(false)
     }
 
-    function saveObstacle() {
-        if (currentFeature == undefined) {
-            return
-        }
-        setFeatures(currFeatures => {
-            const currentLayerCoordinates = (currentFeature as Feature<Polygon>).geometry.coordinates[0]
-            // find the area that contains the obstacle
-            const area = Object.values<Feature>(currFeatures).find((f) => {
-                if (f.geometry.type != "Polygon") {
-                    return false
-                }
-                const areaCoordinates = (f as Feature<Polygon>).geometry.coordinates[0]
-                return inside(currentLayerCoordinates, areaCoordinates)
-            })
-            if (!area) {
-                return currFeatures
-            }
-            const areaType = (area.id as string).split("-")[0]
-            const areaIndex = (area.id as string).split("-")[1]
-            let id = getNewId(currFeatures, areaType, areaIndex, "obstacle");
-            currentFeature.id = id
-            currentFeature.properties = {
-                color: "#bf0000",
-                name: "",
-            }
-            return {...currFeatures, [id]: currentFeature} as Record<string, Feature>;
-        })
-        setCurrentFeature(undefined)
-        setModalOpen(false)
-    }
 
     const onCreate = useCallback((e: any) => {
         for (const f of e.features) {
@@ -550,44 +527,164 @@ export const MapPage = () => {
         setFeatures(currFeatures => {
             const newFeatures = {...currFeatures};
             for (const f of e.features) {
-                newFeatures[f.id] = f;
+
+
+                const feature = newFeatures[f.id] as MowingAreaFeature;
+                if (!(feature instanceof MowingAreaFeature))
+                    continue;
+
+                if ((f.geometry.type=='Polygon'))
+                        feature.setGeometry(f.geometry);
             }
             return newFeatures;
         });
     }, []);
 
     const onCombine = useCallback((e: any) => {
-        setFeatures(currFeatures => {
-            const newFeatures = {...currFeatures};
-            for (const f of e.deletedFeatures) {
-                delete newFeatures[f.id];
-            }
-            const firstDeleted = e.deletedFeatures[0];
-            const areaType = (firstDeleted.id as string).split("-")[0]
-            const areaIndex = (firstDeleted.id as string).split("-")[1]
-            let id = getNewId(newFeatures, areaType, areaIndex, areaType);
-            let coordinates = union(featureCollection(e.deletedFeatures));
-            if (coordinates != null) {
-                newFeatures[id] = {
-                    id,
+
+            const firstDeleted = e.deletedFeatures[0] as Feature<Polygon>;
+            const areaType = firstDeleted?.properties?.feature_type as string;
+            const coordinates = union(featureCollection(e.deletedFeatures));
+
+            if ((coordinates != null) && (coordinates.geometry.type=='Polygon')) {
+                const f ={
+                    id:'',
                     properties: firstDeleted.properties,
                     geometry: coordinates.geometry,
                     type: "Feature"
-                };
+                } as Feature<Polygon>;
+
+                switch (areaType) {
+                    case 'workarea':
+                        addMowingArea(f);
+                        break;
+                    case 'navigation':
+                        addNavigationArea(f);
+                        break;
+                    case 'obstacle':
+                        addObstacle(f);
+                        break;
+                    default:
+                        notification.error({
+                            message: `Unknown type ${areaType}`
+                        })
+                        setFeatures({...features});//revert
+                        return;
+                }
             }
-            return newFeatures;
+            else {
+                notification.error({
+                    message: 'Unable to combine areas. Do they overlap?'
+                })
+                setFeatures({...features});//revert
+                return;
+            }
+
+            setFeatures(currFeatures => {
+                const newFeatures = {...currFeatures};
+                for (const f of e.deletedFeatures) {
+                    delete newFeatures[f.id];
+                }
+    
+                sortFeatures(newFeatures)
+                return newFeatures;
+            });
+    },[addMowingArea, addNavigationArea, addObstacle, features, notification]);
+
+    function sortFeatures(tosort: Record<string, MowingFeature>,  curMowingAreaFeature: mowingAreaEdit|undefined = undefined) {
+        /* sort the mowing areas by mowing order. If there is a duplicate decide the order based on the area (curMowingAreaFeature) that the user 
+        added. */
+        
+
+        const idxorder = Object.values(tosort).sort((a: MowingFeature,b: MowingFeature ) => {
+            if ((a instanceof MowingAreaFeature) && (!(b instanceof MowingAreaFeature)))
+                return -1;
+
+            if ((b instanceof MowingAreaFeature) && (!(a instanceof MowingAreaFeature)))
+                return 1;
+
+            if (!(b instanceof MowingAreaFeature) || (!(a instanceof MowingAreaFeature)))
+                return 0;
+
+            if (a.getMowingOrder() == b.getMowingOrder()) {
+                if (curMowingAreaFeature) {
+
+                    return (((a.id == curMowingAreaFeature.id) && (curMowingAreaFeature.orig_mowing_order < curMowingAreaFeature.mowing_order)) 
+                        || ((b.id == curMowingAreaFeature.id) && (curMowingAreaFeature.orig_mowing_order > curMowingAreaFeature.mowing_order)) ) ? 1 :-1;
+                }
+                else {
+                    console.warn("Duplicate mowing order detected");
+                    return -1;
+                }
+            }
+
+            return a.getMowingOrder() > b.getMowingOrder()? 1 :-1;
+
         });
-    }, []);
 
+        console.log(idxorder);
+        let i = 1;
+        idxorder.map(e=> {
+            if (e instanceof MowingAreaFeature){
+                e.properties.mowing_order = i; 
+                i++;
+            }
+        })
+    }
 
+    function updateMowingArea() {
+        if ((!curMowingAreaFeature) || (!curMowingAreaFeature.id) )
+            return;
+    
+        setAreaModelOpen(false);
+        const newFeatures = {...features} as Record<string, MowingFeature>;
+        const f = newFeatures[curMowingAreaFeature.id];
+        if ((! f) || (!(f instanceof MowingAreaFeature)))
+            return;
+
+        f.setName(curMowingAreaFeature.name);
+
+        if (curMowingAreaFeature.mowing_order != curMowingAreaFeature.orig_mowing_order){
+
+            f.setMowingOrder(curMowingAreaFeature.mowing_order);
+            sortFeatures(newFeatures, curMowingAreaFeature);
+        }
+        setFeatures(newFeatures)
+
+        const labels = buildLabels(Object.values(newFeatures))
+        setLabelsCollection({
+            type: "FeatureCollection",
+            features: labels
+        });
+ 
+        //setCurMowingAreaFeature(undefined)
+        setAreaModelOpen(false);
+    }
 
 
     const onOpenDetails = useCallback((e: any) => {
-        if (!features[e.feature.id])
+        if ((!e) || (!e.feature) || (!e.feature.id))
             return;
-        setCurrentFeature(features[e.feature.id]);
+
+        const feature = e.feature as Feature<Polygon>;
+        if (!feature) 
+            return;
+
+        if (feature.properties?.feature_type != 'workarea') { 
+            notification.info({
+                message: "Unable to edit this area"});
+            return;
+        }
+        /* we can' t access features here, assume this area exists for now */
+        setCurMowingAreaFeature(
+            { id            : feature.id
+            , index         : feature.properties.index
+            , name          : feature.properties.name
+            , mowing_order  : feature.properties.mowing_order
+            , orig_mowing_order  : feature.properties.mowing_order} as mowingAreaEdit);
+
         setAreaModelOpen(true);
-    }, [features]);
+    }, [notification]);
 
     const onDelete = useCallback((e: any) => {
         setFeatures(currFeatures => {
@@ -619,117 +716,89 @@ export const MapPage = () => {
         setEditMap(!editMap)
     }
 
-    function saveArea() {
-        if ((!currentFeature) || (currentFeature.id === undefined) || (currentFeature.properties === null))
-            return;
-
-        const idx = currentFeature.id;
-        const name = currentFeature.properties.name;
-        const index = currentFeature.properties.index;
-
-        setFeatures(currFeatures => {
-            const newFeatures = {...currFeatures};
-            if (!newFeatures[idx].properties)
-                newFeatures[idx].properties = {};
-
-
-            newFeatures[idx].properties.title = name;
-
-            newFeatures[idx].properties.Name = name;
-            
-            return {...currFeatures};
-        })
-        
-        setMap(map => { 
-            let nmap = {...map}; 
-            if (nmap.WorkingArea)
-                nmap.WorkingArea[index].Name = name;
-       
-            return nmap;
-        })
-        setCurrentFeature(undefined)
-        setAreaModelOpen(false);
-    }
 
     function cancelAreaModal() {
         setAreaModelOpen(false);
     }
 
     async function handleSaveMap() {
-        const areas: Record<string, Record<string, MowerMapMapArea>> = {}
-        for (const f of Object.values<Feature>(features)) {
-            let id = f.id as string;
-            let idDetails = id.split("-")
-            if (idDetails.length != 4) {
-                continue
-            }
-            let type = idDetails[0]
-            let index = idDetails[1]
-            let component = idDetails[2]
-            areas[type] = areas[type] ?? {}
-            areas[type][index] = areas[type][index] ?? {}
+        const areas: Record<string, MowerMapMapArea[]> = {
+            "area":[],
+            "navigation":[],
+        }
+        const sorted =  Object.values<MowingFeature>(features).sort((a: MowingFeature,b: MowingFeature): number => {
+            if ((a instanceof MowingFeatureBase) && (!(b instanceof MowingFeatureBase)))
+                return -1;
 
-            const feature = f as Feature<Polygon>
-            const points = feature.geometry.coordinates[0].map((point) => {
-                return itranspose(offsetX, offsetY, datum, point[1], point[0])
-            });
+            if ((b instanceof MowingFeatureBase) && (!(a instanceof MowingFeatureBase)))
+                return 1;
 
-            areas[type][index].name = f.properties?.name ?? '';
+            if ((b instanceof MowingFeatureBase) && ((a instanceof MowingFeatureBase)))
+                return a.properties.mowing_order > b.properties.mowing_order ? 1 :-1;
 
-            if (component == "area") {
-                areas[type][index].area = {
-                   
-                    points: points.map((point) => {
-                        return {
-                            x: point[0],
-                            y: point[1],
-                            z: 0,
-                        }
-                    })
+            return 0;
+        })
+
+
+        for (const [i,f] of Object.entries(sorted)) {
+            if (f instanceof MowingFeatureBase) {
+
+                const idDetails = f.id.split("-")
+                if (idDetails.length != 4) {
+                    if (console.error)
+                        console.error("Invalid id " + f.id);
+                    continue
                 }
-            } else if (component == "obstacle") {
-                areas[type][index].obstacles = [...(areas[type][index].obstacles ?? []), {
-                    points: points.map((point) => {
-                        return {
-                            x: point[0],
-                            y: point[1],
-                            z: 0,
-                        }
-                    })
-                }]
+                const type = idDetails[0]
+
+                if (!areas[type])
+                    throw Error("Unable to find area type " + type);
+
+                let index = parseInt(i);
+                if (f instanceof ObstacleFeature)
+                    index = f.getMowingArea().getIndex();  
+                else {
+                    areas[type][index] = {
+                        name:  f.properties?.name ?? ''
+                    }
+                } 
+
+                const points = f.geometry.coordinates[0].map((point) => {
+                    return itranspose(offsetX, offsetY, datum, point[1], point[0])
+                });
+
+                
+       
+
+                if ((f instanceof MowingAreaFeature)||(f instanceof NavigationFeature))  {
+                    areas[type][index].area = {
+                    
+                        points: points.map((point) => {
+                            return {
+                                x: point[0],
+                                y: point[1],
+                                z: 0,
+                            }
+                        })
+                    }
+                } else if (f instanceof ObstacleFeature) {
+                    if (!areas[type][index])
+                        throw Error("Unable to find area " + index.toString());
+
+            
+                    areas[type][index].obstacles = [...(areas[type][index].obstacles ?? []), {
+                        points: points.map((point) => {
+                            return {
+                                x: point[0],
+                                y: point[1],
+                                z: 0,
+                            }
+                        })
+                    }]
+                }
             }
         }
-        /*try {
-            await guiApi.openmower.deleteOpenmower()
-            notification.success({
-                message: "Map deleted",
-            })
-            setEditMap(false)
-        } catch (e: any) {
-            notification.error({
-                message: "Failed to delete map",
-                description: e.message,
-            })
-        }
-        for (const [type, areasOfType] of Object.entries(areas)) {
-            for (const [_, area] of Object.entries(areasOfType)) {
-                try {
-                    await guiApi.openmower.mapAreaAddCreate({
-                        area: area,
-                        isNavigationArea: type == "navigation",
-                    })
-                    notification.success({
-                        message: "Area saved",
-                    })
-                    setEditMap(false)
-                } catch (e: any) {
-                    notification.error({
-                        message: "Failed to save area",
-                        description: e.message,
-                    })
-                }
-            }
-        }*/
+     
 
         const updateMsg : MowerReplaceMapSrvReq = {
             areas : []
@@ -859,14 +928,14 @@ export const MapPage = () => {
                 return;
             }
             const reader = new FileReader();
-            reader.onload = (event) => {
+            /*reader.onload = (event) => {
                 const geojson = JSON.parse(event.target?.result as string) as FeatureCollection;
                 const newFeatures = geojson.features.reduce((acc, feature) => {
                     acc[feature.id as string] = feature;
                     return acc;
                 }, {} as Record<string, Feature>);
                 setFeatures(newFeatures);
-            };
+            };*/
             reader.readAsText(file);
         });
         input.click();
@@ -979,35 +1048,45 @@ export const MapPage = () => {
                 open={modalOpen}
                 title={"Set the area type"}
                 footer={[
-                    <Button style={{paddingRight: 10}} key="mowing" type="primary" onClick={saveMowingArea}>
+                    <Button style={{paddingRight: 10}} key="mowing" type="primary" onClick={handleSaveMowingAreaClick}>
                         Working area
                     </Button>,
-                    <Button style={{paddingRight: 10}} key="navigation" onClick={saveNavigationArea}>
+                    <Button style={{paddingRight: 10}} key="navigation" onClick={handleSaveNavigationAreaClick}>
                         Navigation area
                     </Button>,
-                    <Button style={{paddingRight: 10}} key="obstacle" onClick={saveObstacle}>
+                    <Button style={{paddingRight: 10}} key="obstacle" onClick={handleSaveObstacleClick}>
                         Obstacle
                     </Button>,
                     <Button key="cancel" onClick={deleteFeature}>
                         Cancel
                     </Button>,
                 ]}
-                onOk={saveMowingArea}
+                onOk={handleSaveMowingAreaClick}
                 onCancel={deleteFeature}
             />
 
             <Modal
                 open={areaModelOpen}
-                title={"Edit area properties of " + (currentFeature?.properties?.name?currentFeature?.properties?.name:currentFeature?.id)}
+                title={"Edit area properties of " + (curMowingAreaFeature.name)}
                 footer={[
-                    <Button style={{paddingRight: 10}} key="area" onClick={saveArea}  type="primary">
+                    <Button style={{paddingRight: 10}} key="area" onClick={updateMowingArea}  type="primary">
                         Save
                     </Button>,
                 ]}
                 onCancel={cancelAreaModal}>
                 <label>
+                    Mowing order
+                    <Input style={{paddingRight: 10}} key="mowingorder" name="mowingorder" onChange={
+                        (e) => {setCurMowingAreaFeature({...curMowingAreaFeature, mowing_order:  parseInt(e.target.value)})}} value={ 
+                            curMowingAreaFeature.mowing_order
+                            }/>
+                </label>
+                <label>
                     Area Name
-                    <Input style={{paddingRight: 10}} key="areaname" name="areaname" onChange={(e) => { if (currentFeature!==undefined) { setCurrentFeature(currentFeature => { let ncurfeat = {...currentFeature} as Feature; if (!ncurfeat.properties) ncurfeat.properties ={}; ncurfeat.properties.name =  e.target.value; return ncurfeat}) } }} value={(currentFeature?.properties && currentFeature?.properties.name) ? currentFeature?.properties.name : ''} placeholder="Name of the area"/>
+                    <Input style={{paddingRight: 10}} key="areaname" name="areaname" onChange={
+                        (e) => {setCurMowingAreaFeature({...curMowingAreaFeature, name:  e.target.value})}} value={ 
+                            curMowingAreaFeature.name
+                            } placeholder="Name of the area"/>
                 </label>
             </Modal>
 
@@ -1017,39 +1096,41 @@ export const MapPage = () => {
                     WARNING: Beta, please backup your map before use
                 </Typography.Title>
             </Col>
-
+            
             <Col span={24}>
                 <MowerActions>
-                    {!editMap && <Button size={"small"} type="primary" onClick={handleEditMap}
+                    {!editMap && <Button size={"small"} key="btnEdit" type="primary" onClick={handleEditMap}
                     >Edit Map</Button>}
-                    {editMap && <AsyncButton size={"small"} type="primary" onAsyncClick={handleSaveMap}
+                    {editMap && <AsyncButton size={"small"} key="btnSave"  type="primary" onAsyncClick={handleSaveMap}
                     >Save Map</AsyncButton>}
-                    {editMap && <Button size={"small"} onClick={handleEditMap}
+                    {editMap && <Button size={"small"} key="btnCancel" onClick={handleEditMap}
                     >Cancel Map Edition</Button>}
-                    <AsyncDropDownButton size={"small"} menu={{
+                    {!editMap && 
+                    <AsyncDropDownButton size={"small"}  key="slctAreas"  menu={{
                         items: mowingAreas,
                         onAsyncClick: (e) => {
                             const item = mowingAreas.find(item => item.key == e.key)                            
                             return mowerAction("start_in_area", {
-                                area: item!!.feat.properties?.index,
+                                area: item!!.index,
                             })()
                         }
-                    }}>Mow area</AsyncDropDownButton>
+                    }}>Mow area</AsyncDropDownButton>}
                     {!manualMode &&
-                        <AsyncButton size={"small"} onAsyncClick={handleManualMode}
+                        <AsyncButton size={"small"}  key="btnManualMode"  onAsyncClick={handleManualMode}
                         >Manual mowing</AsyncButton>}
                     {manualMode &&
-                        <AsyncButton size={"small"} onAsyncClick={handleStopManualMode}
+                        <AsyncButton size={"small"}  key="btnAutoMode"  onAsyncClick={handleStopManualMode}
                         >Stop Manual Mowing</AsyncButton>}
-                    <Button size={"small"} onClick={handleBackupMap}
+                    <Button size={"small"} key="btnBackup" onClick={handleBackupMap}
                     >Backup Map</Button>
-                    <Button size={"small"} onClick={handleRestoreMap}
+                    <Button size={"small"} key="btnRestore" onClick={handleRestoreMap}
                     >Restore Map</Button>
-                    <Button size={"small"} onClick={handleDownloadGeoJSON}
+                    <Button size={"small"} key="btnDownloadGeo" onClick={handleDownloadGeoJSON}
                     >Download GeoJSON</Button>
-                    {editMap && <Button size={"small"} onClick={handleUploadGeoJSON}>Upload GeoJSON</Button>}
+                    {editMap && <Button size={"small"} key="btnUploadGeo" onClick={handleUploadGeoJSON}>Upload GeoJSON</Button>}
                 </MowerActions>
             </Col>
+           
             <Col span={24}>
                 <Row>
                     <Col span={12}>
