@@ -318,7 +318,7 @@ export const MapPage = () => {
             }
             return [{
                 key: feat.id as string,
-                label: '',
+                label: feat.properties.title,
                 feat: feat
             }]
         }))
