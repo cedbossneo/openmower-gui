@@ -27,8 +27,8 @@ import AsyncDropDownButton from "../components/AsyncDropDownButton.tsx";
 import {MowingFeature, MowingAreaFeature, MowerFeatureBase, DockFeatureBase, MowingFeatureBase, LineFeatureBase, NavigationFeature, ObstacleFeature, ActivePathFeature, PathFeature } from "../types/map.ts";
 
 
-var offsetXTimeout: any = null;
-var offsetYTimeout: any = null;
+let offsetXTimeout: any = null;
+let offsetYTimeout: any = null;
 
 class mowingAreaEdit  {
     id?: string;
@@ -318,9 +318,8 @@ export const MapPage = () => {
             }
             return [{
                 key: feat.id as string,
-                label: feat.properties?.title,
-                feat: feat,
-                index: feat.properties?.index
+                label: '',
+                feat: feat
             }]
         }))
     }, [features]);
@@ -928,14 +927,74 @@ export const MapPage = () => {
                 return;
             }
             const reader = new FileReader();
-            /*reader.onload = (event) => {
+            reader.onload = (event) => {
                 const geojson = JSON.parse(event.target?.result as string) as FeatureCollection;
-                const newFeatures = geojson.features.reduce((acc, feature) => {
+                const geojsonfeatures = geojson.features.reduce((acc, feature) => {
                     acc[feature.id as string] = feature;
                     return acc;
                 }, {} as Record<string, Feature>);
+
+                const newFeatures = {} as Record<string, MowingFeature>;
+                Object.values(geojsonfeatures).forEach(element => {
+                    const areaType = element?.properties?.feature_type as string;
+    
+                    let nfeat = null;
+                    if (!element.id)
+                        return;
+
+                    if (typeof element.id == 'number')
+                        element.id = element.id.toString();
+
+                    if (element.geometry.type == 'Polygon') {
+            
+
+                        
+
+                        switch (areaType) {
+                            case 'workarea':
+                                nfeat =  element as MowingAreaFeature;
+                                //nfeat = new MowingAreaFeature(element.id, element?.properties?.mowing_order??100);
+                                //nfeat.geometry.coordinates = origFeature.geometry.coordinates;
+                                //nfeat.setName(origFeature?.properties?.name)
+                                break;
+                            case 'navigation':
+                                nfeat =  element as NavigationFeature;
+                                //nfeat = new NavigationFeature(element.id);
+                                //nfeat.geometry.coordinates = origFeature.geometry.coordinates;
+                                break;
+                            case 'obstacle':
+                                nfeat =  element as ObstacleFeature;
+                                //nfeat = new ObstacleFeature(element.id, newFeatures[element.mowing_area.id]);
+                                //nfeat.geometry.coordinates = origFeature.geometry.coordinates;
+                                break;
+                            default:
+                                notification.error({
+                                    message: `Unknown type ${areaType}`
+                                })
+                                setFeatures({...features});//revert
+                                return;
+                        }
+                    }
+                    else {
+                        switch (areaType) {
+                            case 'dock':
+                                nfeat =  element as DockFeatureBase;
+                            //nfeat = new DockFeatureBase(origFeature.geometry.coordinates);
+                                break;
+                                default:
+                            notification.error({
+                                message: `Unknown type ${areaType}`
+                            })
+                            setFeatures({...features});//revert
+                            return;
+                        }
+
+                    }
+                    newFeatures[element.id] = nfeat;
+                });
+
                 setFeatures(newFeatures);
-            };*/
+            };
             reader.readAsText(file);
         });
         input.click();
@@ -1111,7 +1170,7 @@ export const MapPage = () => {
                         onAsyncClick: (e) => {
                             const item = mowingAreas.find(item => item.key == e.key)                            
                             return mowerAction("start_in_area", {
-                                area: item!!.index,
+                                area: item!!.feat?.properties?.index,
                             })()
                         }
                     }}>Mow area</AsyncDropDownButton>}
