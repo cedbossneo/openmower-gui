@@ -528,8 +528,12 @@ export const MapPage = () => {
             for (const f of e.features) {
 
 
-                const feature = newFeatures[f.id] as MowingAreaFeature;
-                if (!(feature instanceof MowingAreaFeature))
+
+                const feature = newFeatures[f.id];
+                if ((!(feature instanceof MowingAreaFeature)) &&
+                (!(feature instanceof ObstacleFeature)) &&
+                (!(feature instanceof NavigationFeature)) 
+                )
                     continue;
 
                 if ((f.geometry.type=='Polygon'))
