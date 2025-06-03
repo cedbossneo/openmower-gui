@@ -348,6 +348,11 @@ export const SettingsDesc: Record<string, Setting> = {
         section: "OpenMower MQTT",
         type: SettingValueType.String, defaultValue: "", description: "MQTT broker password"
     },
+    "OM_MQTT_TOPIC_PREFIX=": {
+        settingType: SettingType.ConfigFile,
+        section: "OpenMower MQTT",
+        type: SettingValueType.String, defaultValue: "", description: "MQTT topic prefix"
+    },
     "system.api.addr": {
         settingType: SettingType.Db,
         section: "API",
