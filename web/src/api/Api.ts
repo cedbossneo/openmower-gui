@@ -75,6 +75,16 @@ export interface MowerMapAddMowingAreaSrvReq {
     "msg.Package"?: number;
 }
 
+export interface MowerMapReplaceArea {
+  area?: MowerMapMapArea;
+  isNavigationArea?: boolean;
+}
+
+export interface MowerReplaceMapSrvReq {
+  areas: MowerMapReplaceArea[];
+  "msg.Package"?: number;
+}
+
 export interface MowerMapMapArea {
     area?: GeometryMsgsPolygon;
     "msg.Package"?: number;
@@ -480,6 +490,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
               format: "json",
               ...params,
           }),
+
+      /**
+       * @description replace entire map in a single transaction
+       *
+       * @tags openmower
+       * @name mapReplace
+       * @summary Delete the current map and rplace all areas
+       * @request PUT:/openmower/map
+       */
+      mapReplace: (CallReq: MowerReplaceMapSrvReq, params: RequestParams = {}) =>
+        this.request<ApiOkResponse, ApiErrorResponse>({
+            path: `/openmower/map`,
+            method: "PUT",
+            body: CallReq,
+            type: ContentType.Json,
+            format: "json",
+            ...params,
+        }),
+          
 
       /**
        * @description set the docking point
