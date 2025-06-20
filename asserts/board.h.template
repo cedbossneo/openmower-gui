@@ -19,10 +19,13 @@ extern "C"
 * the specific board setting are set a the end of this file
 ********************************************************************************/
 {{if eq .BoardType "BOARD_YARDFORCE500"}}
-    #define BOARD_YARDFORCE500 1
+    #define BOARD_YARDFORCE500_VARIANT_ORIG 1
 {{end}}
 {{if eq .BoardType "BOARD_LUV1000RI"}}
     #define BOARD_LUV1000RI 1
+{{end}}
+{{if eq .BoardType "BOARD_YARDFORCE500B"}}
+    #define BOARD_YARDFORCE500_VARIANT_B 1
 {{end}}
 
 /* definition type don't modify */
@@ -33,46 +36,63 @@ extern "C"
 /* Publish Mowgli Topics */
 //#define ROS_PUBLISH_MOWGLI
 
+#define MAX_MPS {{.MaxMps}}          // Allow maximum speed of 1.0 m/s
+#define PWM_PER_MPS 300.0 // PWM value of 300 means 1 m/s bot speed so we divide by 4 to have correct robot speed but still progressive speed
+#define TICKS_PER_M {{.TickPerM}} // Motor Encoder ticks per meter
+#define WHEEL_BASE  {{.WheelBase}}        // The distance between the center of the wheels in meters
+
 /* different type of panel are possible */
 #define PANEL_TYPE_NONE 0
 #define PANEL_TYPE_YARDFORCE_500_CLASSIC 1
 #define PANEL_TYPE_YARDFORCE_LUV1000RI 2
 #define PANEL_TYPE_YARDFORCE_900_ECO 3
 
-#if defined(BOARD_YARDFORCE500)
-
+#if BOARD_YARDFORCE500_VARIANT_ORIG
+///////////////////////////
+// Yardforce 500 CLASSIC //
+///////////////////////////
+#define BLADEMOTOR_USART_INSTANCE USART3
+#define VALID_BOARD_DEFINED 1
 #define PANEL_TYPE {{.PanelType}}
 #define BLADEMOTOR_LENGTH_RECEIVED_MSG 16
 #define DEBUG_TYPE DEBUG_TYPE_UART
-
-#define MAX_MPS {{.MaxMps}}          // Allow maximum speed of 1.0 m/s
-#define PWM_PER_MPS 300.0 // PWM value of 300 means 1 m/s bot speed so we divide by 4 to have correct robot speed but still progressive speed
-#define TICKS_PER_M 300.0 // Motor Encoder ticks per meter
-#define WHEEL_BASE  0.325        // The distance between the center of the wheels in meters
-
 #define OPTION_ULTRASONIC 0
 #define OPTION_BUMPER 0
+#define BOARD_HAS_MASTER_USART 1
+
+#elif BOARD_YARDFORCE500_VARIANT_B
+/////////////////////
+// Yardforce 500 B //
+/////////////////////
+// TODO: Are those options valid?
+#define BLADEMOTOR_USART_INSTANCE USART6
+#define VALID_BOARD_DEFINED 1
+#define PANEL_TYPE {{.PanelType}}
+#define BLADEMOTOR_LENGTH_RECEIVED_MSG 16
+#define DEBUG_TYPE DEBUG_TYPE_SWO
+#define OPTION_ULTRASONIC 0
+#define OPTION_BUMPER 0
+#define BOARD_HAS_MASTER_USART 1
+
+/////////////////////////
+// Yardforce LUV1000Ri //
+/////////////////////////
 #elif defined(BOARD_LUV1000RI)
+#define VALID_BOARD_DEFINED 1
 #define PANEL_TYPE {{.PanelType}}
 #define BLADEMOTOR_LENGTH_RECEIVED_MSG 14
-
 #define DEBUG_TYPE 0
-
 #define OPTION_ULTRASONIC 1
 #define OPTION_BUMPER 0
-
-#define MAX_MPS {{.MaxMps}}          // Allow maximum speed of 1.0 m/s
-#define PWM_PER_MPS 300.0 // PWM value of 300 means 1 m/s bot speed so we divide by 4 to have correct robot speed but still progressive speed
-#define TICKS_PER_M 300.0 // Motor Encoder ticks per meter
-#define WHEEL_BASE 0.285   // The distance between the center of the wheels in meters
-
-#else
-
-#error "No board selection"
+#define BOARD_HAS_MASTER_USART 0
 #endif
 
 {{if .DisableEmergency }}
     #define I_DONT_NEED_MY_FINGERS              1      // disables EmergencyController() (no wheel lift, or tilt sensing and stopping the blade anymore)
+{{end}}
+
+{{if .PerimeterWire }}
+    #define OPTION_PERIMETER
 {{end}}
 
 /// nominal max charge current is 1.0 Amp
