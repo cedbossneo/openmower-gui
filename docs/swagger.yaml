@@ -363,6 +363,24 @@ paths:
       summary: clear the map
       tags:
       - openmower
+    put:
+      consumes:
+      - application/json
+      description: clear the map and insert areas
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OkResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: clear the map and insert areas
+      tags:
+      - openmower
   /openmower/map/area/add:
     post:
       consumes:

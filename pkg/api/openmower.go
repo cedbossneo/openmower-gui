@@ -4,6 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
@@ -12,9 +16,6 @@ import (
 	"github.com/docker/distribution/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"log"
-	"net/http"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -29,6 +30,7 @@ func OpenMowerRoutes(r *gin.RouterGroup, provider types.IRosProvider) {
 	AddMapAreaRoute(group, provider)
 	SetDockingPointRoute(group, provider)
 	ClearMapRoute(group, provider)
+	ReplaceMapRoute(group, provider)
 	SubscriberRoute(group, provider)
 	PublisherRoute(group, provider)
 }
@@ -76,6 +78,42 @@ func ClearMapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		if err != nil {
 			c.JSON(500, ErrorResponse{Error: err.Error()})
 		} else {
+			c.JSON(200, OkResponse{})
+		}
+	})
+}
+
+// ReplaceMapRoute delete a map area
+//
+// @Summary clear the map and insert areas
+// @Description clear the map and insert areas
+// @Tags openmower
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} OkResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /openmower/map [put]
+func ReplaceMapRoute(group *gin.RouterGroup, provider types.IRosProvider) {
+	group.PUT("/map", func(c *gin.Context) {
+		err := provider.CallService(c.Request.Context(), "/mower_map_service/clear_map", &mower_map.ClearMapSrv{}, &mower_map.ClearMapSrvReq{}, &mower_map.ClearMapSrvRes{})
+		if err != nil {
+			c.JSON(500, ErrorResponse{Error: err.Error()})
+			return
+		} else {
+			var CallReq mower_map.ReplaceMowingAreaSrvReq
+			err := unmarshalROSMessage[*mower_map.ReplaceMowingAreaSrvReq](c.Request.Body, &CallReq)
+			if err != nil {
+				c.JSON(500, ErrorResponse{Error: err.Error()})
+				return
+			}
+			for _, element := range CallReq.Areas {
+				err = provider.CallService(c.Request.Context(), "/mower_map_service/add_mowing_area", &mower_map.AddMowingAreaSrv{}, &element, &mower_map.AddMowingAreaSrvRes{})
+				if err != nil {
+					c.JSON(500, ErrorResponse{Error: err.Error()})
+					return
+				}
+			}
+
 			c.JSON(200, OkResponse{})
 		}
 	})
