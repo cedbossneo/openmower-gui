@@ -4,12 +4,12 @@ import {App, Button, Col, Input, Modal, Row, Slider, Typography} from "antd";
 import {useWS} from "../hooks/useWS.ts";
 import centroid from "@turf/centroid";
 import union from "@turf/union";
-import {featureCollection} from "@turf/helpers"
+import {featureCollection, polygon} from "@turf/helpers"
 import {ChangeEvent, useCallback, useEffect, useMemo, useState} from "react";
 import {AbsolutePose, Map as MapType, MapArea, Marker, MarkerArray, Path, Twist} from "../types/ros.ts";
 import DrawControl from "../components/DrawControl.tsx";
 import Map, {Layer, Source} from 'react-map-gl';
-import type {Feature} from 'geojson';
+import type {Feature, GeoJsonProperties} from 'geojson';
 import {FeatureCollection, LineString, Polygon, Position} from "geojson";
 import {MowerActions, useMowerAction} from "../components/MowerActions.tsx";
 import {MowerMapMapArea} from "../api/Api.ts";
@@ -804,10 +804,83 @@ export const MapPage = () => {
         input.click();
     };
 
+    function polygonFromLineString(f: Feature): Feature<Polygon, GeoJsonProperties> {
+        let line = f as Feature<LineString, GeoJsonProperties>
+        const coords = [...line.geometry.coordinates];
+      
+        // Ensure the LineString is closed
+        const first = coords[0];
+        const last = coords[coords.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          coords.push(first); // Close the ring
+        }
+        let p = polygon([coords], line.properties);
+        p.id = line.id;
+        console.log(p);
+        return p;
+    }
+
+    // JOSM discards ids, so save them inside properties
+    function geoJsonJosmEncode(f: Feature): Feature {
+        f.properties ??= {};
+        let id = f.id?.toString()
+        // f.properties.id = id;
+        for (var t of ["obstacle", "navigation", "area", "dock", "mower", "mower-heading"])
+            if(id?.includes(t))
+                f.properties.type ??= t
+        return f;
+    }
+
+    function geoJsonJosmDecode(f: Feature): Feature {
+        if(!f.properties)
+            return f;
+
+        if(!f.id) {
+            // infer id from type or color, for old geojson downloads
+            f.properties.type ??= ({
+                "white":    "navigation",
+                "#01d30d":  "area",
+                "#bf0000":  "obstacle",
+                "#ff00f2":  "dock",
+                "#00a6ff":  "mower",
+                "#ff0000":  "mower-heading",
+            } as any)[f.properties?.color];
+
+            let index = f.properties?.index;
+            let type = f.properties?.type;
+            switch(type){
+                case "dock":
+                case "mower":
+                case "mower-heading":
+                    f.id = type;
+                    break;
+                case "area":
+                case "navigation":
+                    f.id = type +"-"+ index+"-area-0";
+                    break;
+                case "obstacle":
+                default:
+                    f.id = "area-"+index+"-obstacle-"+Math.random();
+                    break;
+            }
+        }
+        // try backup id
+        if(!f.id) {
+            f.id = f.properties?.id;
+        }
+        delete f.properties?.id;
+
+
+        // Fix possibly mangled geometry type
+        if(f.id?.toString().includes("area") && f.geometry.type == "LineString")
+            f = polygonFromLineString(f);
+        return f
+    }
+
     const handleDownloadGeoJSON = () => {
         const geojson = {
             type: "FeatureCollection",
-            features: Object.values(features)
+            features: Object.values(features).map(geoJsonJosmEncode)
         };
         const a = document.createElement("a");
         document.body.appendChild(a);
@@ -834,7 +907,7 @@ export const MapPage = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const geojson = JSON.parse(event.target?.result as string) as FeatureCollection;
-                const newFeatures = geojson.features.reduce((acc, feature) => {
+                const newFeatures = geojson.features.map(geoJsonJosmDecode).reduce((acc, feature) => {
                     acc[feature.id as string] = feature;
                     return acc;
                 }, {} as Record<string, Feature>);
