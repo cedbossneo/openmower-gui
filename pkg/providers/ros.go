@@ -118,6 +118,8 @@ func (p *RosProvider) getNode() (*goroslib.Node, error) {
 		Name:          string(nodeName),
 		MasterAddress: string(masterUri),
 		Host:          string(nodeHost),
+		ReadTimeout:   time.Minute,
+		WriteTimeout:  time.Minute,
 	})
 	return p.node, err
 
