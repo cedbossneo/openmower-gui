@@ -218,7 +218,7 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 			}
 			switch highLevelStatus.StateName {
 			case "MOWING":
-				sLastMessage, ok := p.lastMessage["/mower/status"]
+				sLastMessage, ok := p.lastMessage["/ll/mower_status"]
 				if ok {
 					var status mower_msgs.Status
 					err := json.Unmarshal(sLastMessage, &status)
@@ -350,11 +350,11 @@ func (p *RosProvider) initSubscribers() error {
 	if p.statusSubscriber == nil {
 		p.statusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:      node,
-			Topic:     "/mower/status",
-			Callback:  cbHandler[*mower_msgs.Status](p, "/mower/status"),
+			Topic:     "/ll/mower_status",
+			Callback:  cbHandler[*mower_msgs.Status](p, "/ll/mower_status"),
 			QueueSize: 1,
 		})
-		logrus.Info("Subscribed to /mower/status")
+		logrus.Info("Subscribed to /ll/mower_status")
 	}
 	if p.highLevelStatusSubscriber == nil {
 		p.highLevelStatusSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -368,11 +368,11 @@ func (p *RosProvider) initSubscribers() error {
 	if p.gpsSubscriber == nil {
 		p.gpsSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:      node,
-			Topic:     "/xbot_driver_gps/xb_pose",
-			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/xbot_driver_gps/xb_pose"),
+			Topic:     "/ll/position/gps",
+			Callback:  cbHandler[*xbot_msgs.AbsolutePose](p, "/ll/position/gps"),
 			QueueSize: 1,
 		})
-		logrus.Info("Subscribed to /xbot_driver_gps/xb_pose")
+		logrus.Info("Subscribed to /ll/position/gps")
 	}
 	if p.poseSubscriber == nil {
 		p.poseSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
@@ -386,11 +386,11 @@ func (p *RosProvider) initSubscribers() error {
 	if p.imuSubscriber == nil {
 		p.imuSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{
 			Node:      node,
-			Topic:     "/imu/data_raw",
-			Callback:  cbHandler[*sensor_msgs.Imu](p, "/imu/data_raw"),
+			Topic:     "/ll/imu/data_raw",
+			Callback:  cbHandler[*sensor_msgs.Imu](p, "/ll/imu/data_raw"),
 			QueueSize: 1,
 		})
-		logrus.Info("Subscribed to /imu/data_raw")
+		logrus.Info("Subscribed to /ll/imu/data_raw")
 	}
 	if p.ticksSubscriber == nil {
 		p.ticksSubscriber, err = goroslib.NewSubscriber(goroslib.SubscriberConf{

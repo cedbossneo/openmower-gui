@@ -93,9 +93,9 @@ See [ros.ts](web%2Fsrc%2Ftypes%2Fros.ts) for topic types
 Available topics :
 
 - /gui/mower_logic/current_state
-- /gui/mower/status
+- /gui/ll/mower_status
 - /gui/xbot_positioning/xb_pose
-- /gui/imu/data_raw
+- /gui/ll/imu/data_raw
 - /gui/mower/wheel_ticks
 - /gui/xbot_monitoring/map
 - /gui/slic3r_coverage_planner/path_marker_array
