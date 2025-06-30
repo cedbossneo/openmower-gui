@@ -3,14 +3,16 @@
 package xbot_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 )
 
+
 type MapOverlayPolygon struct {
-	msg.Package `ros:"xbot_msgs"`
-	Polygon     geometry_msgs.Polygon
-	Color       string
-	Closed      bool
-	LineWidth   float32
+    msg.Package `ros:"xbot_msgs"`
+    Polygon geometry_msgs.Polygon
+    Color string
+    Closed bool
+    LineWidth float32
 }
+

@@ -4,6 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
@@ -12,9 +16,6 @@ import (
 	"github.com/docker/distribution/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"log"
-	"net/http"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{

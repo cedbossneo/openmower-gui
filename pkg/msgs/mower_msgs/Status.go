@@ -3,34 +3,33 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
-	"time"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
+    "time"
 )
 
+
 const (
-	Status_MOWER_STATUS_INITIALIZING uint8 = 0
-	Status_MOWER_STATUS_OK           uint8 = 255
+    Status_MOWER_STATUS_INITIALIZING uint8 = 0
+    Status_MOWER_STATUS_OK uint8 = 255
 )
 
 type Status struct {
-	msg.Package          `ros:"mower_msgs"`
-	msg.Definitions      `ros:"uint8 MOWER_STATUS_INITIALIZING=0,uint8 MOWER_STATUS_OK=255"`
-	Stamp                time.Time
-	MowerStatus          uint8
-	RaspberryPiPower     bool
-	GpsPower             bool
-	EscPower             bool
-	RainDetected         bool
-	SoundModuleAvailable bool
-	SoundModuleBusy      bool
-	UiBoardAvailable     bool
-	UltrasonicRanges     [5]float32
-	Emergency            bool
-	VCharge              float32
-	VBattery             float32
-	ChargeCurrent        float32
-	MowEnabled           bool
-	LeftEscStatus        ESCStatus
-	RightEscStatus       ESCStatus
-	MowEscStatus         ESCStatus
+    msg.Package `ros:"mower_msgs"`
+    msg.Definitions `ros:"uint8 MOWER_STATUS_INITIALIZING=0,uint8 MOWER_STATUS_OK=255"`
+    Stamp time.Time
+    MowerStatus uint8
+    RaspberryPiPower bool
+    IsCharging bool
+    EscPower bool
+    RainDetected bool
+    SoundModuleAvailable bool
+    SoundModuleBusy bool
+    UiBoardAvailable bool
+    MowEnabled bool
+    MowerEscStatus uint8
+    MowerEscTemperature float32
+    MowerEscCurrent float32
+    MowerMotorTemperature float32
+    MowerMotorRpm float32
 }
+

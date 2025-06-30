@@ -3,13 +3,15 @@
 package dynamic_reconfigure
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type ConfigDescription struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	Groups      []Group
-	Max         Config
-	Min         Config
-	Dflt        Config
+    msg.Package `ros:"dynamic_reconfigure"`
+    Groups []Group
+    Max Config
+    Min Config
+    Dflt Config
 }
+

@@ -3,14 +3,16 @@
 package dynamic_reconfigure
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type ParamDescription struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	Name        string
-	Type        string
-	Level       uint32
-	Description string
-	EditMethod  string
+    msg.Package `ros:"dynamic_reconfigure"`
+    Name string
+    Type string
+    Level uint32
+    Description string
+    EditMethod string
 }
+

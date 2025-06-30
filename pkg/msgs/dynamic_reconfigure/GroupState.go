@@ -3,13 +3,15 @@
 package dynamic_reconfigure
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type GroupState struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	Name        string
-	State       bool
-	Id          int32
-	Parent      int32
+    msg.Package `ros:"dynamic_reconfigure"`
+    Name string
+    State bool
+    Id int32
+    Parent int32
 }
+

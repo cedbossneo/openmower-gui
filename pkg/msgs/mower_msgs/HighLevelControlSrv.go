@@ -3,30 +3,33 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 const (
-	HighLevelControlSrvReq_COMMAND_START           uint8 = 1
-	HighLevelControlSrvReq_COMMAND_HOME            uint8 = 2
-	HighLevelControlSrvReq_COMMAND_S1              uint8 = 3
-	HighLevelControlSrvReq_COMMAND_S2              uint8 = 4
-	HighLevelControlSrvReq_COMMAND_RESET_EMERGENCY uint8 = 254
-	HighLevelControlSrvReq_COMMAND_DELETE_MAPS     uint8 = 255
+    HighLevelControlSrvReq_COMMAND_START uint8 = 1
+    HighLevelControlSrvReq_COMMAND_HOME uint8 = 2
+    HighLevelControlSrvReq_COMMAND_S1 uint8 = 3
+    HighLevelControlSrvReq_COMMAND_S2 uint8 = 4
+    HighLevelControlSrvReq_COMMAND_RESET_EMERGENCY uint8 = 254
+    HighLevelControlSrvReq_COMMAND_DELETE_MAPS uint8 = 255
 )
 
 type HighLevelControlSrvReq struct {
-	msg.Package     `ros:"mower_msgs"`
-	msg.Definitions `ros:"uint8 COMMAND_START=1,uint8 COMMAND_HOME=2,uint8 COMMAND_S1=3,uint8 COMMAND_S2=4,uint8 COMMAND_RESET_EMERGENCY=254,uint8 COMMAND_DELETE_MAPS=255"`
-	Command         uint8
+    msg.Package `ros:"mower_msgs"`
+    msg.Definitions `ros:"uint8 COMMAND_START=1,uint8 COMMAND_HOME=2,uint8 COMMAND_S1=3,uint8 COMMAND_S2=4,uint8 COMMAND_RESET_EMERGENCY=254,uint8 COMMAND_DELETE_MAPS=255"`
+    Command uint8
 }
 
+
+
 type HighLevelControlSrvRes struct {
-	msg.Package `ros:"mower_msgs"`
+    msg.Package `ros:"mower_msgs"`
 }
 
 type HighLevelControlSrv struct {
-	msg.Package `ros:"mower_msgs"`
-	HighLevelControlSrvReq
-	HighLevelControlSrvRes
+    msg.Package `ros:"mower_msgs"`
+    HighLevelControlSrvReq
+    HighLevelControlSrvRes
 }

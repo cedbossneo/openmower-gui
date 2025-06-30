@@ -3,21 +3,24 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type MowerControlSrvReq struct {
-	msg.Package  `ros:"mower_msgs"`
-	MowEnabled   uint8
-	MowDirection uint8
+    msg.Package `ros:"mower_msgs"`
+    MowEnabled uint8
+    MowDirection uint8
 }
 
+
+
 type MowerControlSrvRes struct {
-	msg.Package `ros:"mower_msgs"`
+    msg.Package `ros:"mower_msgs"`
 }
 
 type MowerControlSrv struct {
-	msg.Package `ros:"mower_msgs"`
-	MowerControlSrvReq
-	MowerControlSrvRes
+    msg.Package `ros:"mower_msgs"`
+    MowerControlSrvReq
+    MowerControlSrvRes
 }

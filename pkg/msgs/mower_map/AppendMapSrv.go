@@ -3,20 +3,23 @@
 package mower_map
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type AppendMapSrvReq struct {
-	msg.Package `ros:"mower_map"`
-	Bagfile     string
+    msg.Package `ros:"mower_map"`
+    Bagfile string
 }
 
+
+
 type AppendMapSrvRes struct {
-	msg.Package `ros:"mower_map"`
+    msg.Package `ros:"mower_map"`
 }
 
 type AppendMapSrv struct {
-	msg.Package `ros:"mower_map"`
-	AppendMapSrvReq
-	AppendMapSrvRes
+    msg.Package `ros:"mower_map"`
+    AppendMapSrvReq
+    AppendMapSrvRes
 }

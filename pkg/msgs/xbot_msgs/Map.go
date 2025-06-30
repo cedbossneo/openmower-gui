@@ -3,18 +3,20 @@
 package xbot_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type Map struct {
-	msg.Package     `ros:"xbot_msgs"`
-	MapWidth        float64   `rosname:"mapWidth"`
-	MapHeight       float64   `rosname:"mapHeight"`
-	MapCenterX      float64   `rosname:"mapCenterX"`
-	MapCenterY      float64   `rosname:"mapCenterY"`
-	NavigationAreas []MapArea `rosname:"navigationAreas"`
-	WorkingArea     []MapArea `rosname:"workingArea"`
-	DockX           float64   `rosname:"dockX"`
-	DockY           float64   `rosname:"dockY"`
-	DockHeading     float64   `rosname:"dockHeading"`
+    msg.Package `ros:"xbot_msgs"`
+    MapWidth float64`rosname:"mapWidth"`
+    MapHeight float64`rosname:"mapHeight"`
+    MapCenterX float64`rosname:"mapCenterX"`
+    MapCenterY float64`rosname:"mapCenterY"`
+    NavigationAreas []MapArea`rosname:"navigationAreas"`
+    WorkingArea []MapArea`rosname:"workingArea"`
+    DockX float64`rosname:"dockX"`
+    DockY float64`rosname:"dockY"`
+    DockHeading float64`rosname:"dockHeading"`
 }
+

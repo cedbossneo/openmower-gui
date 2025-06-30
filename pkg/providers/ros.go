@@ -3,6 +3,9 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"sync"
+	"time"
+
 	"github.com/bluenviron/goroslib/v2"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 	"github.com/bluenviron/goroslib/v2/pkg/msgs/nav_msgs"
@@ -16,8 +19,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-	"sync"
-	"time"
 )
 
 type RosSubscriber struct {
@@ -225,7 +226,7 @@ func (p *RosProvider) initMowingPathSubscriber() error {
 						logrus.Error(xerrors.Errorf("failed to unmarshal status: %w", err))
 						return
 					}
-					if status.MowEscStatus.Tacho > 0 {
+					if status.MowerMotorRpm > 0 {
 						if p.mowingPath == nil {
 							p.mowingPath = &nav_msgs.Path{}
 							p.mowingPathOrigin = orb.LineString{}

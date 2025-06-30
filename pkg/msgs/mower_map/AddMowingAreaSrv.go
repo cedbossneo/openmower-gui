@@ -3,21 +3,24 @@
 package mower_map
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type AddMowingAreaSrvReq struct {
-	msg.Package      `ros:"mower_map"`
-	Area             MapArea
-	IsNavigationArea bool `rosname:"isNavigationArea"`
+    msg.Package `ros:"mower_map"`
+    Area MapArea
+    IsNavigationArea bool`rosname:"isNavigationArea"`
 }
 
+
+
 type AddMowingAreaSrvRes struct {
-	msg.Package `ros:"mower_map"`
+    msg.Package `ros:"mower_map"`
 }
 
 type AddMowingAreaSrv struct {
-	msg.Package `ros:"mower_map"`
-	AddMowingAreaSrvReq
-	AddMowingAreaSrvRes
+    msg.Package `ros:"mower_map"`
+    AddMowingAreaSrvReq
+    AddMowingAreaSrvRes
 }

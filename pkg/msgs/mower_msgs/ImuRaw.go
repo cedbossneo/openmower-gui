@@ -3,19 +3,21 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type ImuRaw struct {
-	msg.Package `ros:"mower_msgs"`
-	Dt          uint16
-	Ax          float64
-	Ay          float64
-	Az          float64
-	Gx          float64
-	Gy          float64
-	Gz          float64
-	Mx          float64
-	My          float64
-	Mz          float64
+    msg.Package `ros:"mower_msgs"`
+    Dt uint16
+    Ax float64
+    Ay float64
+    Az float64
+    Gx float64
+    Gy float64
+    Gz float64
+    Mx float64
+    My float64
+    Mz float64
 }
+

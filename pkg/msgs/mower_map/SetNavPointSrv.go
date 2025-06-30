@@ -3,21 +3,24 @@
 package mower_map
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 )
 
+
 type SetNavPointSrvReq struct {
-	msg.Package `ros:"mower_map"`
-	NavPose     geometry_msgs.Pose
+    msg.Package `ros:"mower_map"`
+    NavPose geometry_msgs.Pose
 }
 
+
+
 type SetNavPointSrvRes struct {
-	msg.Package `ros:"mower_map"`
+    msg.Package `ros:"mower_map"`
 }
 
 type SetNavPointSrv struct {
-	msg.Package `ros:"mower_map"`
-	SetNavPointSrvReq
-	SetNavPointSrvRes
+    msg.Package `ros:"mower_map"`
+    SetNavPointSrvReq
+    SetNavPointSrvRes
 }
