@@ -30,7 +30,7 @@ export const useMowerAction = () => {
 export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
     const {highLevelStatus} = useHighLevelStatus();
     const mowerAction = useMowerAction()
-    let actionMenuItems: {
+    const actionMenuItems: {
         key: string,
         label: string,
         actions: { command: string, args: any }[],
@@ -85,7 +85,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             }]
         },
         {
-            "key": "emergency_off",
+            key: "emergency_off",
             "label": "Emergency Off",
             "danger": true,
             actions: [{
@@ -96,7 +96,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             }]
         },
         {
-            "key": "mow_forward",
+            key: "mow_forward",
             "label": "Blade Forward",
             actions: [{
                 command: "mow_enabled",
@@ -104,7 +104,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             }]
         },
         {
-            "key": "mow_backward",
+            key: "mow_backward",
             "label": "Blade Backward",
             actions: [{
                 command: "mow_enabled",
@@ -112,7 +112,7 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             }]
         },
         {
-            "key": "mow_off",
+            key: "mow_off",
             "label": "Blade Off",
             "danger": true,
             actions: [{
@@ -134,23 +134,23 @@ export const MowerActions: React.FC<React.PropsWithChildren> = (props) => {
             {children}
             {children ? <Col><Divider type={"vertical"}/></Col> : null}
             <Col>
-                {highLevelStatus.StateName == "IDLE" ? <AsyncButton size={"small"} type="primary"
+                {highLevelStatus.StateName == "IDLE" ? <AsyncButton size={"small"} type="primary" key="btnHLC1" 
                                                                           onAsyncClick={mowerAction("high_level_control", {Command: 1})}
                 >Start</AsyncButton> : null}
-                {highLevelStatus.StateName !== "IDLE" ? <AsyncButton size={"small"} type="primary"
+                {highLevelStatus.StateName !== "IDLE" ? <AsyncButton size={"small"} type="primary" key="btnHLC2" 
                                                                            onAsyncClick={mowerAction("high_level_control", {Command: 2})}
                 >Home</AsyncButton> : null}
             </Col>
             <Col>
                 {!highLevelStatus.Emergency ?
-                    <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 1})}
+                    <AsyncButton danger size={"small"} key="btnEmergencyOn" onAsyncClick={mowerAction("emergency", {Emergency: 1})}
                     >Emergency On</AsyncButton> : null}
                 {highLevelStatus.Emergency ?
-                    <AsyncButton danger size={"small"} onAsyncClick={mowerAction("emergency", {Emergency: 0})}
+                    <AsyncButton danger size={"small"} key="btnEmergencyOff" onAsyncClick={mowerAction("emergency", {Emergency: 0})}
                     >Emergency Off</AsyncButton> : null}
             </Col>
             <Col>
-                <AsyncDropDownButton style={{display: "inline"}} size={"small"} menu={{
+                <AsyncDropDownButton style={{display: "inline"}}  key="drpActions"  size={"small"} menu={{
                     items: actionMenuItems,
                     onAsyncClick: async (e) => {
                         const item = actionMenuItems.find(item => item.key == e.key)
