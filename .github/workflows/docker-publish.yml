@@ -87,10 +87,15 @@ jobs:
           mkdir -p /tmp/digests
           digest="${{ steps.build-and-push.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
+      - name: sanitise arch name for artifact
+        run: |
+          clean=${{ matrix.arch }}
+          clean=${clean////-}
+          echo "ARTIFACT_NAME=digests-${clean}" >> $GITHUB_ENV
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests
+          name: digests-${{ env.ARTIFACT_NAME }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -100,9 +105,10 @@ jobs:
       - build
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: digests
+          pattern: digests-*
+          merge-multiple: true
           path: /tmp/digests
       - name: Set up QEMU (arm64)
         if: runner.arch != 'arm64'
