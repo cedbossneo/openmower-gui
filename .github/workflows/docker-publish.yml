@@ -10,10 +10,10 @@ on:
   #  - cron:  '30,0 * * * *'
   workflow_dispatch:
   push:
-    branches: [ "master" ]
+    branches: [ "V2-messages" ]
   pull_request:
     branches:
-      - 'master'
+      - 'V2-messages'
 
 # permissions are needed if pushing to ghcr.io
 permissions:
