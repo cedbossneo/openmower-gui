@@ -7,10 +7,10 @@ import (
 )
 
 
-type ActionInfo struct {
+type ActionResponse struct {
     msg.Package `ros:"xbot_msgs"`
     ActionId string
-    ActionName string
-    Enabled bool
+    RequestId string
+    Response string
 }
 

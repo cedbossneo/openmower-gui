@@ -3,20 +3,23 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type PerimeterControlSrvReq struct {
-	msg.Package `ros:"mower_msgs"`
-	ListenOn    uint8 `rosname:"listenOn"`
+    msg.Package `ros:"mower_msgs"`
+    ListenOn uint8`rosname:"listenOn"`
 }
 
+
+
 type PerimeterControlSrvRes struct {
-	msg.Package `ros:"mower_msgs"`
+    msg.Package `ros:"mower_msgs"`
 }
 
 type PerimeterControlSrv struct {
-	msg.Package `ros:"mower_msgs"`
-	PerimeterControlSrvReq
-	PerimeterControlSrvRes
+    msg.Package `ros:"mower_msgs"`
+    PerimeterControlSrvReq
+    PerimeterControlSrvRes
 }

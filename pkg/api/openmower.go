@@ -172,15 +172,15 @@ func SubscriberRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 		case "diagnostics":
 			def, err = subscribe(provider, c, conn, "/diagnostics", -1)
 		case "status":
-			def, err = subscribe(provider, c, conn, "/mower/status", -1)
+			def, err = subscribe(provider, c, conn, "/ll/mower_status", -1)
 		case "highLevelStatus":
 			def, err = subscribe(provider, c, conn, "/mower_logic/current_state", -1)
 		case "gps":
-			def, err = subscribe(provider, c, conn, "/xbot_driver_gps/xb_pose", 100)
+			def, err = subscribe(provider, c, conn, "/ll/position/gps", 100)
 		case "pose":
 			def, err = subscribe(provider, c, conn, "/xbot_positioning/xb_pose", 100)
 		case "imu":
-			def, err = subscribe(provider, c, conn, "/imu/data_raw", 100)
+			def, err = subscribe(provider, c, conn, "/ll/imu/data_raw", 100)
 		case "ticks":
 			def, err = subscribe(provider, c, conn, "/mower/wheel_ticks", 100)
 		case "map":

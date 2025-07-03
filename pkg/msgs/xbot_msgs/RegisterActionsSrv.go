@@ -3,21 +3,24 @@
 package xbot_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type RegisterActionsSrvReq struct {
-	msg.Package `ros:"xbot_msgs"`
-	NodePrefix  string
-	Actions     []ActionInfo
+    msg.Package `ros:"xbot_msgs"`
+    NodePrefix string
+    Actions []ActionInfo
 }
 
+
+
 type RegisterActionsSrvRes struct {
-	msg.Package `ros:"xbot_msgs"`
+    msg.Package `ros:"xbot_msgs"`
 }
 
 type RegisterActionsSrv struct {
-	msg.Package `ros:"xbot_msgs"`
-	RegisterActionsSrvReq
-	RegisterActionsSrvRes
+    msg.Package `ros:"xbot_msgs"`
+    RegisterActionsSrvReq
+    RegisterActionsSrvRes
 }

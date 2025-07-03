@@ -3,15 +3,17 @@
 package mower_map
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type MapAreas struct {
-	msg.Package     `ros:"mower_map"`
-	MapWidth        float64   `rosname:"mapWidth"`
-	MapHeight       float64   `rosname:"mapHeight"`
-	MapCenterX      float64   `rosname:"mapCenterX"`
-	MapCenterY      float64   `rosname:"mapCenterY"`
-	NavigationAreas []MapArea `rosname:"navigationAreas"`
-	MowingAreas     []MapArea `rosname:"mowingAreas"`
+    msg.Package `ros:"mower_map"`
+    MapWidth float64`rosname:"mapWidth"`
+    MapHeight float64`rosname:"mapHeight"`
+    MapCenterX float64`rosname:"mapCenterX"`
+    MapCenterY float64`rosname:"mapCenterY"`
+    NavigationAreas []MapArea`rosname:"navigationAreas"`
+    MowingAreas []MapArea`rosname:"mowingAreas"`
 }
+

@@ -3,21 +3,24 @@
 package mower_map
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
-	"github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msgs/geometry_msgs"
 )
 
+
 type SetDockingPointSrvReq struct {
-	msg.Package `ros:"mower_map"`
-	DockingPose geometry_msgs.Pose
+    msg.Package `ros:"mower_map"`
+    DockingPose geometry_msgs.Pose
 }
 
+
+
 type SetDockingPointSrvRes struct {
-	msg.Package `ros:"mower_map"`
+    msg.Package `ros:"mower_map"`
 }
 
 type SetDockingPointSrv struct {
-	msg.Package `ros:"mower_map"`
-	SetDockingPointSrvReq
-	SetDockingPointSrvRes
+    msg.Package `ros:"mower_map"`
+    SetDockingPointSrvReq
+    SetDockingPointSrvRes
 }

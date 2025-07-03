@@ -7,20 +7,19 @@ import (
 )
 
 
-type GetMowingAreaSrvReq struct {
+type PersistNextGlobalPlanSrvReq struct {
     msg.Package `ros:"mower_map"`
-    Index uint32
+    Persist bool
 }
 
 
 
-type GetMowingAreaSrvRes struct {
+type PersistNextGlobalPlanSrvRes struct {
     msg.Package `ros:"mower_map"`
-    Area MapArea
 }
 
-type GetMowingAreaSrv struct {
+type PersistNextGlobalPlanSrv struct {
     msg.Package `ros:"mower_map"`
-    GetMowingAreaSrvReq
-    GetMowingAreaSrvRes
+    PersistNextGlobalPlanSrvReq
+    PersistNextGlobalPlanSrvRes
 }

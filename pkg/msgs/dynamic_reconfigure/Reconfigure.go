@@ -3,21 +3,24 @@
 package dynamic_reconfigure
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 type ReconfigureReq struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	Config      Config
+    msg.Package `ros:"dynamic_reconfigure"`
+    Config Config
 }
 
+
+
 type ReconfigureRes struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	Config      Config
+    msg.Package `ros:"dynamic_reconfigure"`
+    Config Config
 }
 
 type Reconfigure struct {
-	msg.Package `ros:"dynamic_reconfigure"`
-	ReconfigureReq
-	ReconfigureRes
+    msg.Package `ros:"dynamic_reconfigure"`
+    ReconfigureReq
+    ReconfigureRes
 }

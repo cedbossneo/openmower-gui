@@ -4,13 +4,15 @@ package mower_msgs
 
 import (
     "github.com/bluenviron/goroslib/v2/pkg/msg"
+    "time"
 )
 
 
-type Perimeter struct {
+type Emergency struct {
     msg.Package `ros:"mower_msgs"`
-    Left float32
-    Center float32
-    Right float32
+    Stamp time.Time
+    ActiveEmergency bool
+    LatchedEmergency bool
+    Reason string
 }
 

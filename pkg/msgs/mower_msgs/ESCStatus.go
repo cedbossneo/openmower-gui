@@ -3,24 +3,26 @@
 package mower_msgs
 
 import (
-	"github.com/bluenviron/goroslib/v2/pkg/msg"
+    "github.com/bluenviron/goroslib/v2/pkg/msg"
 )
 
+
 const (
-	ESCStatus_ESC_STATUS_DISCONNECTED uint8 = 99
-	ESCStatus_ESC_STATUS_ERROR        uint8 = 100
-	ESCStatus_ESC_STATUS_STALLED      uint8 = 150
-	ESCStatus_ESC_STATUS_OK           uint8 = 200
-	ESCStatus_ESC_STATUS_RUNNING      uint8 = 201
+    ESCStatus_ESC_STATUS_DISCONNECTED uint8 = 99
+    ESCStatus_ESC_STATUS_ERROR uint8 = 100
+    ESCStatus_ESC_STATUS_STALLED uint8 = 150
+    ESCStatus_ESC_STATUS_OK uint8 = 200
+    ESCStatus_ESC_STATUS_RUNNING uint8 = 201
 )
 
 type ESCStatus struct {
-	msg.Package      `ros:"mower_msgs"`
-	msg.Definitions  `ros:"uint8 ESC_STATUS_DISCONNECTED=99,uint8 ESC_STATUS_ERROR=100,uint8 ESC_STATUS_STALLED=150,uint8 ESC_STATUS_OK=200,uint8 ESC_STATUS_RUNNING=201"`
-	Status           uint8
-	Current          float32
-	Tacho            uint32
-	Rpm              int16
-	TemperatureMotor float32
-	TemperaturePcb   float32
+    msg.Package `ros:"mower_msgs"`
+    msg.Definitions `ros:"uint8 ESC_STATUS_DISCONNECTED=99,uint8 ESC_STATUS_ERROR=100,uint8 ESC_STATUS_STALLED=150,uint8 ESC_STATUS_OK=200,uint8 ESC_STATUS_RUNNING=201"`
+    Status uint8
+    Current float32
+    Tacho uint32
+    Rpm int16
+    TemperatureMotor float32
+    TemperaturePcb float32
 }
+
