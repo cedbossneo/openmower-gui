@@ -110,12 +110,20 @@ export const SettingsDesc: Record<string, Setting> = {
                 label: "PS3"
             },
             {
+                id: "shield",
+                label: "Shield"
+            },
+            {
                 id: "steam_stick",
                 label: "Steam Stick"
             },
             {
                 id: "steam_touch",
                 label: "Steam Touch"
+            },
+            {
+                id: "switch_pro",
+                label: "Switch Pro"
             }
         ]
     },
