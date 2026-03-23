@@ -28,6 +28,13 @@ func main() {
 	if string(mqttEnabled) == "true" {
 		providers.NewMqttProvider(rosProvider, dbProvider)
 	}
+	haEnabled, err := dbProvider.Get("system.ha.enabled")
+	if err != nil {
+		panic(err)
+	}
+	if string(haEnabled) == "true" {
+		providers.NewHomeAssistantProvider(dbProvider)
+	}
 	providers.NewSchedulerProvider(rosProvider, dbProvider)
 	api.NewAPI(dbProvider, dockerProvider, rosProvider, firmwareProvider, ubloxProvider)
 }

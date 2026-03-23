@@ -80,41 +80,6 @@ export const SettingsDesc: Record<string, Setting> = {
         defaultValue: "/config/mower_config.sh",
         description: "Mower config file",
     },
-    "system.mqtt.enabled": {
-        settingType: SettingType.Db,
-        section: "GUI MQTT",
-        type: SettingValueType.Boolean,
-        defaultValue: false,
-        description: "Enable GUI MQTT",
-    },
-    "system.mqtt.host": {
-        settingType: SettingType.Db,
-        section: "GUI MQTT",
-        type: SettingValueType.String,
-        defaultValue: ":1883",
-        description: "GUI MQTT host",
-    },
-    "system.mqtt.prefix": {
-        settingType: SettingType.Db,
-        section: "GUI MQTT",
-        type: SettingValueType.String,
-        defaultValue: "/gui",
-        description: "GUI MQTT prefix",
-    },
-    "system.homekit.enabled": {
-        settingType: SettingType.Db,
-        section: "HomeKit",
-        type: SettingValueType.Boolean,
-        defaultValue: false,
-        description: "Enable HomeKit",
-    },
-    "system.homekit.pincode": {
-        settingType: SettingType.Db,
-        section: "HomeKit",
-        type: SettingValueType.String,
-        defaultValue: "00102003",
-        description: "HomeKit Pin Code",
-    },
     "system.ros.nodeName": {
         settingType: SettingType.Db,
         section: "ROS",
@@ -135,7 +100,7 @@ export const SettingsDesc: Record<string, Setting> = {
         type: SettingValueType.String,
         defaultValue: "localhost",
         description: "ROS node host",
-    }
+    },
 }
 export type SettingsConfig = {
     [P in keyof typeof SettingsDesc]: Record<P, typeof SettingsDesc[P]['defaultValue']>;

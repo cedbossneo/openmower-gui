@@ -27,6 +27,12 @@ var EnvFallbacks = map[string]string{
 	"system.ros.nodeName":     "ROS_NODE_NAME",
 	"system.ros.nodeHost":     "ROS_NODE_HOST",
 	"system.homekit.pincode":  "HOMEKIT_PINCODE",
+	"system.ha.enabled":       "HA_ENABLED",
+	"system.ha.mqtt.hostname": "HA_MQTT_HOSTNAME",
+	"system.ha.mqtt.port":     "HA_MQTT_PORT",
+	"system.ha.mqtt.user":     "HA_MQTT_USER",
+	"system.ha.mqtt.password": "HA_MQTT_PASSWORD",
+	"system.ha.device.name":   "HA_DEVICE_NAME",
 }
 var Defaults = map[string]string{
 	"system.api.addr":         ":4006",
@@ -44,6 +50,12 @@ var Defaults = map[string]string{
 	"system.ros.masterUri":    "http://localhost:11311",
 	"system.ros.nodeName":     "openmower-gui",
 	"system.ros.nodeHost":     "localhost",
+	"system.ha.enabled":       "false",
+	"system.ha.mqtt.hostname": "",
+	"system.ha.mqtt.port":     "1883",
+	"system.ha.mqtt.user":     "",
+	"system.ha.mqtt.password": "",
+	"system.ha.device.name":   "Mowgli",
 }
 
 func (d *DBProvider) Set(key string, value []byte) error {

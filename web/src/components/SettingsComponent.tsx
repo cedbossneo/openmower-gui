@@ -26,21 +26,8 @@ export const SettingsComponent: React.FC<{
             createForm<SettingsConfig>({
                 validateFirst: true,
                 effects: (form) => {
-                    onFieldValueChange('system.mqtt.enabled', (field) => {
-                        form.setFieldState('*(system.mqtt.host,system.mqtt.prefix)', (state) => {
-                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                            state.display = field.value ? "visible" : "hidden";
-                        })
-                    })
-                    onFieldValueChange('system.homekit.enabled', (field) => {
-                        form.setFieldState('*(system.homekit.pincode)', (state) => {
-                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
-                            state.display = field.value ? "visible" : "hidden";
-                        })
-                    })
                     onFieldValueChange('system.map.enabled', (field) => {
                         form.setFieldState('*(system.map.tileServer,system.map.tileUri)', (state) => {
-                            //For the initial linkage, if the field cannot be found, setFieldState will push the update into the update queue until the field appears before performing the operation
                             state.display = field.value ? "visible" : "hidden";
                         })
                     })
