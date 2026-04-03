@@ -30,6 +30,30 @@
           "default": 0.0,
           "description": "Wheel axle offset from base_link in metres (0 = base_link at wheel axis)."
         },
+        "chassis_center_x": {
+          "type": "number",
+          "title": "Chassis Center X",
+          "default": 0.18,
+          "description": "Distance from base_link (wheel axis) to chassis geometric centre in metres."
+        },
+        "chassis_length": {
+          "type": "number",
+          "title": "Chassis Length",
+          "default": 0.54,
+          "description": "Chassis length in metres."
+        },
+        "chassis_width": {
+          "type": "number",
+          "title": "Chassis Width",
+          "default": 0.40,
+          "description": "Chassis width in metres."
+        },
+        "chassis_height": {
+          "type": "number",
+          "title": "Chassis Height",
+          "default": 0.19,
+          "description": "Chassis height in metres."
+        },
         "ticks_per_revolution": {
           "type": "integer",
           "title": "Encoder Ticks per Revolution",
