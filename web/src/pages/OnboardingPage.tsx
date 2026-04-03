@@ -98,7 +98,7 @@ const MOWER_MODELS = [
         description: "Most common model. 28V battery, 18cm blade, rear-wheel drive.",
         tag: "Popular",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 24.0,
             battery_critical_voltage: 23.0,
@@ -109,7 +109,7 @@ const MOWER_MODELS = [
         label: "YardForce 500B",
         description: "500 B variant with different blade motor UART and panel layout.",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 24.0,
             battery_critical_voltage: 23.0,
@@ -120,7 +120,7 @@ const MOWER_MODELS = [
         label: "YardForce SA650",
         description: "Larger model with higher encoder resolution (1964 ticks/m).",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 24.0,
             battery_critical_voltage: 23.0,
@@ -131,7 +131,7 @@ const MOWER_MODELS = [
         label: "YardForce 900 ECO",
         description: "Larger 900 ECO model with wider chassis.",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.325, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 24.0,
             battery_critical_voltage: 23.0,
@@ -142,7 +142,7 @@ const MOWER_MODELS = [
         label: "YardForce LUV1000RI",
         description: "LUV1000RI model with narrower wheelbase (0.285m) and ultrasonic sensor.",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.285, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.285, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 24.0,
             battery_critical_voltage: 23.0,
@@ -153,7 +153,7 @@ const MOWER_MODELS = [
         label: "Sabo",
         description: "Sabo mower with wider wheelbase (0.45m) and higher charge current.",
         defaults: {
-            wheel_radius: 0.04475, wheel_track: 0.45, wheel_x_offset: -0.18,
+            wheel_radius: 0.04475, wheel_track: 0.45, wheel_x_offset: 0.0,
             blade_radius: 0.09, tool_width: 0.18, ticks_per_revolution: 1050,
             battery_full_voltage: 28.5, battery_empty_voltage: 21.0,
             battery_critical_voltage: 20.0,

@@ -417,8 +417,8 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
     const resetSensor = useCallback(
         (meta: SensorMeta) => {
             const defaults: Record<string, number> = {
-                lidar_x: 0.2, lidar_y: 0, lidar_z: 0.22, lidar_yaw: 0,
-                imu_x: 0, imu_y: 0, imu_z: 0.095, imu_yaw: 0,
+                lidar_x: 0.38, lidar_y: 0, lidar_z: 0.22, lidar_yaw: 0,
+                imu_x: 0.18, imu_y: 0, imu_z: 0.095, imu_yaw: 0,
                 gps_antenna_x: 0, gps_antenna_y: 0, gps_antenna_z: 0.2,
             };
             onChange(meta.xKey, defaults[meta.xKey] ?? 0);

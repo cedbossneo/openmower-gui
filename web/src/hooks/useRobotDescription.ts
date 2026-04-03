@@ -22,9 +22,9 @@ const DEFAULTS: RobotGeometry = {
     wheelRadius: 0.04475,
     wheelWidth: 0.04,
     wheelTrack: 0.40,
-    wheelXOffset: -0.18,
+    wheelXOffset: 0.0,
     casterRadius: 0.03,
-    casterXOffset: 0.22,
+    casterXOffset: 0.40,
     casterTrack: 0.36,
     bladeRadius: 0.09,
 };
