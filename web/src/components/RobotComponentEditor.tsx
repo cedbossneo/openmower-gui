@@ -248,27 +248,54 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
         const arrowRight = toSvg(ccx + halfL + 0.01, -0.02, cx, cy);
         const arrowColor = mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)";
 
-        // Dock platform behind the robot (robot backs onto it)
-        const dockColor = mode === "dark" ? "#444" : "#888";
-        const dockStroke = mode === "dark" ? "#666" : "#666";
-        const dockW = (robot.baseWidth + 0.06) * SCALE; // slightly wider than robot
-        const dockH = 0.08 * SCALE; // dock depth
-        const dockX = cx + (robot.wheelXOffset - 0.04) * SCALE - dockH; // behind wheels
-        const dockY = cy - dockW / 2;
+        // Dock charging station behind the robot
+        const dockFill = mode === "dark" ? "#333" : "#999";
+        const dockStroke = mode === "dark" ? "#555" : "#777";
+        const contactColor = mode === "dark" ? "#c90" : "#d4a017";
+        const dockLabelColor = mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)";
+        // Base plate dimensions (slightly wider/deeper than robot)
+        const plateW = (robot.baseWidth + 0.08) * SCALE;
+        const plateH = 0.12 * SCALE;
+        const plateX = cx + (robot.wheelXOffset - 0.02) * SCALE - plateH;
+        const plateY = cy - plateW / 2;
+        // Back wall
+        const wallH = 0.02 * SCALE;
+        const wallTall = plateW * 0.6; // shorter than plate
+        // Charging contacts (two strips)
+        const contactW = 0.015 * SCALE;
+        const contactH = 0.04 * SCALE;
+        const contactGap = robot.wheelTrack * 0.35 * SCALE;
 
         return (
             <g>
-                {/* Dock platform */}
+                {/* Dock base plate */}
                 <rect
-                    x={dockX} y={dockY} width={dockH} height={dockW}
-                    rx={3} ry={3}
-                    fill={dockColor} stroke={dockStroke} strokeWidth={1.5} opacity={0.6}
+                    x={plateX} y={plateY} width={plateH} height={plateW}
+                    rx={4} ry={4}
+                    fill={dockFill} stroke={dockStroke} strokeWidth={1.5} opacity={0.55}
+                />
+                {/* Back wall (raised edge) */}
+                <rect
+                    x={plateX - wallH * 0.3} y={cy - wallTall / 2}
+                    width={wallH} height={wallTall}
+                    rx={2} ry={2}
+                    fill={mode === "dark" ? "#555" : "#777"} opacity={0.7}
+                />
+                {/* Charging contacts (two copper strips) */}
+                <rect
+                    x={plateX + plateH * 0.5} y={cy - contactGap - contactH / 2}
+                    width={contactW} height={contactH}
+                    rx={1} fill={contactColor} opacity={0.85}
+                />
+                <rect
+                    x={plateX + plateH * 0.5} y={cy + contactGap - contactH / 2}
+                    width={contactW} height={contactH}
+                    rx={1} fill={contactColor} opacity={0.85}
                 />
                 <text
-                    x={dockX + dockH / 2} y={dockY - 4}
+                    x={plateX + plateH / 2} y={plateY - 5}
                     textAnchor="middle" fontSize={7}
-                    fill={mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)"}
-                    fontFamily="monospace"
+                    fill={dockLabelColor} fontFamily="monospace"
                 >
                     dock
                 </text>
