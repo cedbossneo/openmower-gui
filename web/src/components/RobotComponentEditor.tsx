@@ -248,23 +248,26 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
         const arrowRight = toSvg(ccx + halfL + 0.01, -0.02, cx, cy);
         const arrowColor = mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)";
 
-        // Dock charging station behind the robot
+        // Dock charging station in front of the robot (robot drives forward to dock)
         const dockFill = mode === "dark" ? "#333" : "#999";
         const dockStroke = mode === "dark" ? "#555" : "#777";
         const contactColor = mode === "dark" ? "#c90" : "#d4a017";
         const dockLabelColor = mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.35)";
-        // Base plate dimensions (slightly wider/deeper than robot)
+        // Base plate in front of chassis
+        const frontEdge = ccx + halfL;
         const plateW = (robot.baseWidth + 0.08) * SCALE;
         const plateH = 0.12 * SCALE;
-        const plateX = cx + (robot.wheelXOffset - 0.02) * SCALE - plateH;
+        const plateX = cx + (frontEdge + 0.02) * SCALE; // just in front of robot
         const plateY = cy - plateW / 2;
-        // Back wall
+        // Back wall (the wall the robot pushes against)
         const wallH = 0.02 * SCALE;
-        const wallTall = plateW * 0.6; // shorter than plate
-        // Charging contacts (two strips)
+        const wallTall = plateW * 0.6;
+        const wallX = plateX + plateH; // far edge of plate
+        // Charging contacts (two copper strips on the dock face)
         const contactW = 0.015 * SCALE;
         const contactH = 0.04 * SCALE;
         const contactGap = robot.wheelTrack * 0.35 * SCALE;
+        const contactX = plateX + plateH * 0.1; // near the robot-facing edge
 
         return (
             <g>
@@ -274,21 +277,21 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
                     rx={4} ry={4}
                     fill={dockFill} stroke={dockStroke} strokeWidth={1.5} opacity={0.55}
                 />
-                {/* Back wall (raised edge) */}
+                {/* Back wall (far edge the robot pushes against) */}
                 <rect
-                    x={plateX - wallH * 0.3} y={cy - wallTall / 2}
+                    x={wallX} y={cy - wallTall / 2}
                     width={wallH} height={wallTall}
                     rx={2} ry={2}
                     fill={mode === "dark" ? "#555" : "#777"} opacity={0.7}
                 />
-                {/* Charging contacts (two copper strips) */}
+                {/* Charging contacts (two copper strips facing the robot) */}
                 <rect
-                    x={plateX + plateH * 0.5} y={cy - contactGap - contactH / 2}
+                    x={contactX} y={cy - contactGap - contactH / 2}
                     width={contactW} height={contactH}
                     rx={1} fill={contactColor} opacity={0.85}
                 />
                 <rect
-                    x={plateX + plateH * 0.5} y={cy + contactGap - contactH / 2}
+                    x={contactX} y={cy + contactGap - contactH / 2}
                     width={contactW} height={contactH}
                     rx={1} fill={contactColor} opacity={0.85}
                 />

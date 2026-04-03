@@ -479,35 +479,27 @@ export const MapPage: React.FC<{compact?: boolean}> = ({compact = false}) => {
                                 'text-halo-color': '#ffffff',
                                 'text-halo-width': 1.5,
                             }}/>
-                        {/* Mower marker */}
-                        <Layer type={"circle"} id={"mower-halo"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
+                        {/* Mower footprint (robot shape from URDF) */}
+                        <Layer type={"fill"} id={"mower-footprint-fill"}
+                            filter={['==', ['get', 'feature_type'], 'mower-footprint']}
                             paint={{
-                                'circle-radius': 10,
-                                'circle-color': '#ffffff',
-                                'circle-opacity': 0.9,
+                                'fill-color': '#00a6ff',
+                                'fill-opacity': 0.35,
                             }}/>
+                        <Layer type={"line"} id={"mower-footprint-outline"}
+                            filter={['==', ['get', 'feature_type'], 'mower-footprint']}
+                            paint={{
+                                'line-color': '#003d66',
+                                'line-width': 2,
+                            }}/>
+                        {/* Mower center point */}
                         <Layer type={"circle"} id={"mower-point"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
+                            filter={['all', ['==', '$type', 'Point'], ['==', ['get', 'feature_type'], 'mower']]}
                             paint={{
-                                'circle-radius': 7,
+                                'circle-radius': 4,
                                 'circle-color': '#00a6ff',
-                                'circle-stroke-color': '#003d66',
-                                'circle-stroke-width': 2,
-                            }}/>
-                        <Layer type={"symbol"} id={"mower-label"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
-                            layout={{
-                                'text-field': 'MOWER',
-                                'text-size': 9,
-                                'text-font': ['Open Sans Bold'],
-                                'text-offset': [0, 1.6],
-                                'text-anchor': 'top',
-                            }}
-                            paint={{
-                                'text-color': '#00a6ff',
-                                'text-halo-color': '#ffffff',
-                                'text-halo-width': 1.5,
+                                'circle-stroke-color': '#ffffff',
+                                'circle-stroke-width': 1.5,
                             }}/>
                         {/* Other display points */}
                         <Layer type={"circle"} id={"display-points-halo"}
@@ -633,35 +625,27 @@ export const MapPage: React.FC<{compact?: boolean}> = ({compact = false}) => {
                                 'text-halo-color': '#ffffff',
                                 'text-halo-width': 1.5,
                             }}/>
-                        {/* Mower marker */}
-                        <Layer type={"circle"} id={"mower-halo"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
+                        {/* Mower footprint (robot shape from URDF) */}
+                        <Layer type={"fill"} id={"mower-footprint-fill"}
+                            filter={['==', ['get', 'feature_type'], 'mower-footprint']}
                             paint={{
-                                'circle-radius': 10,
-                                'circle-color': '#ffffff',
-                                'circle-opacity': 0.9,
+                                'fill-color': '#00a6ff',
+                                'fill-opacity': 0.35,
                             }}/>
+                        <Layer type={"line"} id={"mower-footprint-outline"}
+                            filter={['==', ['get', 'feature_type'], 'mower-footprint']}
+                            paint={{
+                                'line-color': '#003d66',
+                                'line-width': 2,
+                            }}/>
+                        {/* Mower center point */}
                         <Layer type={"circle"} id={"mower-point"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
+                            filter={['all', ['==', '$type', 'Point'], ['==', ['get', 'feature_type'], 'mower']]}
                             paint={{
-                                'circle-radius': 7,
+                                'circle-radius': 4,
                                 'circle-color': '#00a6ff',
-                                'circle-stroke-color': '#003d66',
-                                'circle-stroke-width': 2,
-                            }}/>
-                        <Layer type={"symbol"} id={"mower-label"}
-                            filter={['==', ['get', 'feature_type'], 'mower']}
-                            layout={{
-                                'text-field': 'MOWER',
-                                'text-size': 9,
-                                'text-font': ['Open Sans Bold'],
-                                'text-offset': [0, 1.6],
-                                'text-anchor': 'top',
-                            }}
-                            paint={{
-                                'text-color': '#00a6ff',
-                                'text-halo-color': '#ffffff',
-                                'text-halo-width': 1.5,
+                                'circle-stroke-color': '#ffffff',
+                                'circle-stroke-width': 1.5,
                             }}/>
                         {/* Other display points */}
                         <Layer type={"circle"} id={"display-points-halo"}
