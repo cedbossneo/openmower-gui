@@ -87,8 +87,8 @@
         "gps_antenna_x": {
           "type": "number",
           "title": "GPS Antenna X",
-          "default": 0.0,
-          "description": "GPS antenna position X in metres."
+          "default": 0.3,
+          "description": "GPS antenna position X (forward from base_link / wheel axis) in metres."
         },
         "gps_antenna_y": {
           "type": "number",
