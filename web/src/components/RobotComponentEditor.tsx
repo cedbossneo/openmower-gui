@@ -217,6 +217,7 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
 
     // Draw robot body from URDF geometry
     const robotBody = useMemo(() => {
+        const ccx = robot.chassisCenterX; // chassis centre offset from base_link
         const halfL = robot.baseLength / 2;
         const halfW = robot.baseWidth / 2;
         const bodyColor = mode === "dark" ? "#2d5a2d" : "#4CAF50";
@@ -225,7 +226,8 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
         const bladeColor = mode === "dark" ? "#888" : "#9E9E9E";
         const casterColor = mode === "dark" ? "#666" : "#555";
 
-        const [bx, by] = toSvg(-halfL, halfW, cx, cy);
+        // Chassis rect offset by chassisCenterX (base_link is at wheel axis, not chassis centre)
+        const [bx, by] = toSvg(ccx - halfL, halfW, cx, cy);
         const bw = robot.baseLength * SCALE;
         const bh = robot.baseWidth * SCALE;
 
@@ -238,12 +240,12 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
         const rightCaster = toSvg(robot.casterXOffset, -robot.casterTrack / 2, cx, cy);
         const cr = robot.casterRadius * SCALE;
 
-        const bladeCentre = toSvg(0, 0, cx, cy);
+        const bladeCentre = toSvg(ccx, 0, cx, cy);
         const br = robot.bladeRadius * SCALE;
 
-        const arrowTip = toSvg(halfL + 0.04, 0, cx, cy);
-        const arrowLeft = toSvg(halfL + 0.01, 0.02, cx, cy);
-        const arrowRight = toSvg(halfL + 0.01, -0.02, cx, cy);
+        const arrowTip = toSvg(ccx + halfL + 0.04, 0, cx, cy);
+        const arrowLeft = toSvg(ccx + halfL + 0.01, 0.02, cx, cy);
+        const arrowRight = toSvg(ccx + halfL + 0.01, -0.02, cx, cy);
         const arrowColor = mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)";
 
         return (
@@ -273,7 +275,7 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
                     fill={arrowColor}
                 />
                 <text
-                    x={bladeCentre[0]} y={bladeCentre[1] + 4}
+                    x={cx} y={cy + 4}
                     textAnchor="middle" fontSize={9}
                     fill={mode === "dark" ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)"}
                     fontFamily="monospace"
@@ -546,7 +548,7 @@ export const RobotComponentEditor: React.FC<Props> = ({ values, onChange }) => {
                     })}
 
                     <Typography.Paragraph type="secondary" style={{ fontSize: 11, marginTop: 8 }}>
-                        Coordinates are relative to base_link (centre of robot chassis).
+                        Coordinates are relative to base_link (centre of rear wheel axis).
                         X+ = forward, Y+ = left, Z+ = up. Yaw is rotation around Z axis in degrees
                         (displayed) / radians (stored).
                     </Typography.Paragraph>

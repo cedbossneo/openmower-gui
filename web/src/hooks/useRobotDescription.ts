@@ -5,6 +5,7 @@ export type RobotGeometry = {
     baseLength: number;
     baseWidth: number;
     baseHeight: number;
+    chassisCenterX: number;
     wheelRadius: number;
     wheelWidth: number;
     wheelTrack: number;
@@ -19,9 +20,10 @@ const DEFAULTS: RobotGeometry = {
     baseLength: 0.54,
     baseWidth: 0.40,
     baseHeight: 0.19,
+    chassisCenterX: 0.18,
     wheelRadius: 0.04475,
     wheelWidth: 0.04,
-    wheelTrack: 0.40,
+    wheelTrack: 0.325,
     wheelXOffset: 0.0,
     casterRadius: 0.03,
     casterXOffset: 0.40,
@@ -60,6 +62,7 @@ const parseUrdf = (xml: string): RobotGeometry => {
         baseLength: get("base_length", DEFAULTS.baseLength),
         baseWidth: get("base_width", DEFAULTS.baseWidth),
         baseHeight: get("base_height", DEFAULTS.baseHeight),
+        chassisCenterX: get("chassis_cx", DEFAULTS.chassisCenterX),
         wheelRadius: get("wheel_radius", DEFAULTS.wheelRadius),
         wheelWidth: get("wheel_width", DEFAULTS.wheelWidth),
         wheelTrack: get("wheel_track", DEFAULTS.wheelTrack),
