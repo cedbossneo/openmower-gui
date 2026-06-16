@@ -12,9 +12,13 @@ type Power struct {
     msg.Package `ros:"mower_msgs"`
     Stamp time.Time
     VCharge float32
-    VBattery float32
+    VChargeADC float32
     ChargeCurrent float32
+    VBattery float32
+    VBatteryADC float32
+    PercentBattery float32
+    DCDCInputCurrent float32
+    ChargerInputCurrent float32
     ChargerEnabled bool
     ChargerStatus string
 }
-
