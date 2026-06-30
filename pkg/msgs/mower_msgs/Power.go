@@ -11,21 +11,15 @@ import (
 type Power struct {
     msg.Package `ros:"mower_msgs"`
     Stamp time.Time
-    ChargeVoltageAdc float32
-    ChargeVoltageChg float32
+    VCharge float32
+    VChargeADC float32
     ChargeCurrent float32
-    BatteryVoltageAdc float32
-    BatteryVoltageChg float32
-    BatteryVoltageBms float32
-    BatteryCurrent float32
-    BatteryPct float32
-    BatterySoc float32
-    BatteryTemp float32
-    DcdcInputCurrent float32
+    VBattery float32
+    VBatteryADC float32
+    PercentBattery float32
+    DCDCInputCurrent float32
     ChargerInputCurrent float32
-    ChargerStatus string
     ChargerEnabled bool
-    BmsStatus string
-    BmsExtraData string
+    ChargerStatus string
 }
 
