@@ -12,6 +12,7 @@ import (
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/dynamic_reconfigure"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_map"
 	"github.com/cedbossneo/openmower-gui/pkg/msgs/mower_msgs"
+	"github.com/cedbossneo/openmower-gui/pkg/msgs/std_msgs"
 	"github.com/cedbossneo/openmower-gui/pkg/types"
 	"github.com/docker/distribution/uuid"
 	"github.com/gin-gonic/gin"
@@ -342,6 +343,17 @@ func ServiceRoute(group *gin.RouterGroup, provider types.IRosProvider) {
 				return
 			}
 			err = provider.CallService(c.Request.Context(), "/mower_service/start_in_area", &mower_msgs.StartInAreaSrv{}, &CallReq, &mower_msgs.StartInAreaSrvRes{})
+		case "action":
+			// Publish a behavior action string to xbot/action, e.g.
+			// "mower_logic:area_recording/start_manual_mowing". This is how the
+			// GUI reaches the active behavior's actions (the blade toggle during
+			// manual mowing), which plain service calls cannot do.
+			var CallReq std_msgs.String
+			err = c.BindJSON(&CallReq)
+			if err != nil {
+				return
+			}
+			err = provider.PublishAction(CallReq.Data)
 		default:
 			err = errors.New("unknown command")
 		}

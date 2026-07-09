@@ -98,6 +98,10 @@ type RosProvider struct {
 	mowingPath                *nav_msgs.Path
 	mowingPathOrigin          orb.LineString
 	dbProvider                types2.IDBProvider
+	// actionPublisher is a long-lived publisher to xbot/action. It is created
+	// lazily and reused: a fresh publisher would drop its first message because
+	// the TCP link to the mower_logic subscriber is not established yet.
+	actionPublisher *goroslib.Publisher
 }
 
 func (p *RosProvider) getNode() (*goroslib.Node, error) {
@@ -351,6 +355,54 @@ func (p *RosProvider) Publisher(topic string, obj interface{}) (*goroslib.Publis
 		Msg:   obj,
 	})
 	return publisher, nil
+}
+
+// PublishAction publishes an action string to xbot/action (std_msgs/String),
+// which mower_logic forwards to the currently active behavior. The publisher is
+// created once and cached so that repeated toggles (e.g. blade on/off during a
+// manual mowing session) reuse the warm connection.
+func (p *RosProvider) PublishAction(action string) error {
+	// getNode() locks p.mtx itself, so call it before taking the lock to avoid
+	// a re-entrant (deadlocking) lock.
+	rosNode, err := p.getNode()
+	if err != nil {
+		return err
+	}
+
+	p.mtx.Lock()
+	pub := p.actionPublisher
+	p.mtx.Unlock()
+
+	if pub == nil {
+		newPub, err := goroslib.NewPublisher(goroslib.PublisherConf{
+			Node:  rosNode,
+			Topic: "/xbot/action",
+			Msg:   &std_msgs.String{},
+		})
+		if err != nil {
+			return err
+		}
+		p.mtx.Lock()
+		if p.actionPublisher == nil {
+			p.actionPublisher = newPub
+			pub = newPub
+		} else {
+			// Another goroutine won the race; reuse theirs.
+			pub = p.actionPublisher
+			newPub.Close()
+			newPub = nil
+		}
+		p.mtx.Unlock()
+		// Only sleep when we actually created the publisher: give it time to
+		// establish its connection to the mower_logic subscriber before the
+		// first write, otherwise the first action would be dropped.
+		if newPub != nil {
+			time.Sleep(700 * time.Millisecond)
+		}
+	}
+
+	pub.Write(&std_msgs.String{Data: action})
+	return nil
 }
 
 func (p *RosProvider) UnSubscribe(topic string, id string) {

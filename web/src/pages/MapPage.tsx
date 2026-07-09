@@ -32,6 +32,7 @@ import {MapToolbarMobile} from "./map/components/MapToolbarMobile.tsx";
 import {MapEditorToolbar} from "./map/components/MapEditorToolbar.tsx";
 import {JoystickOverlay} from "./map/components/JoystickOverlay.tsx";
 import {useIsMobile} from "../hooks/useIsMobile.ts";
+import {useStatus} from "../hooks/useStatus.ts";
 import {useThemeMode} from "../theme/ThemeContext.tsx";
 
 
@@ -329,7 +330,8 @@ export const MapPage: React.FC<{compact?: boolean}> = ({compact = false}) => {
     });
 
 
-    const {manualMode, handleManualMode, handleStopManualMode, handleJoyMove, handleJoyStop} = useManualMode({mowerAction, joyStream});
+    const mowerStatus = useStatus();
+    const {manualMode, bladeOn, handleManualMode, handleStopManualMode, toggleBlade, handleJoyMove, handleJoyStop} = useManualMode({mowerAction, joyStream, mowEnabled: mowerStatus.MowEnabled});
 
     // Mower action callbacks shared between desktop and mobile toolbars
     const mowerActions = useMemo(() => ({
@@ -527,8 +529,10 @@ export const MapPage: React.FC<{compact?: boolean}> = ({compact = false}) => {
                     isRecording={highLevelStatus.highLevelStatus.StateName === "AREA_RECORDING"}
                     onMove={handleJoyMove}
                     onStop={handleJoyStop}
-                    onFinishRecording={mowerAction("high_level_control", {Command: 2})}
-                    onHome={mowerAction("high_level_control", {Command: 2})}
+                    onFinishRecording={manualMode != null ? handleStopManualMode : mowerAction("high_level_control", {Command: 2})}
+                    onHome={manualMode != null ? handleStopManualMode : mowerAction("high_level_control", {Command: 2})}
+                    bladeOn={bladeOn}
+                    onToggleBlade={toggleBlade}
                 />
                 {isMobile && (
                     <MapToolbarMobile

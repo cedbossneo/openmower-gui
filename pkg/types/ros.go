@@ -10,4 +10,7 @@ type IRosProvider interface {
 	Subscribe(topic string, id string, cb func(msg []byte)) error
 	UnSubscribe(topic string, id string)
 	Publisher(topic string, obj interface{}) (*goroslib.Publisher, error)
+	// PublishAction publishes an action string to the xbot/action topic
+	// (std_msgs/String), e.g. "mower_logic:area_recording/start_manual_mowing".
+	PublishAction(action string) error
 }

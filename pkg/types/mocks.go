@@ -64,6 +64,8 @@ type MockRosProvider struct {
 	ServiceErr    error
 	PublisherErr  error
 	SubscribeErr  error
+	Actions       []string
+	ActionErr     error
 }
 
 type ServiceCall struct {
@@ -108,6 +110,16 @@ func (m *MockRosProvider) UnSubscribe(topic string, id string) {
 
 func (m *MockRosProvider) Publisher(_ string, _ interface{}) (*goroslib.Publisher, error) {
 	return nil, m.PublisherErr
+}
+
+func (m *MockRosProvider) PublishAction(action string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.ActionErr != nil {
+		return m.ActionErr
+	}
+	m.Actions = append(m.Actions, action)
+	return nil
 }
 
 // Publish simulates publishing a message to all subscribers of a topic.
